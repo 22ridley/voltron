@@ -8,6 +8,7 @@ use rocket::response::Redirect;
 use rocket_dyn_templates::Template;
 
 mod config;
+mod common;
 
 #[rocket::main]
 async fn main() {
@@ -24,16 +25,15 @@ async fn main() {
             .expect("failed to set template path!");
     });
 
-    // rocket::build()
-    //     .attach(template)
-    //     .manage(config)
-    //     .mount("/", routes![index])
-
     // build and launch
     if let Err(e) = rocket::build()
         .attach(template)
         .manage(config)
         .mount("/", routes![index])
+        .mount("/login", routes![login])
+        .mount("/view", routes![view])
+        .mount("/instructor", routes![instructor])
+        .mount("/student", routes![student])
         .launch()
         .await 
     {
@@ -51,8 +51,31 @@ fn index() -> Redirect {
 // Login page directs instructor to class view
 // Login page directs students to student view
 // Grouped students see the same student view
-#[get("/login")]
-fn login() -> Template {
+#[get("/")]
+pub fn login() -> Template {
     let ctx: HashMap<&str, &str> = HashMap::new();
     Template::render("login", ctx)
+}
+
+#[get("/?<name>")]
+pub fn view(name: &str) -> Redirect {
+    println!("{name}");
+    //Redirect::to("/login")
+    Redirect::to(format!("/instructor/{}", name))
+}
+
+#[get("/<name>")]
+pub fn instructor(name: &str) -> Template {
+    let ctx = common::InstructorContext {
+        name: name.to_string()
+    };
+    Template::render("instructor", &ctx)
+}
+
+#[get("/<name>")]
+pub fn student(name: &str) -> Template {
+    let ctx = common::StudentContext {
+        name: name.to_string()
+    };
+    Template::render("student", &ctx)
 }
