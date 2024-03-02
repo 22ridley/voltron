@@ -23,18 +23,26 @@
   </div>
   <hr />
   {{#if admin}}
-  <div class="register_instructor">
-    <h3>
-      Register a new instructor:
-    </h3>
-    <form action="/register-instructor" method="get" accept-charset="utf-8">
-      <label>Instructor name:
+    <div class="register_instructor">
+      <h3>
+        Register a new instructor:
+      </h3>
+      <form action="/register-instructor" method="get" accept-charset="utf-8">
+        <label>Instructor name:
+          <p>
+            <input name="name" />
+          </p>
+        </label>
+        <input type="submit" value="Submit" />
+        <div>
+          {{{message}}}
+        </div>
+      </form>
+      {{#if message}}
         <p>
-          <input name="name" />
+          {{{message_cntnt}}}
         </p>
-      </label>
-      <input type="submit" value="Submit" />
-    </form>
-  </div>
+      {{/if}}
+    </div>
   {{/if}}
 </div>

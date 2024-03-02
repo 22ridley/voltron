@@ -4,6 +4,7 @@ extern crate mysql;
 extern crate rocket;
 extern crate rocket_dyn_templates;
 use std::{sync::Arc, sync::Mutex};
+use common::InstructorContext;
 use mysql::{prelude::Queryable, Row};
 use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
@@ -49,6 +50,7 @@ async fn main() {
         .mount("/view", routes![view])
         .mount("/instructor", routes![instructor])
         .mount("/student", routes![student])
+        .mount("/register-instructor", routes![register_instructor])
         .launch()
         .await 
     {
@@ -94,18 +96,26 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
     }
 }
 
-#[get("/<name>")]
-pub fn instructor(name: &str) -> common::AnyResponse {
+#[get("/<name>?<message>")]
+pub fn instructor(name: &str, message: Option<&str>) -> common::AnyResponse {
     // Get the user information from the backend database
     let mut is_admin: bool = false;
+    let mut register_message: &str = "";
+    let mut message_exists: bool = false;
     if name == "admin" {
         is_admin = true;
     }
+    if message.is_some() {
+        message_exists = true;
+        register_message = message.unwrap();
+    }
 
     // Create the context for the template
-    let ctx = common::InstructorContext {
+    let ctx: InstructorContext = common::InstructorContext {
         name: name.to_string(),
-        admin: is_admin
+        admin: is_admin,
+        message_cntnt: register_message.to_string(),
+        message: message_exists
     };
     common::AnyResponse::Template(Template::render("instructor", &ctx))
 }
@@ -116,4 +126,24 @@ pub fn student(name: &str) -> Template {
         name: name.to_string()
     };
     Template::render("student", &ctx)
+}
+
+#[get("/?<name>")]
+pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+-> common::AnyResponse {
+    // Assemble values to insert
+    let users_row: Vec<&str> = vec![name, "1", "-1"];
+
+    // Make insert query to add this new instructor
+    let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 
+                            users_row.iter().map(|s| {format!("\"{s}\"")})
+                                .collect::<Vec<String>>()
+                                .join(","));
+
+    // send insert query to db
+    let mut bg = backend.lock().unwrap();
+    let _ = (*bg).handle.query_drop(q).unwrap();
+    drop(bg);
+
+    common::AnyResponse::Redirect(Redirect::to(format!("/instructor/admin?i-{}", name)))
 }

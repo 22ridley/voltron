@@ -19,7 +19,9 @@ pub struct LoginContext {
 #[derive(Serialize)]
 pub struct InstructorContext {
     pub name: String,
-    pub admin: bool
+    pub admin: bool,
+    pub message_cntnt: String,
+    pub message: bool
 }
 
 // The context needed for rendering the student page
