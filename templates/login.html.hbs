@@ -1,6 +1,7 @@
 <style>
   .all { padding: 10px; } h1 { font-size: 50; display: inline; text-align:
   center; padding: 10px; } .header_background { background-color: #7688a6; }
+  .failure { color: maroon }
 </style>
 <div class="header_background">
   <h1>Voltron</h1>
@@ -15,4 +16,11 @@
     </label>
     <input type="submit" value="Submit" />
   </form>
+  {{#if failed}}
+    <div class="failure">
+      <h3>
+        Login attempted failed. Please check your user name and try again.
+      </h3>
+    </div>
+  {{/if}}
 </div>
