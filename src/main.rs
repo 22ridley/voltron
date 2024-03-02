@@ -3,7 +3,7 @@ extern crate mysql;
 #[macro_use]
 extern crate rocket;
 extern crate rocket_dyn_templates;
-use std::{sync::Arc, sync::Mutex};
+use std::{sync::Arc, sync::Mutex, cmp};
 use common::InstructorContext;
 use mysql::{prelude::Queryable, Row};
 use backend::MySQLBackend;
@@ -51,6 +51,7 @@ async fn main() {
         .mount("/instructor", routes![instructor])
         .mount("/student", routes![student])
         .mount("/register-instructor", routes![register_instructor])
+        .mount("/register-student", routes![register_student])
         .launch()
         .await 
     {
@@ -90,32 +91,40 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let row: Row = user_res.get(0).unwrap().clone();
     let row_name: Option<i32> =  row.get(1).unwrap();
     if row_name.unwrap() != 0 {
-        common::AnyResponse::Redirect(Redirect::to(format!("/instructor/{}", name)))
+        common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}", name)))
     } else {
         common::AnyResponse::Redirect(Redirect::to(format!("/student/{}", name)))
     }
 }
 
-#[get("/<name>?<message>")]
-pub fn instructor(name: &str, message: Option<&str>) -> common::AnyResponse {
+#[get("/?<name>&<reg_name>&<reg_type>")]
+pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>) 
+-> common::AnyResponse {
     // Get the user information from the backend database
     let mut is_admin: bool = false;
-    let mut register_message: &str = "";
-    let mut message_exists: bool = false;
+    let mut register_name: &str = "";
+    let mut reg_instructor: bool = false;
+    let mut reg_student: bool = false;
     if name == "admin" {
         is_admin = true;
     }
-    if message.is_some() {
-        message_exists = true;
-        register_message = message.unwrap();
+    if reg_name.is_some() & reg_type.is_some() {
+        let register_type: &str = reg_type.unwrap();
+        if register_type == "inst" {
+            reg_instructor = true
+        } else if register_type == "stud" {
+            reg_student = true
+        }
+        register_name = reg_name.unwrap();
     }
 
     // Create the context for the template
     let ctx: InstructorContext = common::InstructorContext {
         name: name.to_string(),
         admin: is_admin,
-        message_cntnt: register_message.to_string(),
-        message: message_exists
+        registered_name: register_name.to_string(),
+        registered_instructor: reg_instructor,
+        registered_student: reg_student
     };
     common::AnyResponse::Template(Template::render("instructor", &ctx))
 }
@@ -145,5 +154,30 @@ pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>
     let _ = (*bg).handle.query_drop(q).unwrap();
     drop(bg);
 
-    common::AnyResponse::Redirect(Redirect::to(format!("/instructor/admin?i-{}", name)))
+    common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", name, "inst")))
+}
+
+#[get("/?<name>&<student_name>")]
+pub fn register_student(name: &str, student_name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
+-> common::AnyResponse {
+    // Count the number of students currently in the database 
+    let mut bg = backend.lock().unwrap();
+    let students_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();    
+    drop(bg);
+    let mut max_student_group: i32 = 0;
+    for student in students_res.iter() {
+        let group_id: i32 = student.clone().get(2).unwrap();
+        max_student_group = cmp::max(max_student_group, group_id);
+    }
+    // There are an even number of students, so there are no students alone
+    if students_res.len() % 2 == 0 { 
+        // The student will have group_id max_student_group + 1
+
+    }
+    // Otherwise, there are an odd number of students, so there is some student alone
+    else {
+        // The student will have group_id max_student_group
+    }
+    // need name of person doing registering
+    common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
 }

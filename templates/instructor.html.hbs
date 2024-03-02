@@ -1,6 +1,7 @@
 <style>
   .all { padding: 10px; } h1 { font-size: 50; display: inline; text-align:
-  center; padding: 10px; } .header_background { background-color: #7688a6; }
+  center; padding: 10px; } .header_background { background-color: #7688a6; } h4
+  {color: darkgreen}
 </style>
 <div class="header_background">
   <h1>Voltron</h1>
@@ -13,13 +14,20 @@
       Register a new student:
     </h3>
     <form action="/register-student" method="get" accept-charset="utf-8">
+      <input type="hidden" name="name" value={{name}} />
       <label>Student name:
         <p>
-          <input name="name" />
+          <input name="student_name" />
         </p>
       </label>
       <input type="submit" value="Submit" />
     </form>
+    {{#if registered_student}}
+      <h4>
+        Successfully registered new student with username:
+        <i>{{{registered_name}}}</i>
+      </h4>
+    {{/if}}
   </div>
   <hr />
   {{#if admin}}
@@ -34,14 +42,12 @@
           </p>
         </label>
         <input type="submit" value="Submit" />
-        <div>
-          {{{message}}}
-        </div>
       </form>
-      {{#if message}}
-        <p>
-          {{{message_cntnt}}}
-        </p>
+      {{#if registered_instructor}}
+        <h4>
+          Successfully registered new instructor with username:
+          <i>{{{registered_name}}}</i>
+        </h4>
       {{/if}}
     </div>
   {{/if}}

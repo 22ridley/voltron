@@ -20,8 +20,9 @@ pub struct LoginContext {
 pub struct InstructorContext {
     pub name: String,
     pub admin: bool,
-    pub message_cntnt: String,
-    pub message: bool
+    pub registered_name: String,
+    pub registered_instructor: bool,
+    pub registered_student: bool
 }
 
 // The context needed for rendering the student page
