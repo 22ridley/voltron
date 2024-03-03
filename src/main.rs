@@ -83,24 +83,23 @@ pub fn login(fail: Option<&str>) -> Template {
 
 #[get("/?<name>")]
 pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
--> common::AnyResponse {
+ -> AnyResponse {
     let mut bg = backend.lock().unwrap();
     let user_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE user_name = \"{}\"", name)).unwrap();
     drop(bg);
-    if user_res.len() == 0 { return common::AnyResponse::Redirect(Redirect::to("/login?fail")); }
+    if user_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
     let row: Row = user_res.get(0).unwrap().clone();
     let row_name: Option<i32> =  row.get(1).unwrap();
     if row_name.unwrap() != 0 {
-        common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}", name)))
+        AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}", name)))
     } else {
-        common::AnyResponse::Redirect(Redirect::to(format!("/student/{}", name)))
+        AnyResponse::Redirect(Redirect::to(format!("/student/{}", name)))
     }
 }
 
 #[get("/?<name>&<reg_name>&<reg_type>")]
 pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>, 
-    backend: &State<Arc<Mutex<MySQLBackend>>>) 
--> common::AnyResponse {
+    backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
     // Get the user information from the backend database
     let mut is_admin: bool = false;
     let mut register_name: &str = "";
@@ -132,7 +131,7 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
         registered_student: reg_student,
         students: students_res
     };
-    common::AnyResponse::Template(Template::render("instructor", &ctx))
+    AnyResponse::Template(Template::render("instructor", &ctx))
 }
 
 #[get("/<name>")]
@@ -145,7 +144,7 @@ pub fn student(name: &str) -> Template {
 
 #[get("/?<name>")]
 pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
--> common::AnyResponse {
+-> AnyResponse {
     // Assemble values to insert
     let users_row: Vec<&str> = vec![name, "1", "-1"];
 
@@ -160,12 +159,12 @@ pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>
     let _ = (*bg).handle.query_drop(q).unwrap();
     drop(bg);
 
-    common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", name, "inst")))
+    AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", name, "inst")))
 }
 
 #[get("/?<name>&<student_name>")]
-pub fn register_student(name: &str, student_name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
--> common::AnyResponse {
+pub fn register_student(name: &str, student_name: &str, 
+    backend: &State<Arc<Mutex<MySQLBackend>>>)-> AnyResponse {
     // Count the number of students currently in the database 
     let mut bg = backend.lock().unwrap();
     let students_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();    
@@ -202,5 +201,5 @@ pub fn register_student(name: &str, student_name: &str, backend: &State<Arc<Mute
         let _ = (*bg).handle.query_drop(q).unwrap();
     }
     drop(bg);
-    common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
+    AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
 }
