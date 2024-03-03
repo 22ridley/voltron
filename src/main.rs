@@ -183,7 +183,7 @@ pub fn register_student(name: &str, student_name: &str, backend: &State<Arc<Mute
     // Otherwise, there are an odd number of students, so there is some student alone
     // and the student will have group_id max_student_group
     let student_group_string: &str = &student_group.to_string();
-    let users_row: Vec<&str> = vec![name, "0", student_group_string];    
+    let users_row: Vec<&str> = vec![student_name, "0", student_group_string];    
 
     // Make insert query to add this new student into users
     let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 

@@ -61,7 +61,13 @@
       {{/if}}
     </div>
     <div class="main">
-      Hey
+      Students
+      {{#each students}}
+        <p>
+          {{this.name}}:
+          {{this.group_id}}
+        </p>
+      {{/each}}
     </div>
   </div>
 </div>

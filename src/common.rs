@@ -23,7 +23,6 @@ pub struct LoginContext {
 pub struct Student{
     pub name: String,
     pub group_id: i32,
-    pub code: String,
     pub index: usize
 }
 
@@ -31,8 +30,7 @@ impl Student{
     pub fn new(row: Row, index: usize) -> Self {
         Student{
             name: from_value(row[0].clone()),
-            group_id: from_value(row[1].clone()),
-            code: from_value(row[2].clone()),
+            group_id: from_value(row[2].clone()),
             index: index
         }
     } 
