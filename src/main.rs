@@ -4,7 +4,7 @@ extern crate mysql;
 extern crate rocket;
 extern crate rocket_dyn_templates;
 use std::{sync::Arc, sync::Mutex, cmp};
-use common::InstructorContext;
+use common::{InstructorContext, Student, AnyResponse};
 use mysql::{prelude::Queryable, Row};
 use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
@@ -98,7 +98,8 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
 }
 
 #[get("/?<name>&<reg_name>&<reg_type>")]
-pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>) 
+pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>, 
+    backend: &State<Arc<Mutex<MySQLBackend>>>) 
 -> common::AnyResponse {
     // Get the user information from the backend database
     let mut is_admin: bool = false;
@@ -118,13 +119,18 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>)
         register_name = reg_name.unwrap();
     }
 
+    // Get list of all students
+    let mut bg = backend.lock().unwrap();
+    let students_res: Vec<Student> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();
+
     // Create the context for the template
-    let ctx: InstructorContext = common::InstructorContext {
+    let ctx: InstructorContext = InstructorContext {
         name: name.to_string(),
         admin: is_admin,
         registered_name: register_name.to_string(),
         registered_instructor: reg_instructor,
-        registered_student: reg_student
+        registered_student: reg_student,
+        students: students_res
     };
     common::AnyResponse::Template(Template::render("instructor", &ctx))
 }
@@ -163,21 +169,38 @@ pub fn register_student(name: &str, student_name: &str, backend: &State<Arc<Mute
     // Count the number of students currently in the database 
     let mut bg = backend.lock().unwrap();
     let students_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();    
-    drop(bg);
     let mut max_student_group: i32 = 0;
     for student in students_res.iter() {
         let group_id: i32 = student.clone().get(2).unwrap();
         max_student_group = cmp::max(max_student_group, group_id);
     }
+    let mut student_group: i32 = max_student_group;
     // There are an even number of students, so there are no students alone
-    if students_res.len() % 2 == 0 { 
+    if students_res.len() % 2 == 0 {
         // The student will have group_id max_student_group + 1
-
+        student_group += 1;
     }
     // Otherwise, there are an odd number of students, so there is some student alone
-    else {
-        // The student will have group_id max_student_group
+    // and the student will have group_id max_student_group
+    let student_group_string: &str = &student_group.to_string();
+    let users_row: Vec<&str> = vec![name, "0", student_group_string];    
+
+    // Make insert query to add this new student into users
+    let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 
+                            users_row.iter().map(|s| {format!("\"{s}\"")})
+                                .collect::<Vec<String>>()
+                                .join(","));
+    let _ = (*bg).handle.query_drop(q).unwrap();
+
+    // Make insert query to add a new student_group to student_groups (if necessary)
+    if students_res.len() % 2 == 0 {
+        let student_group_row: Vec<&str> = vec![student_group_string, ""];  
+        let q = format!("INSERT INTO student_groups (group_id, code) VALUES ({})", 
+                            student_group_row.iter().map(|s| {format!("\"{s}\"")})
+                                .collect::<Vec<String>>()
+                                .join(","));
+        let _ = (*bg).handle.query_drop(q).unwrap();
     }
-    // need name of person doing registering
+    drop(bg);
     common::AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
 }
