@@ -1,12 +1,13 @@
 <style>
   .all { padding: 10px; } .header { font-size: 50; background-color: #7688a6;
-  position: fixed; width: 100%; height: 60px; display: flex; padding: 10px;
-  font-weight: bold;} h4 {color: darkgreen} .side {height: 100%; width: 300px;
-  position: fixed; z-index: 1; top: 60px; left: 20px; overflow-x: hidden;
-  padding-top: 20px;} .main{margin-left: 400px; padding: 70px 10px;} a {color:
-  inherit; text-decoration: none;} .grid {display: grid; grid-template-columns:
-  auto auto; padding-right: 50px; } .grid_item {background-color: lightgray;
-  padding: 10px; margin: 20px}
+  position: fixed; width: 100%; height: 50px; display: flex; padding: 0px 8px
+  7px 8px; font-weight: bold;} h4 {color: darkgreen} .side {height: 100%; width:
+  300px; position: fixed; z-index: 1; top: 50px; left: 20px; overflow-x: scroll;
+  padding-top: 20px; overflow-y: scroll;} .main{margin-left: 400px; padding:
+  50px 10px;} a {color: inherit; text-decoration: none;} .grid {display: grid;
+  grid-template-columns: auto auto; padding-right: 50px; } .grid_item
+  {background-color: lightgray; padding: 10px; margin: 20px} .student
+  {padding-bottom: 5px;}
 </style>
 <div class="header">
   <a href="/">
@@ -68,10 +69,10 @@
         Students:
       </h3>
       {{#each students}}
-        <p>
+        <div class="student">
           {{this.name}}:
           {{this.group_id}}
-        </p>
+        </div>
       {{/each}}
     </div>
     <div class="main">
@@ -81,7 +82,11 @@
       <div class="grid">
         {{#each student_groups}}
           <div class="grid_item">
-            {{this.group_id}}
+            <b>
+              Group:
+              {{this.group_id}}
+              {{this.code}}
+            </b>
           </div>
         {{/each}}
       </div>
