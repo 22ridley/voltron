@@ -138,8 +138,28 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
     AnyResponse::Template(Template::render("instructor", &ctx))
 }
 
-#[get("/?<name>&<group_id>")]
-pub fn student(name: &str, group_id: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
+#[get("/?<name>&<group_id>&<text>")]
+pub fn student(name: &str, group_id: &str, text: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
+    // First, see if there is submitted text
+    // If there is text, write it to the database and redirect to the same page
+    //    but without the text to make the url cleaner :)
+    if text.is_some() {
+        // Assemble values to insert
+        let users_row: Vec<&str> = vec![group_id, text.unwrap()];
+
+        // Make insert query to add this new instructor
+        let q = format!("REPLACE INTO student_groups (group_id, code) VALUES ({})", 
+                                users_row.iter().map(|s| {format!("\"{s}\"")})
+                                    .collect::<Vec<String>>()
+                                    .join(","));
+
+        // send insert query to db
+        let mut bg = backend.lock().unwrap();
+        let _ = (*bg).handle.query_drop(q).unwrap();
+        drop(bg);
+        return AnyResponse::Redirect(Redirect::to(format!("/student?name={}&group_id={}", name, group_id)));
+    }
+    
     // Convert group_id to number
     let group_id_num: i32 = group_id.parse().unwrap();
     

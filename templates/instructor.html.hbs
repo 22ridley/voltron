@@ -6,8 +6,9 @@
   padding-top: 20px; overflow-y: scroll;} .main{margin-left: 400px; padding:
   50px 10px;} a {color: inherit; text-decoration: none;} .grid {display: grid;
   grid-template-columns: auto auto; padding-right: 50px; } .grid_item
-  {background-color: lightgray; padding: 10px; margin: 20px} .student
-  {padding-bottom: 5px;}
+  {background-color: lightgray; padding: 10px; margin: 15px; width: 30vw;}
+  .student {padding-bottom: 5px;} .code { white-space: pre-line; font-family:
+  monospace;}
 </style>
 <div class="header">
   <a href="/">
@@ -85,8 +86,10 @@
             <b>
               Group:
               {{this.group_id}}
-              {{this.code}}
             </b>
+            <p class="code">
+              {{this.code}}
+            </p>
           </div>
         {{/each}}
       </div>

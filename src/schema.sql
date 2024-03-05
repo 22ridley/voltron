@@ -14,5 +14,5 @@ INSERT INTO users (user_name, privilege, group_id) VALUES ("elena", 0, 1)
 INSERT INTO users (user_name, privilege, group_id) VALUES ("zoe", 0, 1)
 
 -- Adding sample group information
-INSERT INTO student_groups (group_id, code) VALUES (0, "")
-INSERT INTO student_groups (group_id, code) VALUES (1, "")
+INSERT INTO student_groups (group_id, code) VALUES (0, "//Write your code here!")
+INSERT INTO student_groups (group_id, code) VALUES (1, "//Write your code here!")
