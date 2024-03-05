@@ -1,7 +1,8 @@
 <style>
   .all { padding: 10px; } h1 { font-size: 50; display: inline; text-align:
   center; padding: 10px; } .header_background { background-color: #7688a6; } a
-  {color: inherit; text-decoration: none;}
+  {color: inherit; text-decoration: none;} input {font-size:16px;} textarea
+  {width: 700px; height: 400px}
 </style>
 <div class="header_background">
   <a href="/">
@@ -10,4 +11,14 @@
 </div>
 <div class="all">
   <h2>Student: {{{name}}}</h2>
+  <h2>Group ID: {{{group_id}}}</h2>
+  <form action="/student" method="get" accept-charset="utf-8">
+    <!-- <input name="student_name" value="{{name}}" /> -->
+    <input type="hidden" name="name" value={{name}} />
+    <input type="hidden" name="group_id" value={{group_id}} />
+    <textarea rows="5" cols="60" name="text">{{name}}</textarea>
+    <br />
+    <br />
+    <input type="submit" value="Update" />
+  </form>
 </div>

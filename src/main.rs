@@ -4,7 +4,7 @@ extern crate mysql;
 extern crate rocket;
 extern crate rocket_dyn_templates;
 use std::{sync::Arc, sync::Mutex, cmp};
-use common::{InstructorContext, Student, AnyResponse};
+use common::{InstructorContext, StudentContext, Student, StudentGroup, AnyResponse, LoginContext};
 use mysql::{prelude::Queryable, Row};
 use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
@@ -21,7 +21,7 @@ async fn main() {
     let config = config::parse(config_path).unwrap();
 
     // Make the template
-    let template_dir = config.template_dir.clone();
+    let template_dir: String = config.template_dir.clone();
     let template = Template::custom(move |engines| {
         engines
             .handlebars
@@ -30,8 +30,8 @@ async fn main() {
     });
 
     // Initialize the backend
-    let db_name = "users";
-    let backend = Arc::new(Mutex::new(
+    let db_name: &str = "users";
+    let backend: Arc<Mutex<MySQLBackend>> = Arc::new(Mutex::new(
         backend::MySQLBackend::new(
             &config.db_user,
             &config.db_password,
@@ -75,7 +75,7 @@ pub fn login(fail: Option<&str>) -> Template {
     if fail.is_some() {
         retry = true;
     }
-    let ctx = common::LoginContext {
+    let ctx: LoginContext = LoginContext {
         failed: retry
     };
     Template::render("login", ctx)
@@ -84,16 +84,17 @@ pub fn login(fail: Option<&str>) -> Template {
 #[get("/?<name>")]
 pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
  -> AnyResponse {
-    let mut bg = backend.lock().unwrap();
+    let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let user_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE user_name = \"{}\"", name)).unwrap();
     drop(bg);
     if user_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
     let row: Row = user_res.get(0).unwrap().clone();
-    let row_name: Option<i32> =  row.get(1).unwrap();
-    if row_name.unwrap() != 0 {
+    let privilege: Option<i32> =  row.get(1).unwrap();
+    let group_id: Option<i32> = row.get(2).unwrap();
+    if privilege.unwrap() != 0 {
         AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}", name)))
     } else {
-        AnyResponse::Redirect(Redirect::to(format!("/student/{}", name)))
+        AnyResponse::Redirect(Redirect::to(format!("/student?name={}&group_id={}", name, group_id.unwrap())))
     }
 }
 
@@ -119,8 +120,10 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
     }
 
     // Get list of all students
-    let mut bg = backend.lock().unwrap();
+    let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let students_res: Vec<Student> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();
+    let groups_res: Vec<StudentGroup> = (*bg).handle.query(format!("SELECT * FROM student_groups")).unwrap();
+    drop(bg);
 
     // Create the context for the template
     let ctx: InstructorContext = InstructorContext {
@@ -129,17 +132,31 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
         registered_name: register_name.to_string(),
         registered_instructor: reg_instructor,
         registered_student: reg_student,
-        students: students_res
+        students: students_res,
+        student_groups: groups_res
     };
     AnyResponse::Template(Template::render("instructor", &ctx))
 }
 
-#[get("/<name>")]
-pub fn student(name: &str) -> Template {
-    let ctx = common::StudentContext {
-        name: name.to_string()
+#[get("/?<name>&<group_id>")]
+pub fn student(name: &str, group_id: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
+    // Convert group_id to number
+    let group_id_num: i32 = group_id.parse().unwrap();
+    
+    // Get group id from the database
+    let mut bg = backend.lock().unwrap();
+    let id_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM student_groups WHERE group_id = {}", group_id)).unwrap();
+    drop(bg);
+    if id_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
+    let row: Row = id_res.get(0).unwrap().clone();
+    let text: Option<String> =  row.get(1).unwrap();
+
+    let ctx: StudentContext = StudentContext {
+        name: name.to_string(),
+        group_id: group_id_num,
+        text: text.unwrap().to_string()
     };
-    Template::render("student", &ctx)
+    AnyResponse::Template(Template::render("student", &ctx))
 }
 
 #[get("/?<name>")]

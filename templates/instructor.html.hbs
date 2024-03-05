@@ -1,20 +1,22 @@
 <style>
-  .all { padding: 10px; } h1 { font-size: 50; display: inline; text-align:
-  center; padding: 10px; } .header_background { background-color: #7688a6; } h4
-  {color: darkgreen} .side {height: 100%; width: 300px; position: fixed;
-  z-index: 1; top: 125px; left: 20px; overflow-x: hidden; padding-top: 20px;}
-  .main{margin-left: 400px; padding: 0px 10px;} a {color: inherit;
-  text-decoration: none;}
+  .all { padding: 10px; } .header { font-size: 50; background-color: #7688a6;
+  position: fixed; width: 100%; height: 60px; display: flex; padding: 10px;
+  font-weight: bold;} h4 {color: darkgreen} .side {height: 100%; width: 300px;
+  position: fixed; z-index: 1; top: 60px; left: 20px; overflow-x: hidden;
+  padding-top: 20px;} .main{margin-left: 400px; padding: 70px 10px;} a {color:
+  inherit; text-decoration: none;} .grid {display: grid; grid-template-columns:
+  auto auto; padding-right: 50px; } .grid_item {background-color: lightgray;
+  padding: 10px; margin: 20px}
 </style>
-<div class="header_background">
+<div class="header">
   <a href="/">
-    <h1>Voltron</h1>
+    Voltron
   </a>
 </div>
 <div class="all">
-  <h2>Instructor: {{{name}}}</h2>
   <div>
     <div class="side">
+      <h2>Instructor: {{{name}}}</h2>
       <hr />
       <div class="register_student">
         <h3>
@@ -62,15 +64,27 @@
           {{/if}}
         </div>
       {{/if}}
-    </div>
-    <div class="main">
-      Students
+      <h3>
+        Students:
+      </h3>
       {{#each students}}
         <p>
           {{this.name}}:
           {{this.group_id}}
         </p>
       {{/each}}
+    </div>
+    <div class="main">
+      <h2>
+        Student Code:
+      </h2>
+      <div class="grid">
+        {{#each student_groups}}
+          <div class="grid_item">
+            {{this.group_id}}
+          </div>
+        {{/each}}
+      </div>
     </div>
   </div>
 </div>

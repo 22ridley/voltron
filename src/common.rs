@@ -18,7 +18,36 @@ pub struct LoginContext {
     pub failed: bool
 }
 
-// The structure representing students and their code
+// The structure representing student groups and their code
+#[derive(Serialize)]
+pub struct StudentGroup{
+    pub group_id: i32,
+    pub code: String,
+    pub index: usize
+}
+
+impl StudentGroup{
+    pub fn new(row: Row, index: usize) -> Self {
+        StudentGroup{
+            group_id: from_value(row[0].clone()),
+            code: from_value(row[1].clone()),
+            index: index
+        }
+    } 
+}
+
+impl FromRow for StudentGroup {
+    fn from_row_opt(row: Row) -> Result<Self, mysql::FromRowError> {
+        Ok(StudentGroup::new(row, 0))
+    }
+
+    fn from_row(row: Row) -> Self {
+        StudentGroup::new(row, 0)
+    }
+}
+
+
+// The structure representing students
 #[derive(Serialize)]
 pub struct Student{
     pub name: String,
@@ -54,11 +83,14 @@ pub struct InstructorContext {
     pub registered_name: String,
     pub registered_instructor: bool,
     pub registered_student: bool,
-    pub students: Vec<Student>
+    pub students: Vec<Student>,
+    pub student_groups: Vec<StudentGroup>
 }
 
 // The context needed for rendering the student page
 #[derive(Serialize)]
 pub struct StudentContext {
-    pub name: String
+    pub name: String,
+    pub group_id: i32,
+    pub text: String
 }
