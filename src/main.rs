@@ -3,12 +3,15 @@ extern crate mysql;
 #[macro_use]
 extern crate rocket;
 extern crate rocket_dyn_templates;
+use std::io::Write;
 use std::{sync::Arc, sync::Mutex, cmp};
 use common::{InstructorContext, StudentContext, Student, StudentGroup, AnyResponse, LoginContext};
 use mysql::{prelude::Queryable, Row};
 use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
 use rocket_dyn_templates::Template;
+use std::path::Path;
+use std::fs::{self, File};
 
 mod config;
 mod common;
@@ -122,7 +125,20 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
     // Get list of all students
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let students_res: Vec<Student> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();
-    let groups_res: Vec<StudentGroup> = (*bg).handle.query(format!("SELECT * FROM student_groups")).unwrap();
+    let mut max_student_group: i32 = 0;
+    for student in students_res.iter() {
+        let group_id: i32 = student.group_id;
+        max_student_group = cmp::max(max_student_group, group_id);
+    }
+    let group_numbers: Vec<i32> = (0..max_student_group+1).collect::<Vec<i32>>();
+    let mut groups_res: Vec<StudentGroup> = Vec::new();
+    // Read from the files to create StudentGroup vector
+    for (index, id) in group_numbers.iter().enumerate() {
+        let filepath: String = format!("group_code/group{}_code.txt", id);
+        let code: String = fs::read_to_string(filepath).expect("Unable to read the file");
+        let stud_group: StudentGroup = StudentGroup{group_id: *id, code, index: index};
+        groups_res.push(stud_group);
+    }
     drop(bg);
 
     // Create the context for the template
@@ -139,42 +155,30 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
 }
 
 #[get("/?<name>&<group_id>&<text>")]
-pub fn student(name: &str, group_id: &str, text: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
+pub fn student(name: &str, group_id: &str, text: Option<&str>) -> AnyResponse {
+    // File path to read and write from
+    let filepath: String = format!("group_code/group{}_code.txt", group_id);
     // First, see if there is submitted text
     // If there is text, write it to the database and redirect to the same page
     //    but without the text to make the url cleaner :)
     if text.is_some() {
-        // Assemble values to insert
-        let users_row: Vec<&str> = vec![group_id, text.unwrap()];
+        // Open a file in write-only mode, returns `io::Result<File>`
+        let path: &Path = Path::new(&filepath);
+        let mut file: File = File::create(&path).unwrap();
 
-        // Make insert query to add this new instructor
-        let q = format!("REPLACE INTO student_groups (group_id, code) VALUES ({})", 
-                                users_row.iter().map(|s| {format!("\"{s}\"")})
-                                    .collect::<Vec<String>>()
-                                    .join(","));
-
-        // send insert query to db
-        let mut bg = backend.lock().unwrap();
-        let _ = (*bg).handle.query_drop(q).unwrap();
-        drop(bg);
+        // Write the new text to the file
+        let _bytes_written: Result<usize, std::io::Error> = file.write(text.unwrap().as_bytes());
         return AnyResponse::Redirect(Redirect::to(format!("/student?name={}&group_id={}", name, group_id)));
     }
     
     // Convert group_id to number
     let group_id_num: i32 = group_id.parse().unwrap();
-    
-    // Get group id from the database
-    let mut bg = backend.lock().unwrap();
-    let id_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM student_groups WHERE group_id = {}", group_id)).unwrap();
-    drop(bg);
-    if id_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
-    let row: Row = id_res.get(0).unwrap().clone();
-    let text: Option<String> =  row.get(1).unwrap();
+    let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
 
     let ctx: StudentContext = StudentContext {
         name: name.to_string(),
         group_id: group_id_num,
-        text: text.unwrap().to_string()
+        text: contents
     };
     AnyResponse::Template(Template::render("student", &ctx))
 }
@@ -215,6 +219,10 @@ pub fn register_student(name: &str, student_name: &str,
     if students_res.len() % 2 == 0 {
         // The student will have group_id max_student_group + 1
         student_group += 1;
+
+        // Open a new file for group_id max_student_group + 1
+        let path: String = format!("group_code/group{}_code.txt", student_group);
+        let _ = File::create(&path);
     }
     // Otherwise, there are an odd number of students, so there is some student alone
     // and the student will have group_id max_student_group
@@ -227,16 +235,6 @@ pub fn register_student(name: &str, student_name: &str,
                                 .collect::<Vec<String>>()
                                 .join(","));
     let _ = (*bg).handle.query_drop(q).unwrap();
-
-    // Make insert query to add a new student_group to student_groups (if necessary)
-    if students_res.len() % 2 == 0 {
-        let student_group_row: Vec<&str> = vec![student_group_string, ""];  
-        let q = format!("INSERT INTO student_groups (group_id, code) VALUES ({})", 
-                            student_group_row.iter().map(|s| {format!("\"{s}\"")})
-                                .collect::<Vec<String>>()
-                                .join(","));
-        let _ = (*bg).handle.query_drop(q).unwrap();
-    }
     drop(bg);
     AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
 }

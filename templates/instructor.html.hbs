@@ -8,7 +8,8 @@
   grid-template-columns: auto auto; padding-right: 50px; } .grid_item
   {background-color: lightgray; padding: 10px; margin: 15px; width: 30vw;}
   .student {padding-bottom: 5px;} .code { white-space: pre-line; font-family:
-  monospace;}
+  monospace;} .student_list{overflow:auto; height: 175px; border:1px solid #ccc;
+  padding-left: 15px;}
 </style>
 <div class="header">
   <a href="/">
@@ -66,15 +67,17 @@
           {{/if}}
         </div>
       {{/if}}
-      <h3>
-        Students:
-      </h3>
-      {{#each students}}
-        <div class="student">
-          {{this.name}}:
-          {{this.group_id}}
-        </div>
-      {{/each}}
+      <div class="student_list">
+        <h3>
+          Students:
+        </h3>
+        {{#each students}}
+          <div class="student">
+            {{this.name}}:
+            {{this.group_id}}
+          </div>
+        {{/each}}
+      </div>
     </div>
     <div class="main">
       <h2>
