@@ -12,7 +12,7 @@
 <div class="all">
   <h2>Student: {{{name}}}</h2>
   <h2>Group ID: {{{group_id}}}</h2>
-  <form action="/student" method="get" accept-charset="utf-8">
+  <form action="/update" method="post" accept-charset="utf-8">
     <!-- <input name="student_name" value="{{name}}" /> -->
     <input type="hidden" name="name" value={{name}} />
     <input type="hidden" name="group_id" value={{group_id}} />

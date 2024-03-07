@@ -2,16 +2,17 @@ extern crate serde;
 extern crate mysql;
 use std::{sync::Arc, sync::Mutex, cmp};
 use mysql::{prelude::Queryable, Row};
-use rocket::{response::Redirect, State};
+use rocket::{response::Redirect, State, form::Form};
 use crate::backend::MySQLBackend;
-use crate::common::AnyResponse;
+use crate::common::{AnyResponse, RegisterRequest};
 use std::fs::File;
 
-#[get("/?<name>")]
-pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
--> AnyResponse {
+#[post("/", data="<data>")]
+pub fn register_instructor(data: Form<RegisterRequest>, 
+    backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
+    let instructor_name = &data.registrant_name.clone();
     // Assemble values to insert
-    let users_row: Vec<&str> = vec![name, "1", "-1"];
+    let users_row: Vec<&str> = vec![instructor_name, "1", "-1"];
 
     // Make insert query to add this new instructor
     let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 
@@ -24,11 +25,11 @@ pub fn register_instructor(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>
     let _ = (*bg).handle.query_drop(q).unwrap();
     drop(bg);
 
-    AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", name, "inst")))
+    AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", instructor_name, "inst")))
 }
 
-#[get("/?<name>&<student_name>")]
-pub fn register_student(name: &str, student_name: &str, 
+#[post("/", data="<data>")]
+pub fn register_student(data: Form<RegisterRequest>,
     backend: &State<Arc<Mutex<MySQLBackend>>>)-> AnyResponse {
     // Count the number of students currently in the database 
     let mut bg = backend.lock().unwrap();
@@ -51,6 +52,8 @@ pub fn register_student(name: &str, student_name: &str,
     // Otherwise, there are an odd number of students, so there is some student alone
     // and the student will have group_id max_student_group
     let student_group_string: &str = &student_group.to_string();
+    let student_name = &data.registrant_name.clone();
+    let instructor_name = &data.registrar_name.clone();
     let users_row: Vec<&str> = vec![student_name, "0", student_group_string];    
 
     // Make insert query to add this new student into users
@@ -60,5 +63,5 @@ pub fn register_student(name: &str, student_name: &str,
                                 .join(","));
     let _ = (*bg).handle.query_drop(q).unwrap();
     drop(bg);
-    AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", name, student_name, "stud")))
+    AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", instructor_name, student_name, "stud")))
 }

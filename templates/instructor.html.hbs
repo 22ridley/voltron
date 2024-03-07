@@ -25,11 +25,11 @@
         <h3>
           Register a new student:
         </h3>
-        <form action="/register-student" method="get" accept-charset="utf-8">
-          <input type="hidden" name="name" value={{name}} />
+        <form action="/register-student" method="post" accept-charset="utf-8">
+          <input type="hidden" name="registrar_name" value={{name}} />
           <label>Student name:
             <p>
-              <input name="student_name" />
+              <input name="registrant_name" />
             </p>
           </label>
           <input type="submit" value="Submit" />
@@ -49,12 +49,13 @@
           </h3>
           <form
             action="/register-instructor"
-            method="get"
+            method="post"
             accept-charset="utf-8"
           >
+            <input type="hidden" name="registrar_name" value={{name}} />
             <label>Instructor name:
               <p>
-                <input name="name" />
+                <input name="registrant_name" />
               </p>
             </label>
             <input type="submit" value="Submit" />

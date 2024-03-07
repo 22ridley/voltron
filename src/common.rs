@@ -94,3 +94,16 @@ pub struct StudentContext {
     pub group_id: i32,
     pub text: String
 }
+
+#[derive(FromForm)]
+pub struct RegisterRequest{
+    pub(crate) registrar_name: String,
+    pub(crate) registrant_name: String
+}
+
+#[derive(FromForm)]
+pub struct UpdateRequest{
+    pub(crate) name: String,
+    pub(crate) group_id: i32,
+    pub(crate) text: String
+}
