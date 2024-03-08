@@ -1,5 +1,3 @@
 // Write your code here!
 
 var blah blah
-
-let blah blah blah

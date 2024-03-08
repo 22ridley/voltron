@@ -2,7 +2,6 @@ use std::{cmp, fs};
 use crate::common::{AnyResponse, InstructorContext, Student, StudentGroup};
 use crate::backend::MySQLBackend;
 use rocket::State;
-use mysql::prelude::Queryable;
 use rocket_dyn_templates::Template;
 use std::sync::{Arc, Mutex};
 
@@ -29,7 +28,7 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
 
     // Get list of all students
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let students_res: Vec<Student> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();
+    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0", ()).unwrap();
     let mut max_student_group: i32 = 0;
     for student in students_res.iter() {
         let group_id: i32 = student.group_id;

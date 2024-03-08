@@ -1,7 +1,7 @@
 extern crate serde;
 extern crate mysql;
 use std::{sync::Arc, sync::Mutex, cmp};
-use mysql::{prelude::Queryable, Row};
+use mysql::Row;
 use rocket::{response::Redirect, State, form::Form};
 use crate::backend::MySQLBackend;
 use crate::common::{AnyResponse, RegisterRequest};
@@ -15,14 +15,11 @@ pub fn register_instructor(data: Form<RegisterRequest>,
     let users_row: Vec<&str> = vec![instructor_name, "1", "-1"];
 
     // Make insert query to add this new instructor
-    let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 
-                            users_row.iter().map(|s| {format!("\"{s}\"")})
-                                .collect::<Vec<String>>()
-                                .join(","));
+    let q = "INSERT INTO users (user_name, privilege, group_id) VALUES (?, ?, ?)";
 
     // send insert query to db
     let mut bg = backend.lock().unwrap();
-    let _ = (*bg).handle.query_drop(q).unwrap();
+    let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
 
     AnyResponse::Redirect(Redirect::to(format!("/instructor?name=admin&reg_name={}&reg_type={}", instructor_name, "inst")))
@@ -33,7 +30,7 @@ pub fn register_student(data: Form<RegisterRequest>,
     backend: &State<Arc<Mutex<MySQLBackend>>>)-> AnyResponse {
     // Count the number of students currently in the database 
     let mut bg = backend.lock().unwrap();
-    let students_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE privilege = 0")).unwrap();    
+    let students_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0", ()).unwrap();    
     let mut max_student_group: i32 = 0;
     for student in students_res.iter() {
         let group_id: i32 = student.clone().get(2).unwrap();
@@ -57,11 +54,8 @@ pub fn register_student(data: Form<RegisterRequest>,
     let users_row: Vec<&str> = vec![student_name, "0", student_group_string];    
 
     // Make insert query to add this new student into users
-    let q = format!("INSERT INTO users (user_name, privilege, group_id) VALUES ({})", 
-                            users_row.iter().map(|s| {format!("\"{s}\"")})
-                                .collect::<Vec<String>>()
-                                .join(","));
-    let _ = (*bg).handle.query_drop(q).unwrap();
+    let q: &str = "INSERT INTO users (user_name, privilege, group_id) VALUES (?, ?, ?)";
+    let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
     AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", instructor_name, student_name, "stud")))
 }

@@ -5,7 +5,7 @@ extern crate rocket;
 extern crate rocket_dyn_templates;
 use std::sync::{Arc, Mutex};
 use common::{AnyResponse, LoginContext};
-use mysql::{prelude::Queryable, Row};
+use mysql::Row;
 use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
 use rocket_dyn_templates::Template;
@@ -89,7 +89,7 @@ pub fn login(fail: Option<&str>) -> Template {
 pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>) 
  -> AnyResponse {
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).handle.query(format!("SELECT * FROM users WHERE user_name = \"{}\"", name)).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE user_name = ?", vec![name]).unwrap();
     drop(bg);
     if user_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
     let row: Row = user_res.get(0).unwrap().clone();

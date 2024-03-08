@@ -48,4 +48,13 @@ impl MySQLBackend {
             _db_name: dbname.to_string().to_owned(),
         })
     }
+
+    pub fn prep_exec<Q, P, T>(&mut self, query: Q, params: P) -> Result<Vec<T>>
+    where
+        Q: AsRef<str>,
+        P: Into<Params>,
+        T: FromRow, {
+            let stmt = self.handle.prep(query)?;
+            self.handle.exec(stmt, params)
+    }
 }
