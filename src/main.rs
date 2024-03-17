@@ -129,10 +129,11 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
     if user_res.len() == 0 { return AnyResponse::Redirect(Redirect::to("/login?fail")); }
     let row: Row = user_res.get(0).unwrap().clone();
     let privilege: Option<i32> =  row.get(1).unwrap();
-    let group_id: Option<i32> = row.get(2).unwrap();
+    let class_id: Option<i32> = row.get(2).unwrap();
+    let group_id: Option<i32> = row.get(3).unwrap();
     if privilege.unwrap() != 0 {
-        AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}", name)))
+        AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}", name, class_id.unwrap())))
     } else {
-        AnyResponse::Redirect(Redirect::to(format!("/student?name={}&group_id={}", name, group_id.unwrap())))
+        AnyResponse::Redirect(Redirect::to(format!("/student?name={}&class_id={}&group_id={}", name, class_id.unwrap(), group_id.unwrap())))
     }
 }

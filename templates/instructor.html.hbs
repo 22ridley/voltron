@@ -1,4 +1,4 @@
-<meta http-equiv="refresh" content="4" />
+<meta http-equiv="refresh" content="10" />
 <style>
   .all { padding: 10px; } .header { font-size: 50; background-color: #7688a6;
   position: fixed; width: 100%; height: 50px; display: flex; padding: 0px 8px
@@ -9,7 +9,7 @@
   grid-template-columns: auto auto; padding-right: 50px; } .grid_item
   {background-color: lightgray; padding: 10px; margin: 15px; width: 30vw;}
   .student {padding-bottom: 5px;} .code { white-space: pre-line; font-family:
-  monospace;} .student_list{overflow:auto; height: 175px; border:1px solid #ccc;
+  monospace;} .student_list{overflow:auto; height: 250px; border:1px solid #ccc;
   padding-left: 15px;}
 </style>
 <div class="header">
@@ -33,6 +33,11 @@
               <input name="registrant_name" />
             </p>
           </label>
+          <label>Student group ID:
+            <p>
+              <input name="group_id" />
+            </p>
+          </label>
           <input type="submit" value="Submit" />
         </form>
         {{#if registered_student}}
@@ -43,33 +48,6 @@
         {{/if}}
       </div>
       <hr />
-      {{#if admin}}
-        <div class="register_instructor">
-          <h3>
-            Register a new instructor:
-          </h3>
-          <form
-            action="/register-instructor"
-            method="post"
-            accept-charset="utf-8"
-          >
-            <input type="hidden" name="registrar_name" value={{name}} />
-            <label>Instructor name:
-              <p>
-                <input name="registrant_name" />
-              </p>
-            </label>
-            <input type="submit" value="Submit" />
-          </form>
-          {{#if registered_instructor}}
-            <h4>
-              Successfully registered new instructor with username:
-              <i>{{{registered_name}}}</i>
-            </h4>
-          {{/if}}
-        </div>
-        <hr />
-      {{/if}}
       <div class="student_list">
         <h3>
           Students:
@@ -84,13 +62,18 @@
     </div>
     <div class="main">
       <h2>
+        Class ID:
+        {{this.class_id}}
+      </h2>
+      <hr />
+      <h2>
         Student Code:
       </h2>
       <div class="grid">
         {{#each student_groups}}
           <div class="grid_item">
             <b>
-              Group:
+              Group ID:
               {{this.group_id}}
             </b>
             <p class="code">

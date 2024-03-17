@@ -5,8 +5,8 @@ use rocket::State;
 use rocket_dyn_templates::Template;
 use std::sync::{Arc, Mutex};
 
-#[get("/?<name>&<reg_name>&<reg_type>")]
-pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>, 
+#[get("/?<name>&<class_id>&<reg_name>&<reg_type>")]
+pub fn instructor(name: &str, class_id: i32, reg_name: Option<&str>, reg_type: Option<&str>, 
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
     // Get the user information from the backend database
     let mut is_admin: bool = false;
@@ -48,7 +48,7 @@ pub fn instructor(name: &str, reg_name: Option<&str>, reg_type: Option<&str>,
     // Create the context for the template
     let ctx: InstructorContext = InstructorContext {
         name: name.to_string(),
-        admin: is_admin,
+        class_id: class_id,
         registered_name: register_name.to_string(),
         registered_instructor: reg_instructor,
         registered_student: reg_student,

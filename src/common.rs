@@ -59,7 +59,7 @@ impl Student{
     pub fn new(row: Row, index: usize) -> Self {
         Student{
             name: from_value(row[0].clone()),
-            group_id: from_value(row[2].clone()),
+            group_id: from_value(row[3].clone()),
             index: index
         }
     } 
@@ -79,7 +79,7 @@ impl FromRow for Student {
 #[derive(Serialize)]
 pub struct InstructorContext {
     pub name: String,
-    pub admin: bool,
+    pub class_id: i32,
     pub registered_name: String,
     pub registered_instructor: bool,
     pub registered_student: bool,
@@ -91,6 +91,7 @@ pub struct InstructorContext {
 #[derive(Serialize)]
 pub struct StudentContext {
     pub name: String,
+    pub class_id: i32,
     pub group_id: i32,
     pub text: String
 }
@@ -104,6 +105,7 @@ pub struct RegisterRequest{
 #[derive(FromForm)]
 pub struct UpdateRequest{
     pub(crate) name: String,
+    pub(crate) class_id: i32,
     pub(crate) group_id: i32,
     pub(crate) text: String
 }
