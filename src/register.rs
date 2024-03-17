@@ -12,10 +12,10 @@ pub fn register_instructor(data: Form<RegisterRequest>,
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
     let instructor_name = &data.registrant_name.clone();
     // Assemble values to insert
-    let users_row: Vec<&str> = vec![instructor_name, "1", "-1"];
+    let users_row: Vec<&str> = vec![instructor_name, "1", "0", "-1"];
 
     // Make insert query to add this new instructor
-    let q = "INSERT INTO users (user_name, privilege, group_id) VALUES (?, ?, ?)";
+    let q = "INSERT INTO users (user_name, privilege, class_id, group_id) VALUES (?, ?, ?, ?)";
 
     // send insert query to db
     let mut bg = backend.lock().unwrap();
@@ -51,10 +51,10 @@ pub fn register_student(data: Form<RegisterRequest>,
     let student_group_string: &str = &student_group.to_string();
     let student_name = &data.registrant_name.clone();
     let instructor_name = &data.registrar_name.clone();
-    let users_row: Vec<&str> = vec![student_name, "0", student_group_string];    
+    let users_row: Vec<&str> = vec![student_name, "0", "0", student_group_string];    
 
     // Make insert query to add this new student into users
-    let q: &str = "INSERT INTO users (user_name, privilege, group_id) VALUES (?, ?, ?)";
+    let q: &str = "INSERT INTO users (user_name, privilege, class_id, group_id) VALUES (?, ?, ?, ?)";
     let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
     AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&reg_name={}&reg_type={}", instructor_name, student_name, "stud")))

@@ -1,8 +1,3 @@
-Access:
-- Add root instructor that can register new instructors
-- All instructors can register new students
-    - Need to calculate/deduce the group to put a student in
-
-Actions:
-- Instructors can see the code of all student groups
-- Students can only see the code of their group
+Policies:
+- Only administrators can create classes and only instructors can enroll students to a class (and assign them to a group)
+- A group’s buffer is only accessible to the group’s members and the class’ instructor

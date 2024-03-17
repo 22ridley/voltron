@@ -1,21 +1,28 @@
-extern crate serde;
 extern crate mysql;
+extern crate serde;
 #[macro_use]
 extern crate rocket;
 extern crate rocket_dyn_templates;
-use std::sync::{Arc, Mutex};
+use backend::MySQLBackend;
 use common::{AnyResponse, LoginContext};
 use mysql::Row;
-use backend::MySQLBackend;
 use rocket::{response::Redirect, State};
+use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_dyn_templates::Template;
+use rocket_firebase_auth::FirebaseAuth;
+use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
-mod config;
-mod common;
 mod backend;
+mod common;
+mod config;
+mod instructor;
 mod register;
 mod student;
-mod instructor;
+
+struct AuthState {
+    auth: FirebaseAuth,
+}
 
 #[rocket::main]
 async fn main() {
@@ -39,25 +46,53 @@ async fn main() {
             &config.db_user,
             &config.db_password,
             &format!("{}", db_name),
-            config.prime
-        ).unwrap()
+            config.prime,
+        )
+        .unwrap(),
     ));
+
+    let firebase_auth = FirebaseAuth::builder()
+        .json_file("firebase-credentials.json")
+        .build()
+        .unwrap();
+
+    // Setup cors
+    let cors = CorsOptions::default()
+        .allowed_origins(AllowedOrigins::all())
+        .allowed_methods(
+            ["Get", "Post", "Put", "Delete", "Options"]
+                .iter()
+                .map(|s| FromStr::from_str(s).unwrap())
+                .collect(),
+        )
+        .allow_credentials(true)
+        .to_cors()
+        .expect("Failed to setup cors configuration.");
 
     // build and launch
     if let Err(e) = rocket::build()
         .attach(template)
         .manage(backend)
         .manage(config)
+        .manage(AuthState {
+            auth: firebase_auth,
+        })
         .mount("/", routes![index])
+        .mount("/", rocket_cors::catch_all_options_routes())
+        .attach(cors.clone())
+        .manage(cors)
         .mount("/login", routes![login])
         .mount("/view", routes![view])
         .mount("/instructor", routes![instructor::instructor])
         .mount("/student", routes![student::student])
         .mount("/update", routes![student::update])
-        .mount("/register-instructor", routes![register::register_instructor])
+        .mount(
+            "/register-instructor",
+            routes![register::register_instructor],
+        )
         .mount("/register-student", routes![register::register_student])
         .launch()
-        .await 
+        .await
     {
         println!("Didn't launch properly");
         drop(e);
