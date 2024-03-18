@@ -134,11 +134,12 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let class_id: Option<i32> = row.get(2).unwrap();
     let group_id: Option<i32> = row.get(3).unwrap();
     let privl: i32 = privilege.unwrap();
+    let name_arg: String = name.replace(" ", "+");
     if privl == 2 {
         AnyResponse::Redirect(Redirect::to(format!("/admin")))
     } else if privl == 1 {
-        AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}", name, class_id.unwrap())))
+        AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}", name_arg, class_id.unwrap())))
     } else {
-        AnyResponse::Redirect(Redirect::to(format!("/student?name={}&class_id={}&group_id={}", name, class_id.unwrap(), group_id.unwrap())))
+        AnyResponse::Redirect(Redirect::to(format!("/student?name={}&class_id={}&group_id={}", name_arg, class_id.unwrap(), group_id.unwrap())))
     }
 }
