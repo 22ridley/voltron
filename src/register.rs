@@ -1,7 +1,7 @@
 extern crate serde;
 extern crate mysql;
 use std::path::Path;
-use std::{sync::Arc, sync::Mutex, cmp};
+use std::{sync::Arc, sync::Mutex};
 use mysql::Row;
 use rocket::{response::Redirect, State, form::Form};
 use crate::backend::MySQLBackend;
@@ -38,7 +38,7 @@ pub fn register_student(data: Form<RegisterStudentRequest>,
     let instructor_name = &data.instructor_name.clone();
     let users_row: Vec<&str> = vec![student_name, "0", student_class, student_group];
     // If this group ID is new, create a new file
-    let file_string: String = format!("group_code/group{}_code.txt", student_group);
+    let file_string: String = format!("group_code/class{}_group{}_code.txt", student_class, student_group);
     let file_name: &Path = Path::new(&file_string);
     if !file_name.is_file() {
         // Open a new file for group_id max_student_group + 1

@@ -114,7 +114,7 @@ pub struct AdminContext {
 #[derive(Serialize)]
 pub struct InstructorContext {
     pub name: String,
-    pub class_id: i32,
+    pub class_id: String,
     pub registered_name: String,
     pub registered_student: bool,
     pub students: Vec<Student>,

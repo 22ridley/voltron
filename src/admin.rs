@@ -1,5 +1,4 @@
-use std::{cmp, fs};
-use crate::common::{AdminContext, AnyResponse, Instructor, InstructorContext, Student, StudentGroup};
+use crate::common::{AdminContext, AnyResponse, Instructor};
 use crate::backend::MySQLBackend;
 use rocket::State;
 use rocket_dyn_templates::Template;
