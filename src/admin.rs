@@ -4,15 +4,15 @@ use rocket::State;
 use rocket_dyn_templates::Template;
 use std::sync::{Arc, Mutex};
 
-#[get("/?<reg_name>&<reg_class>")]
-pub fn admin(reg_name: Option<&str>, reg_class: Option<&str>, 
+#[get("/?<fail_message>")]
+pub fn admin(fail_message: Option<&str>, 
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
     // Get the user information from the backend database
-    let mut register_name: &str = "";
-    let mut register_class: &str = "";
-    if reg_name.is_some() & reg_class.is_some() {
-        register_class = reg_class.unwrap();
-        register_name = reg_name.unwrap();
+    let mut fail: bool = false;
+    let mut fail_string: &str = "";
+    if fail_message.is_some() {
+        fail = true;
+        fail_string = fail_message.unwrap();
     }
 
     // Get list of all students
@@ -23,8 +23,8 @@ pub fn admin(reg_name: Option<&str>, reg_class: Option<&str>,
     // Create the context for the template
     let ctx: AdminContext = AdminContext {
         instructors: instructors_res,
-        registered_name: register_name.to_string(),
-        registered_class: register_class.to_string(),
+        fail: fail,
+        fail_message: fail_string.to_string(),
     };
     AnyResponse::Template(Template::render("admin", &ctx))
 }

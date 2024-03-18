@@ -106,8 +106,8 @@ impl FromRow for Student {
 #[derive(Serialize)]
 pub struct AdminContext {
     pub instructors: Vec<Instructor>,
-    pub registered_name: String,
-    pub registered_class: String
+    pub fail: bool,
+    pub fail_message: String
 }
 
 // The context needed for rendering the instructor page
@@ -115,8 +115,8 @@ pub struct AdminContext {
 pub struct InstructorContext {
     pub name: String,
     pub class_id: String,
-    pub registered_name: String,
-    pub registered_student: bool,
+    pub fail: bool,
+    pub fail_message: String,
     pub students: Vec<Student>,
     pub student_groups: Vec<StudentGroup>
 }

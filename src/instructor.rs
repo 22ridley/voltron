@@ -6,15 +6,15 @@ use rocket::State;
 use rocket_dyn_templates::Template;
 use std::sync::{Arc, Mutex};
 
-#[get("/?<name>&<class_id>&<reg_name>")]
-pub fn instructor(name: &str, class_id: &str, reg_name: Option<&str>, 
+#[get("/?<name>&<class_id>&<fail_message>")]
+pub fn instructor(name: &str, class_id: &str, fail_message: Option<&str>, 
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
     // Get the user information from the backend database
-    let mut register_name: &str = "";
-    let mut reg = false;
-    if reg_name.is_some()  {
-        register_name = reg_name.unwrap();
-        reg = true;
+    let mut fail = false;
+    let mut fail_string: &str = "";
+    if fail_message.is_some()  {
+        fail = true;
+        fail_string = fail_message.unwrap();
     }
 
     // Get list of all students
@@ -44,8 +44,8 @@ pub fn instructor(name: &str, class_id: &str, reg_name: Option<&str>,
     let ctx: InstructorContext = InstructorContext {
         name: name.to_string(),
         class_id: class_id.to_string(),
-        registered_name: register_name.to_string(),
-        registered_student: reg,
+        fail: fail,
+        fail_message: fail_string.to_string(),
         students: students_res,
         student_groups: groups_res
     };

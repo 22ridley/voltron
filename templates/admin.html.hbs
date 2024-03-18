@@ -2,7 +2,7 @@
 <style>
   .all { padding: 10px; } .header { font-size: 50; background-color: #7688a6;
   position: fixed; width: 100%; height: 50px; display: flex; padding: 0px 8px
-  7px 8px; font-weight: bold;} h4 {color: darkgreen} .side {height: 100%; width:
+  7px 8px; font-weight: bold;} h4 {color: darkred} .side {height: 100%; width:
   400px; position: fixed; z-index: 1; top: 50px; left: 20px; overflow-x: scroll;
   padding-top: 20px; overflow-y: scroll;} .main{margin-left: 500px; padding:
   50px 10px;} a {color: inherit; text-decoration: none;} .grid {display: grid;
@@ -55,10 +55,10 @@
             </label>
             <input type="submit" value="Submit" />
           </form>
-          {{#if registered_instructor}}
+          {{#if fail}}
             <h4>
-              Successfully registered new instructor with username:
-              <i>{{{registered_name}}}</i>
+              <b>Failed to register new instructor:</b>
+              {{{fail_message}}}
             </h4>
           {{/if}}
         </div>

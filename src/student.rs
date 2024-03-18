@@ -7,7 +7,7 @@ use rocket_dyn_templates::Template;
 #[get("/?<name>&<class_id>&<group_id>")]
 pub fn student(name: &str, class_id: &str, group_id: &str) -> AnyResponse {
     // File path to read and write from
-    let filepath: String = format!("group_code/group{}_code.txt", group_id);
+    let filepath: String = format!("group_code/class{}_group{}_code.txt", class_id, group_id);
     
     // Convert group_id to number
     let class_id_num: i32 = class_id.parse().unwrap();
@@ -26,7 +26,7 @@ pub fn student(name: &str, class_id: &str, group_id: &str) -> AnyResponse {
 #[post("/", data="<data>")]
 pub fn update(data: Form<UpdateRequest>) -> AnyResponse {
     // Open a file in write-only mode, returns `io::Result<File>`
-    let filepath: String = format!("group_code/group{}_code.txt", data.group_id);
+    let filepath: String = format!("group_code/class{}_group{}_code.txt", data.class_id, data.group_id);
     let path: &Path = Path::new(&filepath);
     let mut file: File = File::create(&path).unwrap();
 
