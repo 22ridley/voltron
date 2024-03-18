@@ -46,6 +46,33 @@ impl FromRow for StudentGroup {
     }
 }
 
+// The structure representing instructors
+#[derive(Serialize)]
+pub struct Instructor{
+    pub name: String,
+    pub class_id: i32,
+    pub index: usize
+}
+
+impl Instructor{
+    pub fn new(row: Row, index: usize) -> Self {
+        Instructor{
+            name: from_value(row[0].clone()),
+            class_id: from_value(row[2].clone()),
+            index: index
+        }
+    } 
+}
+
+impl FromRow for Instructor {
+    fn from_row_opt(row: Row) -> Result<Self, mysql::FromRowError> {
+        Ok(Instructor::new(row, 0))
+    }
+
+    fn from_row(row: Row) -> Self {
+        Instructor::new(row, 0)
+    }
+}
 
 // The structure representing students
 #[derive(Serialize)]
@@ -75,13 +102,20 @@ impl FromRow for Student {
     }
 }
 
+// The context needed for rendering the admin page
+#[derive(Serialize)]
+pub struct AdminContext {
+    pub instructors: Vec<Instructor>,
+    pub registered_name: String,
+    pub registered_class: String
+}
+
 // The context needed for rendering the instructor page
 #[derive(Serialize)]
 pub struct InstructorContext {
     pub name: String,
     pub class_id: i32,
     pub registered_name: String,
-    pub registered_instructor: bool,
     pub registered_student: bool,
     pub students: Vec<Student>,
     pub student_groups: Vec<StudentGroup>
@@ -97,9 +131,17 @@ pub struct StudentContext {
 }
 
 #[derive(FromForm)]
-pub struct RegisterRequest{
-    pub(crate) registrar_name: String,
-    pub(crate) registrant_name: String
+pub struct RegisterInstructorRequest{
+    pub(crate) instructor_name: String,
+    pub(crate) class_id: String
+}
+
+#[derive(FromForm)]
+pub struct RegisterStudentRequest {
+    pub(crate) instructor_name: String,
+    pub(crate) student_name: String,
+    pub(crate) class_id: String,
+    pub(crate) group_id: String,
 }
 
 #[derive(FromForm)]

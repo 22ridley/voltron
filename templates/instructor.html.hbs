@@ -27,10 +27,11 @@
           Register a new student:
         </h3>
         <form action="/register-student" method="post" accept-charset="utf-8">
-          <input type="hidden" name="registrar_name" value={{name}} />
+          <input type="hidden" name="instructor_name" value={{name}} />
+          <input type="hidden" name="class_id" value={{class_id}} />
           <label>Student name:
             <p>
-              <input name="registrant_name" />
+              <input name="student_name" />
             </p>
           </label>
           <label>Student group ID:

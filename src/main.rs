@@ -19,6 +19,7 @@ mod config;
 mod instructor;
 mod register;
 mod student;
+mod admin;
 
 struct AuthState {
     auth: FirebaseAuth,
@@ -83,6 +84,7 @@ async fn main() {
         .manage(cors)
         .mount("/login", routes![login])
         .mount("/view", routes![view])
+        .mount("/admin", routes![admin::admin])
         .mount("/instructor", routes![instructor::instructor])
         .mount("/student", routes![student::student])
         .mount("/update", routes![student::update])
@@ -131,7 +133,10 @@ pub fn view(name: &str, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let privilege: Option<i32> =  row.get(1).unwrap();
     let class_id: Option<i32> = row.get(2).unwrap();
     let group_id: Option<i32> = row.get(3).unwrap();
-    if privilege.unwrap() != 0 {
+    let privl: i32 = privilege.unwrap();
+    if privl == 2 {
+        AnyResponse::Redirect(Redirect::to(format!("/admin")))
+    } else if privl == 1 {
         AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}", name, class_id.unwrap())))
     } else {
         AnyResponse::Redirect(Redirect::to(format!("/student?name={}&class_id={}&group_id={}", name, class_id.unwrap(), group_id.unwrap())))
