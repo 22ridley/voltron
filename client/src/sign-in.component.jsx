@@ -42,6 +42,7 @@ const firebaseConfig = {
   storageBucket: "voltron-1ea5c.appspot.com",
   messagingSenderId: "1074514211093",
   appId: "1:1074514211093:web:ce0aa886c2224ccbb9b91c",
+  baseURL: "http://127.0.0.1:8000",
 };
 
 const SignIn = () => {
@@ -63,6 +64,13 @@ const SignIn = () => {
         const uid = user.uid;
         console.log(user);
         console.log(user.displayName);
+        fetch(`${firebaseConfig.baseURL}/login`, {
+          method: "GET",
+          headers: {
+            // Make a GET request with the `Authorization` header set with our bearer token
+            Authorization: `${user.accessToken}`,
+          },
+        });
       } else {
         // User is signed out
         signInWithPopup(auth, provider)
