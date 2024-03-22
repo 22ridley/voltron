@@ -64,11 +64,11 @@ const SignIn = () => {
         const uid = user.uid;
         console.log(user);
         console.log(user.displayName);
-        fetch(`${firebaseConfig.baseURL}/login`, {
+        fetch(`${firebaseConfig.baseURL}/protected`, {
           method: "GET",
           headers: {
-            // Make a GET request with the `Authorization` header set with our bearer token
-            Authorization: `${user.accessToken}`,
+            // Make a POST request with the `Authorization` header set with our bearer token
+            Authorization: `Bearer ${user.accessToken}`,
           },
         });
       } else {
