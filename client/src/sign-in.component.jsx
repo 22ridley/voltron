@@ -73,7 +73,7 @@ const SignIn = () => {
         });
         const json_response = await response.json();
         console.log(json_response.message);
-        return <div>{json_response.message}</div>;
+        window.location.href = "/anotherPagePath";
       } else {
         // User is signed out
         signInWithPopup(auth, provider)
