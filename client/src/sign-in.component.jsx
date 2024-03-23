@@ -57,20 +57,23 @@ const SignIn = () => {
     var provider = new GoogleAuthProvider();
     const auth = getAuth();
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
         // https://firebase.google.com/docs/reference/js/auth.user
         const uid = user.uid;
         console.log(user);
         console.log(user.displayName);
-        fetch(`${firebaseConfig.baseURL}/protected`, {
+        const response = await fetch(`${firebaseConfig.baseURL}/protected`, {
           method: "GET",
           headers: {
             // Make a POST request with the `Authorization` header set with our bearer token
             Authorization: `Bearer ${user.accessToken}`,
           },
         });
+        const json_response = await response.json();
+        console.log(json_response.message);
+        return <div>{json_response.message}</div>;
       } else {
         // User is signed out
         signInWithPopup(auth, provider)

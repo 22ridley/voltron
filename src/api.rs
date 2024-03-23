@@ -80,9 +80,14 @@ pub struct ProtectedEndpointResponse {
 async fn protected_endpoint(
     token: FirebaseToken,
 ) -> ApiResponse<ProtectedEndpointResponse> {
+    let email_opt: Option<String> = token.email;
+    let mut email: String = "".to_string();
+    if email_opt.is_some() {
+        email = email_opt.unwrap();
+    }
     ApiResponse {
         json: Some(Json(ProtectedEndpointResponse {
-            message: format!("Hello, {}! You are signed in!", token.sub),
+            message: format!("Hello, {}, {}! You are signed in!", token.sub, email),
         })),
         status: Status::Ok,
     }
