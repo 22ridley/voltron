@@ -9,11 +9,13 @@ import {
   signInWithPopup,
   User,
 } from "firebase/auth";
-import React, { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 interface SignInProps {
   token: string;
   setToken: Dispatch<SetStateAction<string>>;
+  privilege: number;
+  setPrivilege: Dispatch<SetStateAction<number>>;
 }
 
 // Your web app's Firebase configuration
@@ -28,6 +30,31 @@ const firebaseConfig = {
 };
 
 export default function SignIn(props: SignInProps) {
+  const [jsonResponse, setJsonResponse] = useState<any>(null);
+
+  useEffect(() => {
+    if (jsonResponse) {
+      console.log("In signin json: ", jsonResponse);
+      console.log("In signin token: ", props.token);
+      const success: boolean = jsonResponse.success;
+      const prvlg: number = jsonResponse.privilege;
+      const user_name: string = jsonResponse.name;
+      const email: string = jsonResponse.email;
+      props.setPrivilege(prvlg);
+      if (success == false) {
+        //window.location.href = "/";
+      } else {
+        if (prvlg == 2) {
+          //window.location.href = "/admin";
+        } else if (prvlg == 1) {
+          //window.location.href = "/";
+        } else {
+          //window.location.href = "/student";
+        }
+      }
+    }
+  }, [jsonResponse]);
+
   const logGoogleUser = async () => {
     const app = initializeApp(firebaseConfig);
 
@@ -48,21 +75,7 @@ export default function SignIn(props: SignInProps) {
         });
         const json_response = await response.json();
         console.log(json_response);
-        const success: boolean = json_response.success;
-        const privilege: number = json_response.privilege;
-        const user_name: string = json_response.name;
-        const email: string = json_response.email;
-        if (success == false) {
-          window.location.href = "/";
-        } else {
-          if (privilege == 2) {
-            window.location.href = "/admin";
-          } else if (privilege == 1) {
-            window.location.href = "/instructor";
-          } else {
-            window.location.href = "/student";
-          }
-        }
+        setJsonResponse(json_response);
       } else {
         // User is signed out
         signInWithPopup(auth, provider)
@@ -96,4 +109,7 @@ export default function SignIn(props: SignInProps) {
       <button onClick={logGoogleUser}>Sign In With Google</button>
     </div>
   );
+}
+function setState<T>(arg0: null): [any, any] {
+  throw new Error("Function not implemented.");
 }

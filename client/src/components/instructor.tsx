@@ -1,6 +1,19 @@
-import React from "react";
+import React, { Dispatch, SetStateAction, useEffect } from "react";
 
-const Instructor = (token, setToken) => {
-  return <div>Instructor</div>;
-};
-export default Instructor;
+interface InstructorProps {
+  token: string;
+  privilege: number;
+}
+
+export default function Instructor(props: InstructorProps) {
+  useEffect(() => {
+    console.log("In instructor: ", props.token);
+  }, [props.token]);
+
+  return (
+    <div>
+      <div>Instructor</div>
+      <div>Token: {props.token}</div>
+    </div>
+  );
+}

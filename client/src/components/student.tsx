@@ -1,6 +1,10 @@
 import React from "react";
 
-const Student = (token, setToken) => {
+interface StudentProps {
+  token: string;
+  privilege: number;
+}
+
+export default function Student(props: StudentProps) {
   return <div>Student</div>;
 };
-export default Student;
