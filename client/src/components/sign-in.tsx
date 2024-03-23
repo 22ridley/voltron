@@ -47,8 +47,22 @@ export default function SignIn(props: SignInProps) {
           },
         });
         const json_response = await response.json();
-        console.log(json_response.message);
-        window.location.href = "/student";
+        console.log(json_response);
+        const success: boolean = json_response.success;
+        const privilege: number = json_response.privilege;
+        const user_name: string = json_response.name;
+        const email: string = json_response.email;
+        if (success == false) {
+          window.location.href = "/";
+        } else {
+          if (privilege == 2) {
+            window.location.href = "/admin";
+          } else if (privilege == 1) {
+            window.location.href = "/instructor";
+          } else {
+            window.location.href = "/student";
+          }
+        }
       } else {
         // User is signed out
         signInWithPopup(auth, provider)
