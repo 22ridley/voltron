@@ -15,7 +15,7 @@ use rocket_firebase_auth::FirebaseToken;
 use serde::Serialize;
 
 pub fn routes() -> Vec<Route> {
-    routes![verify_token, protected_endpoint]
+    routes![login]
 }
 
 /// The struct we return for success responses (200s)
@@ -61,23 +61,13 @@ pub struct VerifyTokenResponse {
     pub uid: String,
 }
 
-#[post("/verify")]
-async fn verify_token(
-    token: FirebaseToken,
-) -> ApiResponse<VerifyTokenResponse> {
-    ApiResponse {
-        json: Some(Json(VerifyTokenResponse { uid: token.sub })),
-        status: Status::Ok,
-    }
-}
-
 #[derive(Debug, Serialize)]
 pub struct ProtectedEndpointResponse {
     pub message: String,
 }
 
-#[get("/protected")]
-async fn protected_endpoint(
+#[get("/login")]
+async fn login(
     token: FirebaseToken,
 ) -> ApiResponse<ProtectedEndpointResponse> {
     let email_opt: Option<String> = token.email;

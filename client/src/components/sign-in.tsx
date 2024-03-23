@@ -36,11 +36,10 @@ export default function SignIn(props: SignInProps) {
 
     onAuthStateChanged(auth, async (user: User | null) => {
       if (user) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/auth.user
+        // User is signed in
         const userToken: string = await user.getIdToken();
         props.setToken(userToken);
-        const response = await fetch(`${firebaseConfig.baseURL}/protected`, {
+        const response = await fetch(`${firebaseConfig.baseURL}/login`, {
           method: "GET",
           headers: {
             // Make a POST request with the `Authorization` header set with our bearer token
