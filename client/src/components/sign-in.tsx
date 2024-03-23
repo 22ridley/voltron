@@ -8,13 +8,12 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   User,
+  signOut,
 } from "firebase/auth";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 interface SignInProps {
-  token: string;
   setToken: Dispatch<SetStateAction<string>>;
-  privilege: number;
   setPrivilege: Dispatch<SetStateAction<number>>;
 }
 
@@ -29,35 +28,30 @@ const firebaseConfig = {
   baseURL: "http://127.0.0.1:8000",
 };
 
+const firebaseApp = initializeApp(firebaseConfig);
+
 export default function SignIn(props: SignInProps) {
   const [jsonResponse, setJsonResponse] = useState<any>(null);
 
   useEffect(() => {
     if (jsonResponse) {
-      console.log("In signin json: ", jsonResponse);
-      console.log("In signin token: ", props.token);
       const success: boolean = jsonResponse.success;
-      const prvlg: number = jsonResponse.privilege;
+      const privilege: number = jsonResponse.privilege;
       const user_name: string = jsonResponse.name;
       const email: string = jsonResponse.email;
-      props.setPrivilege(prvlg);
-      if (success == false) {
-        //window.location.href = "/";
-      } else {
-        if (prvlg == 2) {
-          //window.location.href = "/admin";
-        } else if (prvlg == 1) {
-          //window.location.href = "/";
-        } else {
-          //window.location.href = "/student";
-        }
-      }
+      props.setPrivilege(privilege);
     }
   }, [jsonResponse]);
 
-  const logGoogleUser = async () => {
-    const app = initializeApp(firebaseConfig);
+  const handleSignOut = async () => {
+    const auth = getAuth(firebaseApp);
+    // Sign out of firebase
+    await signOut(auth);
+    // Set the local state back to it's initial state
+    props.setToken("null");
+  };
 
+  const logGoogleUser = async () => {
     var provider = new GoogleAuthProvider();
     const auth = getAuth();
 
@@ -107,6 +101,7 @@ export default function SignIn(props: SignInProps) {
   return (
     <div>
       <button onClick={logGoogleUser}>Sign In With Google</button>
+      <button onClick={handleSignOut}>Clear Last Sign In</button>
     </div>
   );
 }

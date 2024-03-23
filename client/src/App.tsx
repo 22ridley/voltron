@@ -10,23 +10,10 @@ function App() {
   const [privilege, setPrivilege] = useState<number>(-1);
   const [token, setToken] = useState<string>("default");
 
-  useEffect(() => {
-    console.log("In app: ", token);
-  }, [token]);
-
-  useEffect(() => {
-    console.log("In app privilege: ", privilege);
-  }, [privilege]);
-
   if (privilege == -1) {
     return (
       <div className="signIn">
-        <SignIn
-          token={token}
-          setToken={setToken}
-          privilege={privilege}
-          setPrivilege={setPrivilege}
-        />
+        <SignIn setToken={setToken} setPrivilege={setPrivilege} />
       </div>
     );
   } else if (privilege == 0) {
