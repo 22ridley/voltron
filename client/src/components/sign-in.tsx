@@ -1,38 +1,20 @@
-// import { signInWithGooglePopup } from "./utils/firebase.utils";
-// // import {
-// //   getAuth,
-// //   GoogleAuthProvider,
-// //   onAuthStateChanged,
-// //   signInWithPopup,
-// //   signOut,
-// // } from "firebase/auth";
-
-// const SignIn = () => {
-//   const logGoogleUser = async () => {
-//     const response = await signInWithGooglePopup();
-//     console.log(response);
-//     const bearerToken = await response._tokenResponse;
-//     console.log(bearerToken);
-//   };
-//   return (
-//     <div>
-//       <button onClick={logGoogleUser}>Sign In With Google</button>
-//     </div>
-//   );
-// };
-// export default SignIn;
-
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithRedirect,
   onAuthStateChanged,
   signInWithPopup,
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+  User,
+} from "firebase/auth";
+import React, { Dispatch, SetStateAction } from "react";
+
+interface SignInProps {
+  token: string;
+  setToken: Dispatch<SetStateAction<string>>;
+}
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -45,44 +27,40 @@ const firebaseConfig = {
   baseURL: "http://127.0.0.1:8000",
 };
 
-const SignIn = () => {
+export default function SignIn(props: SignInProps) {
   const logGoogleUser = async () => {
-    // const response = await signInWithPopup();
-    // console.log(response);
-    // const bearerToken = await response._tokenResponse;
-    // console.log(bearerToken);
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
 
     var provider = new GoogleAuthProvider();
     const auth = getAuth();
 
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, async (user: User | null) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
         // https://firebase.google.com/docs/reference/js/auth.user
-        const uid = user.uid;
-        console.log(user);
-        console.log(user.displayName);
+        const userToken: string = await user.getIdToken();
+        props.setToken(userToken);
         const response = await fetch(`${firebaseConfig.baseURL}/protected`, {
           method: "GET",
           headers: {
             // Make a POST request with the `Authorization` header set with our bearer token
-            Authorization: `Bearer ${user.accessToken}`,
+            Authorization: `Bearer ${userToken}`,
           },
         });
         const json_response = await response.json();
         console.log(json_response.message);
-        window.location.href = "/anotherPagePath";
+        window.location.href = "/student";
       } else {
         // User is signed out
         signInWithPopup(auth, provider)
           .then((result) => {
             // This gives you a Google Access Token. You can use it to access the Google API.
             const credential = GoogleAuthProvider.credentialFromResult(result);
-            const token = credential.accessToken;
-            // The signed-in user info.
-            const user = result.user;
+            if (credential) {
+              const token = credential.accessToken;
+              // The signed-in user info.
+              const user = result.user;
+            }
             // IdP data available using getAdditionalUserInfo(result)
             // ...
           })
@@ -105,5 +83,4 @@ const SignIn = () => {
       <button onClick={logGoogleUser}>Sign In With Google</button>
     </div>
   );
-};
-export default SignIn;
+}
