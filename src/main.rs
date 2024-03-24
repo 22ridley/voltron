@@ -5,11 +5,7 @@ extern crate rocket;
 use rocket::{Build, Rocket};
 extern crate rocket_dyn_templates;
 use backend::MySQLBackend;
-use common::{AnyResponse, LoginContext};
-use mysql::Row;
-use rocket::{response::Redirect, State};
 use rocket_cors::{AllowedOrigins, CorsOptions};
-use rocket_dyn_templates::Template;
 use rocket_firebase_auth::FirebaseAuth;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -18,9 +14,9 @@ mod login;
 mod backend;
 mod common;
 mod config;
+mod student;
 mod instructor;
 mod register;
-mod student;
 mod admin;
 
 #[rocket::launch]
@@ -57,6 +53,7 @@ async fn rocket() -> Rocket<Build> {
 
     rocket::build()
         .mount("/", login::routes())
+        .mount("/", student::routes())
         .mount("/", rocket_cors::catch_all_options_routes())
         .attach(cors.clone())
         .manage(cors)

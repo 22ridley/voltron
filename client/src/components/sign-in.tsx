@@ -17,7 +17,7 @@ interface SignInProps {
   setName: Dispatch<SetStateAction<string>>;
 }
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBhZq1cflqUOXts2-1dtCDl7j-NBhpE7tw",
   authDomain: "voltron-1ea5c.firebaseapp.com",
   projectId: "voltron-1ea5c",

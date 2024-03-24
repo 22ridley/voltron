@@ -22,6 +22,15 @@ textarea {
   width: 700px;
   height: 350px;
 }
-h2 {
+.labels {
+  display: flex;
+  flex-direction: row;
+  justify-content: lft;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.one-label {
   font-size: 25px;
+  padding-right: 80px;
+  padding-bottom: 20px;
 }
