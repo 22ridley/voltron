@@ -1,24 +1,50 @@
 use std::fs;
-use crate::common::{AnyResponse, InstructorContext, Student, StudentGroup};
+use crate::common::{Student, StudentGroup, ApiResponse};
 use crate::backend::MySQLBackend;
 use mysql::Row;
-use rocket::State;
-use rocket_dyn_templates::Template;
+use rocket::http::Status;
+use rocket::serde::json::Json;
+use rocket::{Route, State};
+use serde::Serialize;
 use std::sync::{Arc, Mutex};
+use rocket_firebase_auth::FirebaseToken;
 
-#[get("/?<name>&<class_id>&<fail_message>")]
-pub fn instructor(name: &str, class_id: &str, fail_message: Option<&str>, 
-    backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
-    // Get the user information from the backend database
-    let mut fail = false;
-    let mut fail_string: &str = "";
-    if fail_message.is_some()  {
-        fail = true;
-        fail_string = fail_message.unwrap();
-    }
+pub fn routes() -> Vec<Route> {
+    routes![instructor]
+}
 
-    // Get list of all students
+#[derive(Debug, Serialize)]
+pub struct InstructorResponse {
+    pub success: bool,
+    pub class_id: i32,
+    pub group_id: i32,
+    pub students: Vec<Student>,
+    pub student_groups: Vec<StudentGroup>
+}
+
+#[get("/instructor")]
+pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+    -> ApiResponse<InstructorResponse> {
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
+    // Get this instructor's class ID
+    let email: String = token.email.unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    // If the instructor is not found, return error
+    if user_res.len() == 0 {
+        return ApiResponse {
+            json: Some(Json(InstructorResponse {
+                success: false,
+                class_id: -1,
+                group_id: -1,
+                students: vec![],
+                student_groups: vec![]
+            })),
+            status: Status::InternalServerError,
+        }
+    }
+    let row: Row = user_res.get(0).unwrap().clone();
+    let class_id: i32 = row.get(3).unwrap();
+    // Get list of all students in this class
     let mut args: Vec<String> = Vec::new();
     args.push(class_id.to_string());
     let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", args).unwrap();
@@ -40,14 +66,15 @@ pub fn instructor(name: &str, class_id: &str, fail_message: Option<&str>,
     }
     drop(bg);
 
-    // Create the context for the template
-    let ctx: InstructorContext = InstructorContext {
-        name: name.to_string(),
-        class_id: class_id.to_string(),
-        fail: fail,
-        fail_message: fail_string.to_string(),
-        students: students_res,
-        student_groups: groups_res
-    };
-    AnyResponse::Template(Template::render("instructor", &ctx))
+    // Return response
+    ApiResponse {
+        json: Some(Json(InstructorResponse {
+            success: true,
+            class_id: class_id,
+            group_id: -1,
+            students: students_res,
+            student_groups: groups_res
+        })),
+        status: Status::Ok,
+    }
 }

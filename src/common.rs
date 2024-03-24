@@ -48,7 +48,7 @@ pub struct LoginContext {
 }
 
 // The structure representing student groups and their code
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct StudentGroup{
     pub group_id: i32,
     pub code: String,
@@ -76,7 +76,7 @@ impl FromRow for StudentGroup {
 }
 
 // The structure representing instructors
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Instructor{
     pub name: String,
     pub class_id: i32,
@@ -104,7 +104,7 @@ impl FromRow for Instructor {
 }
 
 // The structure representing students
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Student{
     pub name: String,
     pub group_id: i32,
@@ -137,26 +137,6 @@ pub struct AdminContext {
     pub instructors: Vec<Instructor>,
     pub fail: bool,
     pub fail_message: String
-}
-
-// The context needed for rendering the instructor page
-#[derive(Serialize)]
-pub struct InstructorContext {
-    pub name: String,
-    pub class_id: String,
-    pub fail: bool,
-    pub fail_message: String,
-    pub students: Vec<Student>,
-    pub student_groups: Vec<StudentGroup>
-}
-
-// The context needed for rendering the student page
-#[derive(Serialize)]
-pub struct StudentContext {
-    pub name: String,
-    pub class_id: i32,
-    pub group_id: i32,
-    pub text: String
 }
 
 #[derive(FromForm)]
