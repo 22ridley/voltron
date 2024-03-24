@@ -1,7 +1,7 @@
 use std::{io::Write, path::Path, sync::Arc, sync::Mutex};
-use crate::common::{UpdateRequest, AnyResponse, ApiResponse};
+use crate::common::{ApiResponse, SuccessResponse};
 use mysql::Row;
-use rocket::{form::Form, http::Status, response::Redirect, serde::json::Json, Route, State};
+use rocket::{http::Status, serde::json::Json, Route, State};
 use serde::Serialize;
 use std::fs::{self, File};
 use rocket_firebase_auth::FirebaseToken;
@@ -20,7 +20,8 @@ pub struct StudentResponse {
 }
 
 #[get("/student")]
-pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) -> ApiResponse<StudentResponse> {
+pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+-> ApiResponse<StudentResponse> {
     // Find this student
     let email_opt: Option<String> = token.email;
     let mut email: String = "".to_string();
@@ -64,15 +65,44 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
     }
 }
 
-#[post("/", data="<data>")]
-pub fn update(data: Form<UpdateRequest>) -> AnyResponse {
+#[post("/update?<text>")]
+pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
+    text: Option<&str>) -> ApiResponse<SuccessResponse> {
+    // Find this student
+    let email_opt: Option<String> = token.email;
+    let mut email: String = "".to_string();
+    if email_opt.is_some() {
+        email = email_opt.unwrap();
+    }
+    let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    drop(bg);
+    // If the student is not found, return error
+    if user_res.len() == 0 {
+        return ApiResponse {
+            json: Some(Json(SuccessResponse {
+                success: false,
+            })),
+            status: Status::InternalServerError,
+        }
+    }
+    let row: Row = user_res.get(0).unwrap().clone();
+    let class_id: i32 = row.get(3).unwrap();
+    let group_id: i32 = row.get(4).unwrap();
+
     // Open a file in write-only mode, returns `io::Result<File>`
-    let filepath: String = format!("group_code/class{}_group{}_code.txt", data.class_id, data.group_id);
+    let filepath: String = format!("group_code/class{}_group{}_code.txt", class_id, group_id);
     let path: &Path = Path::new(&filepath);
     let mut file: File = File::create(&path).unwrap();
 
     // Write the new text to the file
-    let _bytes_written: Result<usize, std::io::Error> = file.write(data.text.as_bytes());
-    return AnyResponse::Redirect(Redirect::to(format!("/student?name={}&class_id={}&group_id={}", data.name, data.class_id, data.group_id)));
+    let _bytes_written: Result<usize, std::io::Error> = file.write(text.unwrap().as_bytes());
+    // Return response
+    ApiResponse {
+        json: Some(Json(SuccessResponse {
+            success: true
+        })),
+        status: Status::Ok,
+    }
 }
 

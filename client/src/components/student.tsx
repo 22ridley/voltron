@@ -35,7 +35,14 @@ export default function Student(props: StudentProps) {
   }, [props.privilege]);
 
   // Updating backend based on bufferText
-  useEffect(() => {}, [bufferText]);
+  useEffect(() => {
+    fetch(`${firebaseConfig.baseURL}/update?text=${bufferText}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${props.token}`,
+      },
+    });
+  }, [bufferText]);
   return (
     <div>
       <div className="header">

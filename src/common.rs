@@ -18,6 +18,11 @@ where
     pub status: Status,
 }
 
+#[derive(Debug, Serialize)]
+pub struct SuccessResponse {
+    pub success: bool,
+}
+
 /// Implements the `Responder` trait for Rocket, so we can simply return a for
 /// endpoint functions, result and Rocket takes care of the rest.
 impl<'r, T: Serialize> response::Responder<'r, 'r> for ApiResponse<T> {
