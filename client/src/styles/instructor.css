@@ -1,0 +1,43 @@
+.grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  padding-right: 50px;
+}
+.grid_item {
+  background-color: lightgray;
+  padding: 10px;
+  margin: 15px;
+  width: 30vw;
+}
+.student {
+  padding-bottom: 5px;
+}
+.code {
+  white-space: pre-line;
+  font-family: monospace;
+  min-height: 150px;
+}
+.student_list {
+  overflow: auto;
+  height: 250px;
+  border: 1px solid #ccc;
+  padding-left: 15px;
+}
+.sideI {
+  height: 100%;
+  width: 300px;
+  position: fixed;
+  z-index: 1;
+  top: 80px;
+  left: 20px;
+  overflow-x: scroll;
+  padding-top: 20px;
+  overflow-y: scroll;
+}
+.mainI {
+  margin-left: 400px;
+  padding-top: 100px;
+}
+h3 {
+  font-size: 24px;
+}

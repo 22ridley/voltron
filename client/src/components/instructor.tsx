@@ -1,4 +1,5 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import "../styles/instructor.css";
 import { firebaseConfig } from "./sign-in.tsx";
 
 interface InstructorProps {
@@ -10,6 +11,8 @@ interface InstructorProps {
 
 export default function Instructor(props: InstructorProps) {
   const [classID, setClassID] = useState<string>("");
+  const [students, setStudents] = useState<any[]>([]);
+  const [studentGroups, setStudentGroups] = useState<any[]>([]);
   // Initial fetch of bufferText from backend
   useEffect(() => {
     fetch(`${firebaseConfig.baseURL}/instructor`, {
@@ -20,11 +23,13 @@ export default function Instructor(props: InstructorProps) {
     }).then((response) => {
       response.json().then((response_json) => {
         const class_id: number = response_json.class_id;
-        const group_id: number = response_json.group_id;
         const students = response_json.students;
         const student_groups = response_json.student_groups;
         setClassID(class_id.toString());
+        setStudents(students);
+        setStudentGroups(student_groups);
         console.log(students);
+        console.log(students[0].group_id);
         console.log(student_groups);
       });
     });
@@ -36,14 +41,13 @@ export default function Instructor(props: InstructorProps) {
           <h1>Voltron</h1>
         </a>
       </div>
-      <div className="all">
-        <div>
-          <div className="side">
-            <h2>Instructor: {props.name}</h2>
-            <hr />
-            <div className="register_student">
-              <h3>Register a new student:</h3>
-              {/* <form action="/register-student" method="post" accept-charset="utf-8">
+      <div>
+        <div className="sideI">
+          <h3>Instructor: {props.name}</h3>
+          <hr />
+          <div className="register_student">
+            <h3>Register a new student:</h3>
+            {/* <form action="/register-student" method="post" accept-charset="utf-8">
                 <input type="hidden" name="instructor_name" value={{name}} />
                 <input type="hidden" name="class_id" value={{class_id}} />
                 <label>Student name:
@@ -61,36 +65,32 @@ export default function Instructor(props: InstructorProps) {
                 <h4>
                   Failed to register new student:
                 </h4> */}
-            </div>
-            <hr />
-            <div className="student_list">
-              <h3>Students:</h3>
-              <div>{}</div>
-              {/* {{#each students}}
-                <div class="student">
-                  {{this.name}}:
-                  {{this.group_id}}
-                </div>
-              {{/each}} */}
-            </div>
           </div>
-          <div className="main">
-            <h2>Class ID: {classID}</h2>
-            <hr />
-            <h2>Student Code:</h2>
-            <div className="grid">
-              {/* {{#each student_groups}}
-                <div class="grid_item">
-                  <b>
-                    Group ID:
-                    {{this.group_id}}
-                  </b>
-                  <p class="code">
-                    {{this.code}}
-                  </p>
-                </div>
-              {{/each}} */}
-            </div>
+          <hr />
+          <div className="student_list">
+            <h4>Students:</h4>
+            <div>{}</div>
+            {students.map((student_json) => (
+              <div className="student">
+                {student_json.name}: {student_json.group_id}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mainI">
+          <h3>Class ID: {classID}</h3>
+          <hr />
+          <h3>Student Code:</h3>
+          <div className="grid">
+            {studentGroups.map((group_json) => (
+              <div className="grid_item">
+                <b>
+                  Group ID:&nbsp;
+                  {group_json.group_id}
+                </b>
+                <p className="code">{group_json.code}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
