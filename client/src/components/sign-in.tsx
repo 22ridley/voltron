@@ -44,7 +44,7 @@ export default function SignIn(props: SignInProps) {
         props.setName(name);
       }
     }
-  }, [jsonResponse]);
+  }, [jsonResponse, props]);
 
   const handleSignOut = async () => {
     const auth = getAuth(firebaseApp);
@@ -81,6 +81,7 @@ export default function SignIn(props: SignInProps) {
               const token = credential.accessToken;
               // The signed-in user info.
               const user = result.user;
+              console.log(token, user);
             }
           })
           .catch((error) => {
