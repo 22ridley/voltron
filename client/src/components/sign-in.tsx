@@ -1,7 +1,5 @@
-// Import the functions you need from the SDKs you need
+import "../styles/sign-in.css";
 import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 import {
   getAuth,
   GoogleAuthProvider,
@@ -15,9 +13,10 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 interface SignInProps {
   setToken: Dispatch<SetStateAction<string>>;
   setPrivilege: Dispatch<SetStateAction<number>>;
+  setEmail: Dispatch<SetStateAction<string>>;
+  setName: Dispatch<SetStateAction<string>>;
 }
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBhZq1cflqUOXts2-1dtCDl7j-NBhpE7tw",
   authDomain: "voltron-1ea5c.firebaseapp.com",
@@ -37,9 +36,13 @@ export default function SignIn(props: SignInProps) {
     if (jsonResponse) {
       const success: boolean = jsonResponse.success;
       const privilege: number = jsonResponse.privilege;
-      const user_name: string = jsonResponse.name;
       const email: string = jsonResponse.email;
-      props.setPrivilege(privilege);
+      const name: string = jsonResponse.name;
+      if (success) {
+        props.setPrivilege(privilege);
+        props.setEmail(email);
+        props.setName(name);
+      }
     }
   }, [jsonResponse]);
 
@@ -48,7 +51,7 @@ export default function SignIn(props: SignInProps) {
     // Sign out of firebase
     await signOut(auth);
     // Set the local state back to it's initial state
-    props.setToken("null");
+    props.setToken("");
   };
 
   const logGoogleUser = async () => {
@@ -63,12 +66,10 @@ export default function SignIn(props: SignInProps) {
         const response = await fetch(`${firebaseConfig.baseURL}/login`, {
           method: "GET",
           headers: {
-            // Make a POST request with the `Authorization` header set with our bearer token
             Authorization: `Bearer ${userToken}`,
           },
         });
         const json_response = await response.json();
-        console.log(json_response);
         setJsonResponse(json_response);
       } else {
         // User is signed out
@@ -81,30 +82,28 @@ export default function SignIn(props: SignInProps) {
               // The signed-in user info.
               const user = result.user;
             }
-            // IdP data available using getAdditionalUserInfo(result)
-            // ...
           })
           .catch((error) => {
-            // Handle Errors here.
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.customData.email;
-            // The AuthCredential type that was used.
-            const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
-            console.log("error!");
+            console.log("Error: ", error);
           });
       }
     });
   };
   return (
     <div>
-      <button onClick={logGoogleUser}>Sign In With Google</button>
-      <button onClick={handleSignOut}>Clear Last Sign In</button>
+      <div className="header">
+        <a href="/">
+          <h1>Voltron</h1>
+        </a>
+      </div>
+      <div className="all">
+        <div className="loginbox">
+          <h2>Login</h2>
+          <button onClick={logGoogleUser}>Sign In With Google</button>
+          <br />
+          <button onClick={handleSignOut}>Clear Last Sign In</button>
+        </div>
+      </div>
     </div>
   );
-}
-function setState<T>(arg0: null): [any, any] {
-  throw new Error("Function not implemented.");
 }

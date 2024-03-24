@@ -3,16 +3,14 @@ import React, { Dispatch, SetStateAction, useEffect } from "react";
 interface InstructorProps {
   token: string;
   privilege: number;
+  email: string;
+  name: string;
 }
 
 export default function Instructor(props: InstructorProps) {
-  useEffect(() => {
-    console.log("In instructor: ", props.token);
-  }, [props.token]);
-
   return (
     <div>
-      <div>Instructor</div>
+      <div>Instructor: {props.name}</div>
       <div>Token: {props.token}</div>
     </div>
   );
