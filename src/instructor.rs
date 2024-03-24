@@ -17,7 +17,6 @@ pub fn routes() -> Vec<Route> {
 pub struct InstructorResponse {
     pub success: bool,
     pub class_id: i32,
-    pub group_id: i32,
     pub students: Vec<Student>,
     pub student_groups: Vec<StudentGroup>
 }
@@ -35,7 +34,6 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
             json: Some(Json(InstructorResponse {
                 success: false,
                 class_id: -1,
-                group_id: -1,
                 students: vec![],
                 student_groups: vec![]
             })),
@@ -71,7 +69,6 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
         json: Some(Json(InstructorResponse {
             success: true,
             class_id: class_id,
-            group_id: -1,
             students: students_res,
             student_groups: groups_res
         })),

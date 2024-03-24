@@ -131,14 +131,6 @@ impl FromRow for Student {
     }
 }
 
-// The context needed for rendering the admin page
-#[derive(Serialize)]
-pub struct AdminContext {
-    pub instructors: Vec<Instructor>,
-    pub fail: bool,
-    pub fail_message: String
-}
-
 #[derive(FromForm)]
 pub struct RegisterInstructorRequest{
     pub(crate) instructor_name: String,
@@ -151,12 +143,4 @@ pub struct RegisterStudentRequest {
     pub(crate) student_name: String,
     pub(crate) class_id: String,
     pub(crate) group_id: String,
-}
-
-#[derive(FromForm)]
-pub struct UpdateRequest{
-    pub(crate) name: String,
-    pub(crate) class_id: i32,
-    pub(crate) group_id: i32,
-    pub(crate) text: String
 }

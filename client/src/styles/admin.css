@@ -1,0 +1,9 @@
+.instructor_list {
+  overflow: auto;
+  height: 250px;
+  border: 1px solid #ccc;
+  padding-left: 15px;
+}
+.instructor {
+  padding-bottom: 5px;
+}

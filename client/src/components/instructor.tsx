@@ -13,7 +13,7 @@ export default function Instructor(props: InstructorProps) {
   const [classID, setClassID] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [studentGroups, setStudentGroups] = useState<any[]>([]);
-  // Initial fetch of bufferText from backend
+  // Initial fetch of students from backend
   useEffect(() => {
     fetch(`${firebaseConfig.baseURL}/instructor`, {
       method: "GET",

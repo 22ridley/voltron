@@ -1,30 +1,36 @@
-use crate::common::{AdminContext, AnyResponse, Instructor};
+use crate::common::{Instructor, ApiResponse};
 use crate::backend::MySQLBackend;
-use rocket::State;
-use rocket_dyn_templates::Template;
+use rocket::http::Status;
+use rocket::serde::json::Json;
+use rocket::{Route, State};
+use serde::Serialize;
 use std::sync::{Arc, Mutex};
+use rocket_firebase_auth::FirebaseToken;
 
-#[get("/?<fail_message>")]
-pub fn admin(fail_message: Option<&str>, 
-    backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
-    // Get the user information from the backend database
-    let mut fail: bool = false;
-    let mut fail_string: &str = "";
-    if fail_message.is_some() {
-        fail = true;
-        fail_string = fail_message.unwrap();
-    }
+pub fn routes() -> Vec<Route> {
+    routes![admin]
+}
 
+#[derive(Debug, Serialize)]
+pub struct AdminResponse {
+    pub success: bool,
+    pub instructors: Vec<Instructor>
+}
+
+#[get("/admin")]
+pub fn admin(_token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+    -> ApiResponse<AdminResponse> {
     // Get list of all students
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let instructors_res: Vec<Instructor> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 1", ()).unwrap();
     drop(bg);
 
-    // Create the context for the template
-    let ctx: AdminContext = AdminContext {
-        instructors: instructors_res,
-        fail: fail,
-        fail_message: fail_string.to_string(),
-    };
-    AnyResponse::Template(Template::render("admin", &ctx))
+    // Return response
+    ApiResponse {
+        json: Some(Json(AdminResponse {
+            success: true,
+            instructors: instructors_res
+        })),
+        status: Status::Ok,
+    }
 }
