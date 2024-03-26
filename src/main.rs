@@ -56,6 +56,7 @@ async fn rocket() -> Rocket<Build> {
         .mount("/", student::routes())
         .mount("/", instructor::routes())
         .mount("/", admin::routes())
+        .mount("/", register::routes())
         .mount("/", rocket_cors::catch_all_options_routes())
         .attach(cors.clone())
         .manage(cors)

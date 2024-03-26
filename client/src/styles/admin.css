@@ -7,3 +7,15 @@
 .instructor {
   padding-bottom: 5px;
 }
+.submit_button_box {
+  padding-top: 20px;
+}
+.submit_button {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.error {
+  color: maroon;
+  padding-top: 10px;
+  font-weight: bold;
+}

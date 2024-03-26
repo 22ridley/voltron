@@ -78,6 +78,7 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
         return ApiResponse {
             json: Some(Json(SuccessResponse {
                 success: false,
+                message: "Student not found".to_string()
             })),
             status: Status::InternalServerError,
         }
@@ -96,7 +97,8 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     // Return response
     ApiResponse {
         json: Some(Json(SuccessResponse {
-            success: true
+            success: true,
+            message: "".to_string()
         })),
         status: Status::Ok,
     }

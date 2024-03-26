@@ -3,16 +3,25 @@ extern crate mysql;
 use std::path::Path;
 use std::{sync::Arc, sync::Mutex};
 use mysql::Row;
-use rocket::{response::Redirect, State, form::Form};
+use rocket::http::Status;
+use rocket::serde::json::Json;
+use rocket::Route;
+use rocket::State;
 use crate::backend::MySQLBackend;
-use crate::common::{AnyResponse, RegisterStudentRequest, RegisterInstructorRequest};
+use crate::common::{ApiResponse, SuccessResponse};
 use std::fs::File;
+use rocket_firebase_auth::FirebaseToken;
 
-#[post("/", data="<data>")]
-pub fn register_instructor(data: Form<RegisterInstructorRequest>, 
-    backend: &State<Arc<Mutex<MySQLBackend>>>) -> AnyResponse {
-    let instructor_name: &String = &data.instructor_name.clone();
-    let class_id: &String = &data.class_id.clone();
+pub fn routes() -> Vec<Route> {
+    routes![register_instructor, register_student]
+}
+
+#[post("/register_instructor?<instr_name>&<class_id>")]
+pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
+    class_id: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+    -> ApiResponse<SuccessResponse> {
+    let instructor_name: &str = instr_name.unwrap();
+    let class_id: &str = class_id.unwrap();
     // Create variables for failure
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
@@ -40,8 +49,13 @@ pub fn register_instructor(data: Form<RegisterInstructorRequest>,
     // Return if either failure occured
     if fail {
         drop(bg);
-        fail_message = fail_message.replace(" ", "+");
-        return AnyResponse::Redirect(Redirect::to(format!("/admin?fail_message={}", fail_message)))
+        return ApiResponse {
+            json: Some(Json(SuccessResponse {
+                success: false,
+                message: fail_message
+            })),
+            status: Status::Ok,
+        }
     } 
     // Assemble values to insert
     let users_row: Vec<&str> = vec![instructor_name, "1", class_id, "-1"];
@@ -53,17 +67,22 @@ pub fn register_instructor(data: Form<RegisterInstructorRequest>,
     let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
 
-    AnyResponse::Redirect(Redirect::to(format!("/admin")))
+    ApiResponse {
+        json: Some(Json(SuccessResponse {
+            success: true,
+            message: "".to_string()
+        })),
+        status: Status::Ok,
+    }
 }
 
-#[post("/", data="<data>")]
-pub fn register_student(data: Form<RegisterStudentRequest>,
-    backend: &State<Arc<Mutex<MySQLBackend>>>)-> AnyResponse {
+#[post("/register-student?<stud_group>&<stud_name>&<stud_class>")]
+pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_name: Option<&str>,
+    stud_class: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>)-> ApiResponse<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
-    let student_group: &String = &data.group_id.clone();
-    let student_name: &String = &data.student_name.clone();
-    let student_class: &String = &data.class_id.clone();
-    let instructor_name: &String = &data.instructor_name.clone();
+    let student_group: &str = stud_group.unwrap();
+    let student_name: &str = stud_name.unwrap();
+    let student_class: &str = stud_class.unwrap();
     // Create variables for failure
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
@@ -89,9 +108,14 @@ pub fn register_student(data: Form<RegisterStudentRequest>,
     }
     // Return if either failure occured
     if fail {
-        fail_message = fail_message.replace(" ", "+");
         drop(bg);
-        return AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}&fail_message={}", instructor_name, student_class, fail_message)))
+        return ApiResponse {
+            json: Some(Json(SuccessResponse {
+                success: false,
+                message: fail_message
+            })),
+            status: Status::Ok,
+        }
     }
 
     let users_row: Vec<&str> = vec![student_name, "0", student_class, student_group];
@@ -99,7 +123,7 @@ pub fn register_student(data: Form<RegisterStudentRequest>,
     let file_string: String = format!("group_code/class{}_group{}_code.txt", student_class, student_group);
     let file_name: &Path = Path::new(&file_string);
     if !file_name.is_file() {
-        // Open a new file for group_id max_student_group + 1
+        // Open a new file
         let _ = File::create(file_name);
     }   
 
@@ -107,5 +131,11 @@ pub fn register_student(data: Form<RegisterStudentRequest>,
     let q: &str = "INSERT INTO users (user_name, privilege, class_id, group_id) VALUES (?, ?, ?, ?)";
     let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
-    AnyResponse::Redirect(Redirect::to(format!("/instructor?name={}&class_id={}", instructor_name, student_class)))
+    ApiResponse {
+        json: Some(Json(SuccessResponse {
+            success: true,
+            message: "".to_string()
+        })),
+        status: Status::Ok,
+    }
 }

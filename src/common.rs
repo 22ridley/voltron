@@ -1,9 +1,8 @@
 use mysql::serde::Serialize;
 use rocket::http::{ContentType, Status};
-use rocket::response::{self, Redirect};
+use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
-use rocket_dyn_templates::Template;
 use mysql::Row;
 use mysql::prelude::FromRow;
 use mysql::from_value;
@@ -21,6 +20,7 @@ where
 #[derive(Debug, Serialize)]
 pub struct SuccessResponse {
     pub success: bool,
+    pub message: String
 }
 
 /// Implements the `Responder` trait for Rocket, so we can simply return a for
@@ -32,13 +32,6 @@ impl<'r, T: Serialize> response::Responder<'r, 'r> for ApiResponse<T> {
             .header(ContentType::JSON)
             .ok()
     }
-}
-
-// Response enum that can be either templates or redirects
-#[derive(Debug, Responder)]
-pub enum AnyResponse {
-    Template(Template),
-    Redirect(Redirect),
 }
 
 // The context needed for rendering the login page
@@ -87,7 +80,7 @@ impl Instructor{
     pub fn new(row: Row, index: usize) -> Self {
         Instructor{
             name: from_value(row[0].clone()),
-            class_id: from_value(row[2].clone()),
+            class_id: from_value(row[3].clone()),
             index: index
         }
     } 
@@ -129,18 +122,4 @@ impl FromRow for Student {
     fn from_row(row: Row) -> Self {
         Student::new(row, 0)
     }
-}
-
-#[derive(FromForm)]
-pub struct RegisterInstructorRequest{
-    pub(crate) instructor_name: String,
-    pub(crate) class_id: String
-}
-
-#[derive(FromForm)]
-pub struct RegisterStudentRequest {
-    pub(crate) instructor_name: String,
-    pub(crate) student_name: String,
-    pub(crate) class_id: String,
-    pub(crate) group_id: String,
 }

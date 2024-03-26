@@ -100,9 +100,13 @@ export default function SignIn(props: SignInProps) {
       <div className="all">
         <div className="loginbox">
           <h2>Login</h2>
-          <button onClick={logGoogleUser}>Sign In With Google</button>
+          <button className="signin_button" onClick={logGoogleUser}>
+            Sign In With Google
+          </button>
           <br />
-          <button onClick={handleSignOut}>Clear Last Sign In</button>
+          <button className="signin_button" onClick={handleSignOut}>
+            Clear Last Sign In
+          </button>
         </div>
       </div>
     </div>

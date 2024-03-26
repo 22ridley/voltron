@@ -10,9 +10,39 @@ interface AdminProps {
 }
 
 export default function Admin(props: AdminProps) {
+  const [failMessage, setFailMessage] = useState<string>("");
+  const [newInstructorName, setNewInstructorName] = useState<string>("");
+  const [newClassID, setNewClassID] = useState<string>("");
   const [instructors, setInstructors] = useState<any[]>([]);
-  // Initial fetch of instructors from backend
-  useEffect(() => {
+  const [count, setCount] = useState<number>(0);
+
+  function handleSubmit() {
+    setCount(count + 1);
+    setFailMessage("");
+    fetch(
+      `${firebaseConfig.baseURL}/register_instructor?instr_name=${newInstructorName}&class_id=${newClassID}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+      }
+    ).then((response) => {
+      response.json().then((response_json) => {
+        const success: boolean = response_json.success;
+        const message: string = response_json.message;
+        if (!success) {
+          setFailMessage(message);
+        }
+        getInstructors();
+        setNewInstructorName("");
+        setNewClassID("");
+      });
+    });
+  }
+
+  // Fetch instructors
+  const getInstructors = () => {
     fetch(`${firebaseConfig.baseURL}/admin`, {
       method: "GET",
       headers: {
@@ -24,6 +54,11 @@ export default function Admin(props: AdminProps) {
         setInstructors(instr);
       });
     });
+  };
+
+  // Fetch of instructors from backend at beginning
+  useEffect(() => {
+    getInstructors();
   }, [props.privilege]);
   return (
     <div>
@@ -49,32 +84,25 @@ export default function Admin(props: AdminProps) {
           <div className="mainI">
             <h2>Register a new instructor: </h2>
             <hr />
-            {/* <div className="register_instructor">
-                    <form
-                        action="/register-instructor"
-                        method="post"
-                        accept-charset="utf-8"
-                    >
-                        <label>Instructor name:
-                        <p>
-                            <input name="instructor_name" />
-                        </p>
-                        </label>
-                        <label>Class ID:
-                        <p>
-                            <input name="class_id" />
-                        </p>
-                        </label>
-                        <input type="submit" value="Submit" />
-                    </form>
-                    {{#if fail}}
-                        <h4>
-                        <b>Failed to register new instructor:</b>
-                        {{{fail_message}}}
-                        </h4>
-                    {{/if}}
-                    </div>
-                </div> */}
+            <div className="register_instructor">
+              <h4>Instructor name:</h4>
+              <input
+                value={newInstructorName}
+                onChange={(val) => setNewInstructorName(val.target.value)}
+              ></input>
+              <h4>Class ID:</h4>
+              <input
+                value={newClassID}
+                onChange={(val) => setNewClassID(val.target.value)}
+              ></input>
+              <br />
+              <div className="submit_button_box">
+                <button className="submit_button" onClick={handleSubmit}>
+                  Submit
+                </button>
+              </div>
+              <p className="error">{failMessage}</p>
+            </div>
           </div>
         </div>
       </div>
