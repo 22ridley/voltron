@@ -76,7 +76,7 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
     }
 }
 
-#[post("/register-student?<stud_group>&<stud_name>&<stud_class>")]
+#[post("/register_student?<stud_group>&<stud_name>&<stud_class>")]
 pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_name: Option<&str>,
     stud_class: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>)-> ApiResponse<SuccessResponse> {
     let mut bg = backend.lock().unwrap();

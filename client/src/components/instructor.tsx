@@ -10,11 +10,40 @@ interface InstructorProps {
 }
 
 export default function Instructor(props: InstructorProps) {
+  const [newStudentName, setNewStudentName] = useState<string>("");
+  const [newStudentGroup, setNewStudentGroup] = useState<string>("");
+  const [failMessage, setFailMessage] = useState<string>("");
   const [classID, setClassID] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [studentGroups, setStudentGroups] = useState<any[]>([]);
-  // Initial fetch of students from backend
-  useEffect(() => {
+
+  // Handle submit
+  function handleSubmit() {
+    setFailMessage("");
+    fetch(
+      `${firebaseConfig.baseURL}/register_student?stud_group=${newStudentGroup}&stud_name=${newStudentName}&stud_class=${classID}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+      }
+    ).then((response) => {
+      response.json().then((response_json) => {
+        const success: boolean = response_json.success;
+        const message: string = response_json.message;
+        if (!success) {
+          setFailMessage(message);
+        }
+        getInstructors();
+        setNewStudentName("");
+        setNewStudentGroup("");
+      });
+    });
+  }
+
+  // Fetch students
+  const getInstructors = () => {
     fetch(`${firebaseConfig.baseURL}/instructor`, {
       method: "GET",
       headers: {
@@ -33,6 +62,11 @@ export default function Instructor(props: InstructorProps) {
         console.log(student_groups);
       });
     });
+  };
+
+  // Initial fetch of students from backend
+  useEffect(() => {
+    getInstructors();
   }, [props.privilege]);
   return (
     <div>
@@ -47,24 +81,25 @@ export default function Instructor(props: InstructorProps) {
           <hr />
           <div className="register_student">
             <h3>Register a new student:</h3>
-            {/* <form action="/register-student" method="post" accept-charset="utf-8">
-                <input type="hidden" name="instructor_name" value={{name}} />
-                <input type="hidden" name="class_id" value={{class_id}} />
-                <label>Student name:
-                  <p>
-                    <input name="student_name" />
-                  </p>
-                </label>
-                <label>Student group ID:
-                  <p>
-                    <input name="group_id" />
-                  </p>
-                </label>
-                <input type="submit" value="Submit" />
-              </form>
-                <h4>
-                  Failed to register new student:
-                </h4> */}
+            <div className="register_instructor">
+              <h4>Student name:</h4>
+              <input
+                value={newStudentName}
+                onChange={(val) => setNewStudentName(val.target.value)}
+              ></input>
+              <h4>Class ID:</h4>
+              <input
+                value={newStudentGroup}
+                onChange={(val) => setNewStudentGroup(val.target.value)}
+              ></input>
+              <br />
+              <div className="submit_button_box">
+                <button className="submit_button" onClick={handleSubmit}>
+                  Submit
+                </button>
+              </div>
+              <p className="error">{failMessage}</p>
+            </div>
           </div>
           <hr />
           <div className="student_list">

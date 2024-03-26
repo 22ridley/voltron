@@ -19,7 +19,7 @@
 }
 .student_list {
   overflow: auto;
-  height: 250px;
+  height: 150px;
   border: 1px solid #ccc;
   padding-left: 15px;
 }

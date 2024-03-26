@@ -14,10 +14,8 @@ export default function Admin(props: AdminProps) {
   const [newInstructorName, setNewInstructorName] = useState<string>("");
   const [newClassID, setNewClassID] = useState<string>("");
   const [instructors, setInstructors] = useState<any[]>([]);
-  const [count, setCount] = useState<number>(0);
 
   function handleSubmit() {
-    setCount(count + 1);
     setFailMessage("");
     fetch(
       `${firebaseConfig.baseURL}/register_instructor?instr_name=${newInstructorName}&class_id=${newClassID}`,
