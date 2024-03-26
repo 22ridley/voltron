@@ -76,10 +76,9 @@ export default function Instructor(props: InstructorProps) {
       </div>
       <div>
         <div className="sideI">
-          <h3>Instructor: {props.name}</h3>
+          <h3 className="regStud">Register a new student:</h3>
           <hr />
           <div className="register_student">
-            <h3>Register a new student:</h3>
             <div className="register_instructor">
               <p className="reg">Student name:</p>
               <input
@@ -117,7 +116,17 @@ export default function Instructor(props: InstructorProps) {
           </div>
         </div>
         <div className="mainI">
-          <h3>Class ID: {classID}</h3>
+          <div className="labelsI">
+            <p className="one-labelI">
+              <b>Instructor:</b> {props.name}
+            </p>
+            <p className="one-labelI">
+              <b>Email:</b> {props.email}
+            </p>
+            <p className="one-labelI">
+              <b>Class ID:</b> {classID}
+            </p>
+          </div>
           <hr />
           <h3>Student Code:</h3>
           <div className="grid">

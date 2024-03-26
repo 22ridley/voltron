@@ -52,9 +52,18 @@ export default function Student(props: StudentProps) {
       </div>
       <div className="all">
         <div className="labels">
-          <h2 className="one-label">Student: {props.name}</h2>
-          <h2 className="one-label">Class ID: {classID} </h2>
-          <h2 className="one-label">Group ID: {groupID} </h2>
+          <p className="one-label">
+            <b>Student:</b> {props.name}
+          </p>
+          <p className="one-label">
+            <b>Email:</b> {props.email}
+          </p>
+          <p className="one-label">
+            <b>Class ID:</b> {classID}{" "}
+          </p>
+          <p className="one-label">
+            <b>Group ID:</b> {groupID}{" "}
+          </p>
         </div>
         <textarea
           value={bufferText}

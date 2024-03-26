@@ -72,6 +72,10 @@ export default function Admin(props: AdminProps) {
           <div className="sideI">
             <h2>Admin</h2>
             <hr />
+            <p className="one-label">
+              <b>Email:</b> {props.email}
+            </p>
+            <hr />
             <div className="instructor_list">
               <h4>Instructors:</h4>
               {instructors.map((instructor_json) => (

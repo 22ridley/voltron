@@ -44,3 +44,16 @@ h3 {
 .reg {
   font-weight: bold;
 }
+.labelsI {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  padding-left: 10px;
+}
+.one-labelI {
+  font-size: 25px;
+  padding-right: 80px;
+}
+.regStud {
+  padding-bottom: 12px;
+}
