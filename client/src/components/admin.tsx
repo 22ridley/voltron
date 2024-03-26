@@ -11,14 +11,15 @@ interface AdminProps {
 
 export default function Admin(props: AdminProps) {
   const [failMessage, setFailMessage] = useState<string>("");
-  const [newInstructorName, setNewInstructorName] = useState<string>("");
+  const [newName, setNewName] = useState<string>("");
   const [newClassID, setNewClassID] = useState<string>("");
+  const [newEmail, setNewEmail] = useState<string>("");
   const [instructors, setInstructors] = useState<any[]>([]);
 
   function handleSubmit() {
     setFailMessage("");
     fetch(
-      `${firebaseConfig.baseURL}/register_instructor?instr_name=${newInstructorName}&class_id=${newClassID}`,
+      `${firebaseConfig.baseURL}/register_instructor?instr_name=${newName}&instr_class=${newClassID}&instr_email=${newEmail}`,
       {
         method: "POST",
         headers: {
@@ -33,8 +34,9 @@ export default function Admin(props: AdminProps) {
           setFailMessage(message);
         }
         getInstructors();
-        setNewInstructorName("");
+        setNewName("");
         setNewClassID("");
+        setNewEmail("");
       });
     });
   }
@@ -85,8 +87,13 @@ export default function Admin(props: AdminProps) {
             <div className="register_instructor">
               <h4>Instructor name:</h4>
               <input
-                value={newInstructorName}
-                onChange={(val) => setNewInstructorName(val.target.value)}
+                value={newName}
+                onChange={(val) => setNewName(val.target.value)}
+              ></input>
+              <h4>Email:</h4>
+              <input
+                value={newEmail}
+                onChange={(val) => setNewEmail(val.target.value)}
               ></input>
               <h4>Class ID:</h4>
               <input

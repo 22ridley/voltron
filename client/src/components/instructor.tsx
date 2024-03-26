@@ -10,8 +10,9 @@ interface InstructorProps {
 }
 
 export default function Instructor(props: InstructorProps) {
-  const [newStudentName, setNewStudentName] = useState<string>("");
-  const [newStudentGroup, setNewStudentGroup] = useState<string>("");
+  const [newName, setNewName] = useState<string>("");
+  const [newEmail, setNewEmail] = useState<string>("");
+  const [newGroup, setNewGroup] = useState<string>("");
   const [failMessage, setFailMessage] = useState<string>("");
   const [classID, setClassID] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export default function Instructor(props: InstructorProps) {
   function handleSubmit() {
     setFailMessage("");
     fetch(
-      `${firebaseConfig.baseURL}/register_student?stud_group=${newStudentGroup}&stud_name=${newStudentName}&stud_class=${classID}`,
+      `${firebaseConfig.baseURL}/register_student?stud_group=${newGroup}&stud_name=${newName}&stud_class=${classID}&stud_email=${newEmail}`,
       {
         method: "POST",
         headers: {
@@ -36,8 +37,9 @@ export default function Instructor(props: InstructorProps) {
           setFailMessage(message);
         }
         getInstructors();
-        setNewStudentName("");
-        setNewStudentGroup("");
+        setNewName("");
+        setNewGroup("");
+        setNewEmail("");
       });
     });
   }
@@ -57,9 +59,6 @@ export default function Instructor(props: InstructorProps) {
         setClassID(class_id.toString());
         setStudents(students);
         setStudentGroups(student_groups);
-        console.log(students);
-        console.log(students[0].group_id);
-        console.log(student_groups);
       });
     });
   };
@@ -82,15 +81,20 @@ export default function Instructor(props: InstructorProps) {
           <div className="register_student">
             <h3>Register a new student:</h3>
             <div className="register_instructor">
-              <h4>Student name:</h4>
+              <p className="reg">Student name:</p>
               <input
-                value={newStudentName}
-                onChange={(val) => setNewStudentName(val.target.value)}
+                value={newName}
+                onChange={(val) => setNewName(val.target.value)}
               ></input>
-              <h4>Class ID:</h4>
+              <p className="reg">Email:</p>
               <input
-                value={newStudentGroup}
-                onChange={(val) => setNewStudentGroup(val.target.value)}
+                value={newEmail}
+                onChange={(val) => setNewEmail(val.target.value)}
+              ></input>
+              <p className="reg">Group ID:</p>
+              <input
+                value={newGroup}
+                onChange={(val) => setNewGroup(val.target.value)}
               ></input>
               <br />
               <div className="submit_button_box">

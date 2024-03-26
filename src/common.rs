@@ -108,7 +108,7 @@ impl Student{
     pub fn new(row: Row, index: usize) -> Self {
         Student{
             name: from_value(row[0].clone()),
-            group_id: from_value(row[3].clone()),
+            group_id: from_value(row[4].clone()),
             index: index
         }
     } 

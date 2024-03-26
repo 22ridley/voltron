@@ -16,12 +16,13 @@ pub fn routes() -> Vec<Route> {
     routes![register_instructor, register_student]
 }
 
-#[post("/register_instructor?<instr_name>&<class_id>")]
+#[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
 pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
-    class_id: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>) 
-    -> ApiResponse<SuccessResponse> {
+    instr_class: Option<&str>, instr_email: Option<&str>,
+    backend: &State<Arc<Mutex<MySQLBackend>>>) -> ApiResponse<SuccessResponse> {
     let instructor_name: &str = instr_name.unwrap();
-    let class_id: &str = class_id.unwrap();
+    let class_id: &str = instr_class.unwrap();
+    let instructor_email: &str = instr_email.unwrap();
     // Create variables for failure
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
@@ -58,10 +59,10 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
         }
     } 
     // Assemble values to insert
-    let users_row: Vec<&str> = vec![instructor_name, "1", class_id, "-1"];
+    let users_row: Vec<&str> = vec![instructor_name, instructor_email, "1", class_id, "-1"];
 
     // Make insert query to add this new instructor
-    let q = "INSERT INTO users (user_name, privilege, class_id, group_id) VALUES (?, ?, ?, ?)";
+    let q = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
 
     // send insert query to db
     let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
@@ -76,13 +77,15 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
     }
 }
 
-#[post("/register_student?<stud_group>&<stud_name>&<stud_class>")]
+#[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_name: Option<&str>,
-    stud_class: Option<&str>, backend: &State<Arc<Mutex<MySQLBackend>>>)-> ApiResponse<SuccessResponse> {
+    stud_class: Option<&str>, stud_email: Option<&str>, 
+    backend: &State<Arc<Mutex<MySQLBackend>>>)-> ApiResponse<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
     let student_group: &str = stud_group.unwrap();
     let student_name: &str = stud_name.unwrap();
     let student_class: &str = stud_class.unwrap();
+    let student_email: &str = stud_email.unwrap();
     // Create variables for failure
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
@@ -118,7 +121,7 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
         }
     }
 
-    let users_row: Vec<&str> = vec![student_name, "0", student_class, student_group];
+    let users_row: Vec<&str> = vec![student_name, student_email, "0", student_class, student_group];
     // If this group ID is new, create a new file
     let file_string: String = format!("group_code/class{}_group{}_code.txt", student_class, student_group);
     let file_name: &Path = Path::new(&file_string);
@@ -128,7 +131,7 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
     }   
 
     // Make insert query to add this new student into users
-    let q: &str = "INSERT INTO users (user_name, privilege, class_id, group_id) VALUES (?, ?, ?, ?)";
+    let q: &str = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
     let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
     drop(bg);
     ApiResponse {
