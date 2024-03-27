@@ -13,6 +13,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 interface SignInProps {
   setToken: Dispatch<SetStateAction<string>>;
   setPrivilege: Dispatch<SetStateAction<number>>;
+  email: string;
   setEmail: Dispatch<SetStateAction<string>>;
   setName: Dispatch<SetStateAction<string>>;
 }
@@ -28,9 +29,15 @@ export const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
+var provider = new GoogleAuthProvider();
+const auth = getAuth();
 
 export default function SignIn(props: SignInProps) {
   const [jsonResponse, setJsonResponse] = useState<any>(null);
+
+  useEffect(() => {
+    findCurrentUser();
+  }, [auth, props]);
 
   useEffect(() => {
     if (jsonResponse) {
@@ -52,12 +59,18 @@ export default function SignIn(props: SignInProps) {
     await signOut(auth);
     // Set the local state back to it's initial state
     props.setToken("");
+    props.setEmail("");
+  };
+
+  const findCurrentUser = async () => {
+    onAuthStateChanged(auth, async (user: User | null) => {
+      if (user && user.email) {
+        props.setEmail(user.email);
+      }
+    });
   };
 
   const logGoogleUser = async () => {
-    var provider = new GoogleAuthProvider();
-    const auth = getAuth();
-
     onAuthStateChanged(auth, async (user: User | null) => {
       if (user) {
         // User is signed in
@@ -100,6 +113,9 @@ export default function SignIn(props: SignInProps) {
       <div className="all">
         <div className="loginbox">
           <h2>Login</h2>
+          <p className="email">
+            <b>Current email:</b> {props.email}
+          </p>
           <button className="signin_button" onClick={logGoogleUser}>
             Sign In With Google
           </button>

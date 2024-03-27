@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./App.css";
 import SignIn from "./components/sign-in.tsx";
 import Student from "./components/student.tsx";
@@ -12,18 +12,19 @@ function App() {
   const [email, setEmail] = useState<string>("");
   const [name, setName] = useState<string>("");
 
-  if (privilege == -1) {
+  if (privilege === -1) {
     return (
       <div className="signIn">
         <SignIn
           setToken={setToken}
           setPrivilege={setPrivilege}
+          email={email}
           setEmail={setEmail}
           setName={setName}
         />
       </div>
     );
-  } else if (privilege == 0) {
+  } else if (privilege === 0) {
     return (
       <div className="student">
         <Student
@@ -34,7 +35,7 @@ function App() {
         />
       </div>
     );
-  } else if (privilege == 1) {
+  } else if (privilege === 1) {
     return (
       <div className="instructor">
         <Instructor
