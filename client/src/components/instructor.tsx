@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/instructor.css";
 import { firebaseConfig } from "./sign-in.tsx";
 

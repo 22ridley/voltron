@@ -37,7 +37,7 @@ export default function SignIn(props: SignInProps) {
 
   useEffect(() => {
     findCurrentUser();
-  }, [auth, props]);
+  }, [props]);
 
   useEffect(() => {
     if (jsonResponse) {

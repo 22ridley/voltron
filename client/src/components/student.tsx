@@ -32,7 +32,7 @@ export default function Student(props: StudentProps) {
         setGroupID(group_id.toString());
       });
     });
-  }, [props.privilege]);
+  }, [props.privilege, props.token]);
 
   // Updating backend based on bufferText
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function Student(props: StudentProps) {
         Authorization: `Bearer ${props.token}`,
       },
     });
-  }, [bufferText]);
+  }, [bufferText, props.token]);
   return (
     <div>
       <div className="header">
