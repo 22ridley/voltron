@@ -21,17 +21,21 @@ export default function Student(props: StudentProps) {
       headers: {
         Authorization: `Bearer ${props.token}`,
       },
-    }).then((response) => {
-      response.json().then((response_json) => {
-        const contents: string = response_json.contents;
-        const class_id: number = response_json.class_id;
-        const group_id: number = response_json.group_id;
-        setBufferText(contents);
-        console.log(contents);
-        setClassID(class_id.toString());
-        setGroupID(group_id.toString());
-      });
-    });
+    })
+      .then((response) => {
+        response
+          .json()
+          .then((response_json) => {
+            const contents: string = response_json.contents;
+            const class_id: number = response_json.class_id;
+            const group_id: number = response_json.group_id;
+            setBufferText(contents);
+            setClassID(class_id.toString());
+            setGroupID(group_id.toString());
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   }, [props.privilege, props.token]);
 
   // Updating backend based on bufferText
@@ -69,7 +73,6 @@ export default function Student(props: StudentProps) {
           value={bufferText}
           onChange={(ev) => {
             setBufferText(ev.target.value);
-            console.log(ev.target.value);
           }}
         ></textarea>
       </div>

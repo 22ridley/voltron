@@ -29,19 +29,24 @@ export default function Instructor(props: InstructorProps) {
           Authorization: `Bearer ${props.token}`,
         },
       }
-    ).then((response) => {
-      response.json().then((response_json) => {
-        const success: boolean = response_json.success;
-        const message: string = response_json.message;
-        if (!success) {
-          setFailMessage(message);
-        }
-        getInstructors();
-        setNewName("");
-        setNewGroup("");
-        setNewEmail("");
-      });
-    });
+    )
+      .then((response) => {
+        response
+          .json()
+          .then((response_json) => {
+            const success: boolean = response_json.success;
+            const message: string = response_json.message;
+            if (!success) {
+              setFailMessage(message);
+            }
+            getInstructors();
+            setNewName("");
+            setNewGroup("");
+            setNewEmail("");
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   }
 
   // Fetch students
@@ -51,16 +56,21 @@ export default function Instructor(props: InstructorProps) {
       headers: {
         Authorization: `Bearer ${props.token}`,
       },
-    }).then((response) => {
-      response.json().then((response_json) => {
-        const class_id: number = response_json.class_id;
-        const students = response_json.students;
-        const student_groups = response_json.student_groups;
-        setClassID(class_id.toString());
-        setStudents(students);
-        setStudentGroups(student_groups);
-      });
-    });
+    })
+      .then((response) => {
+        response
+          .json()
+          .then((response_json) => {
+            const class_id: number = response_json.class_id;
+            const students = response_json.students;
+            const student_groups = response_json.student_groups;
+            setClassID(class_id.toString());
+            setStudents(students);
+            setStudentGroups(student_groups);
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   };
 
   // Initial fetch of students from backend

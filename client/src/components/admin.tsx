@@ -26,19 +26,24 @@ export default function Admin(props: AdminProps) {
           Authorization: `Bearer ${props.token}`,
         },
       }
-    ).then((response) => {
-      response.json().then((response_json) => {
-        const success: boolean = response_json.success;
-        const message: string = response_json.message;
-        if (!success) {
-          setFailMessage(message);
-        }
-        getInstructors();
-        setNewName("");
-        setNewClassID("");
-        setNewEmail("");
-      });
-    });
+    )
+      .then((response) => {
+        response
+          .json()
+          .then((response_json) => {
+            const success: boolean = response_json.success;
+            const message: string = response_json.message;
+            if (!success) {
+              setFailMessage(message);
+            }
+            getInstructors();
+            setNewName("");
+            setNewClassID("");
+            setNewEmail("");
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   }
 
   // Fetch instructors
@@ -48,12 +53,17 @@ export default function Admin(props: AdminProps) {
       headers: {
         Authorization: `Bearer ${props.token}`,
       },
-    }).then((response) => {
-      response.json().then((response_json) => {
-        const instr = response_json.instructors;
-        setInstructors(instr);
-      });
-    });
+    })
+      .then((response) => {
+        response
+          .json()
+          .then((response_json) => {
+            const instr = response_json.instructors;
+            setInstructors(instr);
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
   };
 
   // Fetch of instructors from backend at beginning
