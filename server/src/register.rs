@@ -123,7 +123,7 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
 
     let users_row: Vec<&str> = vec![student_name, student_email, "0", student_class, student_group];
     // If this group ID is new, create a new file
-    let file_string: String = format!("group_code/class{}_group{}_code.txt", student_class, student_group);
+    let file_string: String = format!("../group_code/class{}_group{}_code.txt", student_class, student_group);
     let file_name: &Path = Path::new(&file_string);
     if !file_name.is_file() {
         // Open a new file

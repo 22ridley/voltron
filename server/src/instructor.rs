@@ -57,7 +57,7 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
     let mut groups_res: Vec<StudentGroup> = Vec::new();
     // Read from the files to create StudentGroup vector
     for (index, group_id) in group_ids_vec.iter().enumerate() {
-        let filepath: String = format!("group_code/class{}_group{}_code.txt", class_id, group_id);
+        let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
         let code: String = fs::read_to_string(filepath).expect("Unable to read the file");
         let stud_group: StudentGroup = StudentGroup{group_id: *group_id, code, index: index};
         groups_res.push(stud_group);

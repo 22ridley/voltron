@@ -44,7 +44,7 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let group_id: i32 = row.get(4).unwrap();
 
     // File path to read and write from
-    let filepath: String = format!("group_code/class{}_group{}_code.txt", class_id, group_id);
+    let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
     
     // Convert group_id to number
     let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
@@ -88,7 +88,7 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     let group_id: i32 = row.get(4).unwrap();
 
     // Open a file in write-only mode, returns `io::Result<File>`
-    let filepath: String = format!("group_code/class{}_group{}_code.txt", class_id, group_id);
+    let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
     let path: &Path = Path::new(&filepath);
     let mut file: File = File::create(&path).unwrap();
 

@@ -22,7 +22,7 @@ mod admin;
 #[rocket::launch]
 async fn rocket() -> Rocket<Build> {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
-        .json_file("firebase-credentials.json")
+        .json_file("src/firebase-credentials.json")
         .build()
         .expect("Failed to read firebase credentials");
 
