@@ -6,8 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+alohomora = { path = "../../alohomora/alohomora" }
+alohomora_derive = { path = "../../alohomora/alohomora_derive" }
+bitvec = "0.22.3"
 chrono = "0.4.31"
-mysql = "24.0.0"
+mysql = "21.0.2"
+mysql_common = "0.22"
 rocket = "0.5.0-rc.1"
 rocket_cors = "0.6.0"
 rocket_firebase_auth = "0.5.0"
@@ -20,3 +24,6 @@ features = ["handlebars", "tera"]
 
 [dependencies.handlebars]
 features = ["dir_source"]
+
+[patch.crates-io]
+funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
