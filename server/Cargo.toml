@@ -12,7 +12,6 @@ bitvec = "0.22.3"
 chrono = "0.4.31"
 mysql = "21.0.2"
 mysql_common = "0.22"
-rocket = "0.5.0-rc.1"
 rocket_cors = "0.6.0"
 rocket_firebase_auth = "0.5.0"
 serde = "1.0.195"
@@ -27,3 +26,4 @@ features = ["dir_source"]
 
 [patch.crates-io]
 funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
+rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }

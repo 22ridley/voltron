@@ -2,13 +2,14 @@ extern crate mysql;
 extern crate serde;
 #[macro_use]
 extern crate rocket;
-use rocket::{Build, Rocket};
 extern crate rocket_dyn_templates;
 use backend::MySQLBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use alohomora::rocket::BBoxRocket;
+use alohomora_derive::routes;
 
 mod login;
 mod backend;
@@ -19,8 +20,8 @@ mod instructor;
 mod register;
 mod admin;
 
-#[rocket::launch]
-async fn rocket() -> Rocket<Build> {
+#[rocket::main]
+async fn main() {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
         .json_file("src/firebase-credentials.json")
         .build()
@@ -51,16 +52,23 @@ async fn rocket() -> Rocket<Build> {
         .to_cors()
         .expect("Failed to setup cors configuration.");
 
-    rocket::build()
-        .mount("/", login::routes())
-        .mount("/", student::routes())
-        .mount("/", instructor::routes())
-        .mount("/", admin::routes())
-        .mount("/", register::routes())
-        .mount("/", rocket_cors::catch_all_options_routes())
-        .attach(cors.clone())
+    // build and launch
+    if let Err(e) = BBoxRocket::build()
+        //.attach(cors.clone())
         .manage(cors)
         .manage(backend)
         .manage(config)
         .manage(firebase_auth)
+        .mount("/", routes![login::login])
+        //.mount("/", student::routes())
+        //.mount("/", instructor::routes())
+        //.mount("/", admin::routes())
+        //.mount("/", register::routes())
+        //.mount("/", rocket_cors::catch_all_options_routes())
+        .launch()
+        .await 
+    {
+        println!("didn't launch properly");
+        drop(e);
+    };
 }

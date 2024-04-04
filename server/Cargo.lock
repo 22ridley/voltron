@@ -4307,7 +4307,6 @@ dependencies = [
  "handlebars 4.5.0",
  "mysql",
  "mysql_common 0.22.2",
- "rocket 0.5.0",
  "rocket_cors",
  "rocket_dyn_templates 0.1.0",
  "rocket_firebase_auth",

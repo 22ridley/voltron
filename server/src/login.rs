@@ -1,13 +1,5 @@
-use alohomora::policy::Policy;
 use mysql::Row;
-use rocket::{
-    get,
-    http::Status,
-    routes,
-    serde::json::Json,
-    State,
-    Route
-};
+use rocket::state::State;
 use rocket_firebase_auth::FirebaseToken;
 use serde::Serialize;
 use crate::backend::MySQLBackend;
@@ -15,10 +7,7 @@ use std::{sync::Arc, sync::Mutex};
 use crate::common::ApiResponse;
 use alohomora::rocket::{BBoxResponse, BBoxResponseResult};
 use alohomora::{bbox::BBox, policy::NoPolicy};
-
-pub fn routes() -> Vec<Route> {
-    routes![login]
-}
+use alohomora_derive::get;
 
 #[derive(Debug, Serialize)]
 pub struct LoginResponse {
@@ -29,9 +18,9 @@ pub struct LoginResponse {
 }
 
 #[get("/login")]
-async fn login(
-    token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>
-) -> ApiResponse<LoginResponse> {
+pub(crate) fn login(
+    token: BBox<FirebaseToken, NoPolicy>, backend: &State<Arc<Mutex<MySQLBackend>>>
+) -> String {
     let email_opt: Option<String> = token.email;
     let mut email: String = "".to_string();
     if email_opt.is_some() {
