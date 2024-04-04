@@ -11,14 +11,15 @@ use crate::backend::MySQLBackend;
 use crate::common::{ApiResponse, SuccessResponse};
 use std::fs::File;
 use rocket_firebase_auth::FirebaseToken;
+use alohomora::{bbox::BBox, policy::NoPolicy};
 
 pub fn routes() -> Vec<Route> {
     routes![register_instructor, register_student]
 }
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
-pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
-    instr_class: Option<&str>, instr_email: Option<&str>,
+pub fn register_instructor(_token: FirebaseToken, instr_name: BBox<String, NoPolicy>,
+    instr_class: BBox<String, NoPolicy>, instr_email: BBox<String, NoPolicy>,
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> ApiResponse<SuccessResponse> {
     let instructor_name: &str = instr_name.unwrap();
     let class_id: &str = instr_class.unwrap();
