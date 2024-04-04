@@ -1,9 +1,10 @@
-use std::result::Result;
-use alohomora::db::{BBoxConn, BBoxOpts};
+use mysql::Opts;
+use mysql::*;
+use mysql::prelude::*;
 
 // Struct representing the SQL backend
 pub struct MySQLBackend {
-    pub handle: BBoxConn,
+    pub handle: mysql::Conn,
     _schema: String,
     _db_user: String,
     _db_password: String,
@@ -16,11 +17,11 @@ impl MySQLBackend {
         password: &str, 
         dbname: &str, 
         prime: bool,
-    ) -> Result<Self, String> {
+    ) -> Result<Self> {
         let schema = std::fs::read_to_string("src/schema.sql").unwrap();
 
-        let mut db = BBoxConn::new(
-            BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap()
+        let mut db = mysql::Conn::new(
+            Opts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap()
         ).unwrap();
 
         assert_eq!(db.ping(), true);
@@ -46,5 +47,14 @@ impl MySQLBackend {
             _db_password: password.to_string().to_owned(),
             _db_name: dbname.to_string().to_owned(),
         })
+    }
+
+    pub fn prep_exec<Q, P, T>(&mut self, query: Q, params: P) -> Result<Vec<T>>
+    where
+        Q: AsRef<str>,
+        P: Into<Params>,
+        T: FromRow, {
+            let stmt = self.handle.prep(query)?;
+            self.handle.exec(stmt, params)
     }
 }
