@@ -9,16 +9,20 @@ edition = "2021"
 alohomora = { path = "../../alohomora/alohomora" }
 alohomora_derive = { path = "../../alohomora/alohomora_derive" }
 bitvec = "0.22.3"
+rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
 chrono = "0.4.31"
 mysql = "21.0.2"
 mysql_common = "0.22"
 rocket_cors = "0.6.0"
-rocket_firebase_auth = "0.5.0"
+rocket_firebase_auth = { path = "../../rocket-firebase-auth" }
 serde = "1.0.195"
 toml = "0.2.1"
+slog = { version = "2.4.0", features = ["max_level_trace", "release_max_level_trace"] }
+slog-term = "2.4.0"
 
 [dependencies.rocket_dyn_templates]
-version = "0.1.0-rc.1"
+git = "https://github.com/KinanBab/Rocket.git"
+branch = "main"
 features = ["handlebars", "tera"]
 
 [dependencies.handlebars]
@@ -26,4 +30,3 @@ features = ["dir_source"]
 
 [patch.crates-io]
 funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
-rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
