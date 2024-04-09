@@ -1,3 +1,4 @@
+use alohomora::fold::fold;
 use alohomora::policy::AnyPolicy;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use mysql::{Row, Value};
@@ -40,23 +41,24 @@ pub(crate) fn login(
      */
     let email_bbox = execute_pure(token, 
         PrivacyPureRegion::new(|token: FirebaseToken| {
-            // Need two separate lines to give email a type
+            // Need the following separate lines to give email a type
             let email: String = token.email.unwrap();
             email
         })
     ).unwrap();
+
     let user_res_bbox = execute_pure(email_bbox, 
         PrivacyPureRegion::new(|email: String| {
             let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
             let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]);
             drop(bg);
-            user_res;
+            user_res
         })
     ).unwrap();
 
-    let user_res_bbox: Vec<BBox<Vec<Value>, AnyPolicy>> = user_res_bbox.into();
+    let user_res_bbox: Vec<BBox<Vec<Value>, AnyPolicy>> = fold(user_res_bbox);
     let response = execute_pure((email_bbox, user_res_bbox),
-        PrivacyPureRegion::new(|(email: String, user_res: Vec<Bbox<Vec<Value>, AnyPolicy>>)| {
+        PrivacyPureRegion::new(|(email, user_res)| {
             if user_res.len() == 0 {
                 return ApiResponse {
                     json: Some(Json(LoginResponse {
@@ -66,13 +68,13 @@ pub(crate) fn login(
                         privilege: -1,
                     })),
                     status: Status::InternalServerError,
-                }
+                };
             }
             let row: Row = user_res.get(0).unwrap().clone();
             let user_name: String = row.get(0).unwrap();
             let privilege: i32 =  row.get(2).unwrap();
             // Return response
-            return ApiResponse {
+            ApiResponse {
                 json: Some(Json(LoginResponse {
                     success: true,
                     name: user_name,
@@ -83,5 +85,5 @@ pub(crate) fn login(
             }
         })
     ).unwrap();
-    response;
+    response
 }
