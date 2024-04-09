@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::result::Result;
 use std::error::Error;
 
-pub struct MySqlBackend {
+pub struct MySQLBackend {
     pub handle: BBoxConn,
     pub log: slog::Logger,
     _schema: String,
@@ -13,7 +13,7 @@ pub struct MySqlBackend {
     db_name: String,
 }
 
-impl MySqlBackend { 
+impl MySQLBackend { 
     pub fn new(
         user: &str,
         password: &str,
@@ -54,7 +54,7 @@ impl MySqlBackend {
             db.query_drop(format!("USE {};", dbname)).unwrap();
         }
 
-        Ok(MySqlBackend {
+        Ok(MySQLBackend {
             handle: db,
             log: log,
             _schema: schema.to_owned(),

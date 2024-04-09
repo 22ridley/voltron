@@ -49,7 +49,7 @@ dependencies = [
  "erased-serde",
  "figment",
  "futures",
- "handlebars 4.5.0",
+ "handlebars 3.5.5",
  "indexmap 1.9.3",
  "itertools",
  "lazy_static",
@@ -1340,6 +1340,7 @@ dependencies = [
  "quick-error",
  "serde",
  "serde_json",
+ "walkdir",
 ]
 
 [[package]]
