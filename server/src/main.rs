@@ -19,6 +19,7 @@ mod student;
 mod instructor;
 mod register;
 mod admin;
+mod policies;
 
 #[rocket::main]
 async fn main() {

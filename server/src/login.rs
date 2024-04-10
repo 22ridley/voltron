@@ -1,6 +1,9 @@
+use alohomora::context::Context;
+use alohomora::db::from_value;
 use alohomora::fold::fold;
 use alohomora::policy::AnyPolicy;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
+use alohomora::AlohomoraType;
 use mysql::{Row, Value};
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -8,11 +11,13 @@ use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
 use serde::Serialize;
 use crate::backend::MySQLBackend;
+use crate::config::Config;
 use std::{sync::Arc, sync::Mutex};
 use crate::common::ApiResponse;
-use alohomora::rocket::{BBoxResponse, BBoxResponseResult};
+use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, BBoxResponse, BBoxResponseResult, FromBBoxRequest};
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use alohomora_derive::get;
+use crate::policies::QueryableOnly;
 
 #[derive(Debug, Serialize)]
 pub struct LoginResponse {
@@ -22,9 +27,70 @@ pub struct LoginResponse {
     pub privilege: i32,
 }
 
+// Custom developer defined payload attached to every context.
+#[derive(AlohomoraType, Clone)]
+#[alohomora_out_type(verbatim = [db, config])]
+pub struct ContextDataType {
+    pub user: Option<BBox<String, NoPolicy>>,
+    pub db: Arc<Mutex<MySQLBackend>>,
+    pub config: Config,
+}
+
+// Build the custom payload for the context given HTTP request.
+#[rocket::async_trait]
+impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
+    type BBoxError = ();
+
+    async fn from_bbox_request(
+        request: BBoxRequest<'a, 'r>,
+    ) -> BBoxRequestOutcome<Self, Self::BBoxError> {
+        let db: &State<Arc<Mutex<MySQLBackend>>> = request.guard().await.unwrap();
+        let config: &State<Config> = request.guard().await.unwrap();
+
+        // Find user using ApiKey token from cookie.
+        let apikey = request
+            .cookies()
+            .get::<QueryableOnly>("apikey");
+        let user = match apikey {
+            None => None,
+            Some(apikey) => {
+                let apikey = apikey.value().to_owned();
+                let mut bg = db.lock().unwrap();
+                let res = bg.prep_exec(
+                    "SELECT * FROM users WHERE apikey = ?",
+                    (apikey,),
+                    Context::empty(),
+                );
+                drop(bg);
+                if res.len() > 0 {
+                    Some(from_value(res[0][0].clone()).unwrap())
+                }
+                else {
+                    None
+                }
+            }
+        };
+
+        request
+            .route()
+            .and_then(|_| {
+                Some(ContextDataType {
+                    user,
+                    db: db.inner().clone(),
+                    config: config.inner().clone(),
+                })
+            })
+            .into_outcome((
+                Status::InternalServerError,
+                (),
+            ))
+    }
+}
+
 #[get("/login")]
 pub(crate) fn login(
-    token: BBox<FirebaseToken, NoPolicy>, backend: &State<Arc<Mutex<MySQLBackend>>>
+    token: BBox<FirebaseToken, NoPolicy>, backend: &State<Arc<Mutex<MySQLBackend>>>, 
+    context: Context<ContextDataType>
 ) -> ApiResponse<LoginResponse> {
     // Statically analyzed region in a closure (look at websubmit)
     // Use a match statement instead
@@ -56,7 +122,7 @@ pub(crate) fn login(
         })
     ).unwrap();
 
-    let user_res_bbox: Vec<BBox<Vec<Value>, AnyPolicy>> = fold(user_res_bbox);
+    // let user_res_bbox: Vec<BBox<Vec<Value>, AnyPolicy>> = fold(user_res_bbox);
     let response = execute_pure((email_bbox, user_res_bbox),
         PrivacyPureRegion::new(|(email, user_res)| {
             if user_res.len() == 0 {

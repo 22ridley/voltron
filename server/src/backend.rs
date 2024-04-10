@@ -1,82 +1,68 @@
-use alohomora::db::{BBoxConn, BBoxOpts, BBoxParams, BBoxStatement, BBoxValue};
-use std::collections::HashMap;
-use std::result::Result;
-use std::error::Error;
+use alohomora::context::{Context, ContextData};
+use alohomora::db::{BBoxConn, BBoxParams, BBoxResult, BBoxStatement, BBoxValue};
+use alohomora::policy::Reason;
+use mysql::Opts;
+use mysql::*;
+use mysql::prelude::*;
+use crate::login::ContextDataType;
 
+// Struct representing the SQL backend
 pub struct MySQLBackend {
     pub handle: BBoxConn,
-    pub log: slog::Logger,
     _schema: String,
-    prep_stmts: HashMap<String, BBoxStatement>,
-    db_user: String,
-    db_password: String,
-    db_name: String,
+    _db_user: String,
+    _db_password: String,
+    _db_name: String,
 }
 
-impl MySQLBackend { 
+impl MySQLBackend {
     pub fn new(
-        user: &str,
-        password: &str,
-        dbname: &str,
-        log: Option<slog::Logger>,
+        user: &str, 
+        password: &str, 
+        dbname: &str, 
         prime: bool,
-    ) -> Result<Self, Box<dyn Error>> { 
-        let log = match log {
-            None => slog::Logger::root(slog::Discard, o!()),
-            Some(l) => l,
-        };
+    ) -> Result<Self> {
+        let schema = std::fs::read_to_string("src/schema.sql").unwrap();
 
-        let schema = std::fs::read_to_string("websubmit-boxed/src/schema.sql")?;
+        let mut db = BBoxConn::new(
+            Opts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap()
+        ).unwrap();
 
-        debug!(
-            log,
-            "Connecting to MySql DB and initializing schema {}...", dbname
-        );
-        let mut db = BBoxConn::new( // this is the user and password from the config.toml file
-            BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap(),
-        )
-        .unwrap();
         assert_eq!(db.ping(), true);
 
         if prime {
-            db.query_drop(format!("DROP DATABASE IF EXISTS {};", dbname))
-                .unwrap();
-            db.query_drop(format!("CREATE DATABASE {};", dbname))
-                .unwrap();
+            println!("[!] priming");
+            db.query_drop(format!("DROP DATABASE IF EXISTS {};", dbname)).unwrap();
+            db.query_drop(format!("CREATE DATABASE {};", dbname)).unwrap();
             db.query_drop(format!("USE {};", dbname)).unwrap();
-            for line in schema.lines() {
-                if line.starts_with("--") || line.is_empty() {
-                    continue;
-                }
+
+            for line in schema.lines(){
+                if line.starts_with("--") || line.is_empty() { continue };
                 db.query_drop(line).unwrap();
             }
         } else {
             db.query_drop(format!("USE {};", dbname)).unwrap();
         }
 
-        Ok(MySQLBackend {
+        Ok(MySQLBackend{
             handle: db,
-            log: log,
             _schema: schema.to_owned(),
-            prep_stmts: HashMap::new(),
-            db_user: String::from(user),
-            db_password: String::from(password),
-            db_name: String::from(dbname),
+            _db_user: user.to_string().to_owned(),
+            _db_password: password.to_string().to_owned(),
+            _db_name: dbname.to_string().to_owned(),
         })
     }
 
-    fn reconnect(&mut self) {
-        self.handle = BBoxConn::new(
-            BBoxOpts::from_url(&format!(
-                "mysql://{}:{}@127.0.0.1/{}",
-                self.db_user, self.db_password, self.db_name
-            ))
-            .unwrap(),
-        )
-        .unwrap();
-    }
+    // Needs to take context
+    // pub fn prep_exec<Q, P, T>(&mut self, query: Q, params: P, context: Context<ContextData>) -> Result<Vec<T>>
+    // where
+    //     Q: AsRef<str>,
+    //     P: Into<Params>,
+    //     T: FromRow, {
+    //         self.handle.prep_exec(query, params, context)
+    // }
 
-    pub fn prep_exec<P: Into<BBoxParams>>(&mut self, sql: &str, params: P) -> Vec<Vec<BBoxValue>> {
+    pub fn prep_exec<P: Into<BBoxParams>>(&mut self, sql: &str, params: P, context: Context<ContextDataType>) -> Vec<Vec<BBoxValue>> {
         if !self.prep_stmts.contains_key(sql) {
             let stmt = self
                 .handle
@@ -89,14 +75,9 @@ impl MySQLBackend {
         loop {
             match self
                 .handle
-                .exec_iter(self.prep_stmts[sql].clone(), params.clone())
+                .exec_iter(self.prep_stmts[sql].clone(), params.clone(), context.clone())
             {
-                Err(e) => {
-                    warn!(
-                        self.log,
-                        "query \'{}\' failed ({}), reconnecting to database", sql, e
-                    );
-                }
+                Err(e) => {}
                 Ok(res) => {
                     let mut rows = vec![];
                     for row in res {
@@ -109,35 +90,25 @@ impl MySQLBackend {
             self.reconnect();
         }
     }
+    // pub fn prep_exec<'i, P: Into<BBoxParams>, D: ContextData, T: FromRow>(
+    //     &mut self, query: &str, params: P, context: Context<D>) -> BBoxResult<Vec<T>> {
+    //         let stmt = self.prep(query)?;
+    //         self.exec(stmt, params, context)
+    // }
+    // pub fn exec<S: for<'a> Into<BBoxStatement<'a>>, P: Into<BBoxParams>, D: ContextData, T: FromRow>(
+    //     &mut self,
+    //     stmt: S,
+    //     params: P,
+    //     context: Context<D>,
+    // ) -> BBoxResult<Vec<T>> {
+    //     let stmt = stmt.into();
+    //     let (statement, stmt_str) = (stmt.0, stmt.1);
+    //     let statement = match statement {
+    //         Some(statement) => statement,
+    //         None => self.conn.prep(stmt_str.deref())?,
+    //     };
 
-    fn do_insert<P: Into<BBoxParams>>(&mut self, table: &str, vals: P, replace: bool) {
-        let vals: BBoxParams = vals.into();
-        let mut param_count = 0;
-        if let BBoxParams::Positional(vec) = &vals {
-          param_count = vec.len();
-        }
-    
-        let op = if replace { "REPLACE" } else { "INSERT" };
-        let q = format!(
-            "{} INTO {} VALUES ({})",
-            op,
-            table,
-            (0..param_count).map(|_| "?").collect::<Vec<&str>>().join(",")
-        );
-        while let Err(e) = self.handle.exec_drop(q.clone(), vals.clone()) {
-            warn!(
-                self.log,
-                "failed to insert into {}, query {} ({}), reconnecting to database", table, q, e
-            );
-            self.reconnect();
-        }
-    }
-
-    pub fn insert<P: Into<BBoxParams>>(&mut self, table: &str, vals: P) {
-        self.do_insert(table, vals, false);
-    }
-
-    pub fn replace<P: Into<BBoxParams>>(&mut self, table: &str, vals: P) {
-        self.do_insert(table, vals, true);
-    }
+    //     let params = params.into().transform(context, Reason::DB(stmt_str.deref()))?;
+    //     self.conn.exec(statement, params)
+    // }
 }
