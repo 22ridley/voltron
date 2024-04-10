@@ -10,7 +10,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
 use serde::Serialize;
-use crate::backend::MySQLBackend;
+use crate::backend::MySqlBackend;
 use crate::config::Config;
 use std::{sync::Arc, sync::Mutex};
 use crate::common::ApiResponse;
@@ -32,7 +32,7 @@ pub struct LoginResponse {
 #[alohomora_out_type(verbatim = [db, config])]
 pub struct ContextDataType {
     pub user: Option<BBox<String, NoPolicy>>,
-    pub db: Arc<Mutex<MySQLBackend>>,
+    pub db: Arc<Mutex<MySqlBackend>>,
     pub config: Config,
 }
 
@@ -44,7 +44,7 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
     async fn from_bbox_request(
         request: BBoxRequest<'a, 'r>,
     ) -> BBoxRequestOutcome<Self, Self::BBoxError> {
-        let db: &State<Arc<Mutex<MySQLBackend>>> = request.guard().await.unwrap();
+        let db: &State<Arc<Mutex<MySqlBackend>>> = request.guard().await.unwrap();
         let config: &State<Config> = request.guard().await.unwrap();
 
         // Find user using ApiKey token from cookie.
@@ -89,7 +89,7 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
 
 #[get("/login")]
 pub(crate) fn login(
-    token: BBox<FirebaseToken, NoPolicy>, backend: &State<Arc<Mutex<MySQLBackend>>>, 
+    token: BBox<FirebaseToken, NoPolicy>, backend: &State<Arc<Mutex<MySqlBackend>>>, 
     context: Context<ContextDataType>
 ) -> ApiResponse<LoginResponse> {
     // Statically analyzed region in a closure (look at websubmit)
@@ -115,7 +115,7 @@ pub(crate) fn login(
 
     let user_res_bbox = execute_pure(email_bbox, 
         PrivacyPureRegion::new(|email: String| {
-            let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
+            let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
             let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]);
             drop(bg);
             user_res

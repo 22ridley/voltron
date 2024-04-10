@@ -3,9 +3,10 @@ extern crate serde;
 #[macro_use]
 extern crate rocket;
 extern crate rocket_dyn_templates;
-use backend::MySQLBackend;
+use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
+use slog::o;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use alohomora::rocket::BBoxRocket;
@@ -21,6 +22,13 @@ mod register;
 mod admin;
 mod policies;
 
+pub fn new_logger() -> slog::Logger {
+    use slog::Drain;
+    use slog::Logger;
+    use slog_term::term_full;
+    Logger::root(Mutex::new(term_full()).fuse(), o!())
+}
+
 #[rocket::main]
 async fn main() {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
@@ -32,11 +40,12 @@ async fn main() {
     let config_path = "config.toml";
     let config = config::parse(config_path).unwrap();
     let db_name: &str = "users";
-    let backend: Arc<Mutex<MySQLBackend>> = Arc::new(Mutex::new(
-    backend::MySQLBackend::new(
+    let backend: Arc<Mutex<MySqlBackend>> = Arc::new(Mutex::new(
+    backend::MySqlBackend::new(
         &config.db_user,
         &config.db_password,
         &format!("{}", db_name),
+        Some(new_logger()),
         config.prime,
         ).unwrap(),));
 
