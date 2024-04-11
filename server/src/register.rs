@@ -5,7 +5,6 @@ use std::{sync::Arc, sync::Mutex};
 use mysql::Row;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::Route;
 use rocket::State;
 use crate::backend::MySqlBackend;
 use crate::common::{ApiResponse, SuccessResponse};

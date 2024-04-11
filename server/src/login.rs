@@ -1,7 +1,7 @@
 use alohomora::db::from_value;
 use alohomora::policy::AnyPolicy;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
-use mysql::{Row, Value};
+use mysql::Value;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -9,7 +9,7 @@ use rocket_firebase_auth::FirebaseToken;
 use serde::Serialize;
 use crate::backend::MySqlBackend;
 use std::{sync::Arc, sync::Mutex};
-use crate::common::{ApiResponse};
+use crate::common::ApiResponse;
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use alohomora::rocket::get;
 use alohomora::context::Context;

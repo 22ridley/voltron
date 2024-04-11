@@ -1,6 +1,6 @@
 use std::{io::Write, path::Path, sync::Arc, sync::Mutex};
 use crate::common::{ApiResponse, SuccessResponse};
-use mysql::{Row, Value};
+use mysql::Value;
 use rocket::{http::Status, serde::json::Json, State};
 use serde::Serialize;
 use std::fs::{self, File};
@@ -102,24 +102,29 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
             status: Status::InternalServerError,
         }
     }
-    let row: Row = user_res.get(0).unwrap().clone();
-    let class_id: i32 = row.get(3).unwrap();
-    let group_id: i32 = row.get(4).unwrap();
+    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
+    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4]).unwrap();
 
-    // Open a file in write-only mode, returns `io::Result<File>`
-    let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-    let path: &Path = Path::new(&filepath);
-    let mut file: File = File::create(&path).unwrap();
+    let response = execute_pure((class_id_bbox, group_id_bbox, text), 
+        PrivacyPureRegion::new(|(class_id, group_id, text_u): (i32, i32, String)| {
+            // Open a file in write-only mode, returns `io::Result<File>`
+            let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+            let path: &Path = Path::new(&filepath);
+            let mut file: File = File::create(&path).unwrap();
 
-    // Write the new text to the file
-    let _bytes_written: Result<usize, std::io::Error> = file.write(text.unwrap().as_bytes());
-    // Return response
-    ApiResponse {
-        json: Some(Json(SuccessResponse {
-            success: true,
-            message: "".to_string()
-        })),
-        status: Status::Ok,
-    }
+            // Write the new text to the file
+            let _bytes_written: Result<usize, std::io::Error> = file.write(text_u.as_bytes());
+            // Return response
+            ApiResponse {
+                json: Some(Json(SuccessResponse {
+                    success: true,
+                    message: "".to_string()
+                })),
+                status: Status::Ok,
+            }
+        })
+    ).unwrap();
+    response
 }
 
