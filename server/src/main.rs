@@ -2,7 +2,6 @@ extern crate mysql;
 extern crate serde;
 #[macro_use]
 extern crate rocket;
-extern crate rocket_dyn_templates;
 use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
