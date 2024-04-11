@@ -1,8 +1,7 @@
-use crate::common::{Instructor, ApiResponse};
+use crate::common::Instructor;
 use crate::backend::MySqlBackend;
 use alohomora::db::from_value;
 use alohomora::fold::fold;
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
@@ -13,7 +12,7 @@ use alohomora::context::Context;
 use crate::policies::ContextDataType;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use mysql::Value;
-use alohomora::rocket::get;
+use alohomora::rocket::{get, ContextResponse};
 
 #[derive(Debug, Serialize)]
 pub struct AdminResponse {
@@ -25,11 +24,11 @@ pub struct AdminResponse {
 pub(crate) fn admin(token: BBox<FirebaseToken, NoPolicy>, 
     backend: &State<Arc<Mutex<MySqlBackend>>>, 
     context: Context<ContextDataType>) 
-    -> ApiResponse<AdminResponse> {
+    -> ContextResponse<Json<AdminResponse>, AnyPolicy, ContextDataType> {
     // Verify that this user is admin?
     // Get list of all students
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 1", (), context);
+    let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 1", (), context.clone());
     drop(bg);
 
     let instr_vec_bbox: Vec<BBox<Instructor, AnyPolicy>> = Vec::new();
@@ -49,14 +48,11 @@ pub(crate) fn admin(token: BBox<FirebaseToken, NoPolicy>,
     // Return response
     let response = execute_pure(instr_bbox_vec, 
         PrivacyPureRegion::new(|instr_vec| {
-            ApiResponse {
-                json: Some(Json(AdminResponse {
-                    success: true,
-                    instructors: instr_vec
-                })),
-                status: Status::Ok,
-            }
+            Json(AdminResponse {
+                success: true,
+                instructors: instr_vec
+            })
         })
     ).unwrap();
-    response
+    ContextResponse::from((response, context))
 }

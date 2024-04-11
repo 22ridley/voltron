@@ -1,7 +1,7 @@
 use std::{io::Write, path::Path, sync::Arc, sync::Mutex};
-use crate::common::{ApiResponse, SuccessResponse};
+use crate::common::SuccessResponse;
 use mysql::Value;
-use rocket::{http::Status, serde::json::Json, State};
+use rocket::{serde::json::Json, State};
 use serde::Serialize;
 use std::fs::{self, File};
 use rocket_firebase_auth::FirebaseToken;
@@ -9,7 +9,7 @@ use crate::backend::MySqlBackend;
 use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}};
 use alohomora::context::Context;
 use crate::policies::ContextDataType;
-use alohomora::rocket::{get, post};
+use alohomora::rocket::{get, post, ContextResponse};
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 
 #[derive(Debug, Serialize)]
@@ -24,7 +24,7 @@ pub struct StudentResponse {
 pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>, 
     backend: &State<Arc<Mutex<MySqlBackend>>>, 
     context: Context<ContextDataType>) 
--> ApiResponse<StudentResponse> {
+-> ContextResponse<Json<StudentResponse>, AnyPolicy, ContextDataType> {
     // Find this student
     let email_bbox: BBox<String, AnyPolicy> = execute_pure(token, 
         PrivacyPureRegion::new(|token: FirebaseToken| {
@@ -39,15 +39,14 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
-        return ApiResponse {
-            json: Some(Json(StudentResponse {
-                success: false,
-                class_id: -1,
-                group_id: -1,
-                contents: "".to_string(),
-            })),
-            status: Status::InternalServerError,
-        }
+        let response = Json(StudentResponse {
+            success: false,
+            class_id: -1,
+            group_id: -1,
+            contents: "".to_string(),
+        });
+        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
+        return ContextResponse::from((response_bbox, context))
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
     let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
@@ -62,25 +61,23 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
             let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
 
             // Return response
-            ApiResponse {
-                json: Some(Json(StudentResponse {
-                    success: true,
-                    class_id: class_id,
-                    group_id: group_id,
-                    contents: contents,
-                })),
-                status: Status::Ok,
-            }
+            Json(StudentResponse {
+                success: true,
+                class_id: class_id,
+                group_id: group_id,
+                contents: contents,
+            })
         })
     ).unwrap();
-    response
+    ContextResponse::from((response, context))
 }
 
 #[post("/update?<text>")]
 pub fn update(token: BBox<FirebaseToken, NoPolicy>, 
     text: BBox<String, NoPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
-    context: Context<ContextDataType>) -> ApiResponse<SuccessResponse> {
+    context: Context<ContextDataType>) 
+    -> ContextResponse<Json<SuccessResponse>, AnyPolicy, ContextDataType> {
     // Find this student
     let email_bbox: BBox<String, AnyPolicy> = execute_pure(token, 
         PrivacyPureRegion::new(|token: FirebaseToken| {
@@ -94,13 +91,12 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
-        return ApiResponse {
-            json: Some(Json(SuccessResponse {
-                success: false,
-                message: "Student not found".to_string()
-            })),
-            status: Status::InternalServerError,
-        }
+        let response = Json(SuccessResponse {
+            success: false,
+            message: "Student not found".to_string()
+        });
+        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
+        return ContextResponse::from((response_bbox, context))
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
     let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
@@ -116,15 +112,12 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
             // Write the new text to the file
             let _bytes_written: Result<usize, std::io::Error> = file.write(text_u.as_bytes());
             // Return response
-            ApiResponse {
-                json: Some(Json(SuccessResponse {
-                    success: true,
-                    message: "".to_string()
-                })),
-                status: Status::Ok,
-            }
+            Json(SuccessResponse {
+                success: true,
+                message: "".to_string()
+            })
         })
     ).unwrap();
-    response
+    ContextResponse::from((response, context))
 }
 
