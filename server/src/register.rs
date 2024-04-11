@@ -7,20 +7,23 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::Route;
 use rocket::State;
-use crate::backend::MySQLBackend;
+use crate::backend::MySqlBackend;
 use crate::common::{ApiResponse, SuccessResponse};
 use std::fs::File;
 use rocket_firebase_auth::FirebaseToken;
 use alohomora::{bbox::BBox, policy::NoPolicy};
-
-pub fn routes() -> Vec<Route> {
-    routes![register_instructor, register_student]
-}
+use alohomora::rocket::post;
+use alohomora::context::Context;
+use crate::policies::ContextDataType;
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
-pub fn register_instructor(_token: FirebaseToken, instr_name: BBox<String, NoPolicy>,
-    instr_class: BBox<String, NoPolicy>, instr_email: BBox<String, NoPolicy>,
-    backend: &State<Arc<Mutex<MySQLBackend>>>) -> ApiResponse<SuccessResponse> {
+pub fn register_instructor(_token: BBox<FirebaseToken, NoPolicy>, 
+    instr_name: BBox<String, NoPolicy>,
+    instr_class: BBox<String, NoPolicy>, 
+    instr_email: BBox<String, NoPolicy>,
+    backend: &State<Arc<Mutex<MySqlBackend>>>, 
+    context: Context<ContextDataType>
+) -> ApiResponse<SuccessResponse> {
     let instructor_name: &str = instr_name.unwrap();
     let class_id: &str = instr_class.unwrap();
     let instructor_email: &str = instr_email.unwrap();
@@ -66,7 +69,7 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: BBox<String, NoPol
     let q = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
 
     // send insert query to db
-    let _res: Vec<Row> = (*bg).prep_exec(q, users_row).unwrap();
+    let _res: Vec<Row> = (*bg).prep_exec(q, users_row, context).unwrap();
     drop(bg);
 
     ApiResponse {
@@ -79,9 +82,13 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: BBox<String, NoPol
 }
 
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
-pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_name: Option<&str>,
-    stud_class: Option<&str>, stud_email: Option<&str>, 
-    backend: &State<Arc<Mutex<MySQLBackend>>>)-> ApiResponse<SuccessResponse> {
+pub fn register_student(_token: BBox<FirebaseToken, NoPolicy>, 
+    stud_group: BBox<String, NoPolicy>, 
+    stud_name: BBox<String, NoPolicy>,
+    stud_class: BBox<String, NoPolicy>, 
+    stud_email: BBox<String, NoPolicy>, 
+    backend: &State<Arc<Mutex<MySqlBackend>>>,
+    context: Context<ContextDataType>)-> ApiResponse<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
     let student_group: &str = stud_group.unwrap();
     let student_name: &str = stud_name.unwrap();
@@ -91,7 +98,7 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
     // Get the names of everyone currently in the database 
-    let all_names: Vec<Row> = (*bg).prep_exec("SELECT user_name FROM users", ()).unwrap();
+    let all_names: Vec<Row> = (*bg).prep_exec("SELECT user_name FROM users", (), context).unwrap();
     // Check that this name is not already in the database
     for row in all_names {
         let name: String = row.get(0).unwrap();

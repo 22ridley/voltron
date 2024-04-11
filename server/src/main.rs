@@ -1,6 +1,5 @@
 extern crate mysql;
 extern crate serde;
-#[macro_use]
 extern crate rocket;
 use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
@@ -69,9 +68,9 @@ async fn main() {
         .manage(config)
         .manage(firebase_auth)
         .mount("/", routes![login::login])
-        //.mount("/", student::routes())
-        //.mount("/", instructor::routes())
-        //.mount("/", admin::routes())
+        .mount("/", routes![admin::admin])
+        .mount("/", routes![student::student, student::update])
+        .mount("/", routes![instructor::instructor])
         //.mount("/", register::routes())
         //.mount("/", rocket_cors::catch_all_options_routes())
         .launch()

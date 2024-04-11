@@ -3,6 +3,7 @@ use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
 use mysql::Value;
 use rocket::http::{Cookie, Status};
+use rocket::outcome::IntoOutcome;
 use rocket::{Request, State};
 use alohomora::context::{Context, UnprotectedContext};
 use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason, schema_policy, SchemaPolicy};

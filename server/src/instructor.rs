@@ -1,6 +1,6 @@
 use std::fs;
 use crate::common::{Student, StudentGroup, ApiResponse};
-use crate::backend::MySQLBackend;
+use crate::backend::MySqlBackend;
 use mysql::Row;
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -8,10 +8,10 @@ use rocket::{Route, State};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use rocket_firebase_auth::FirebaseToken;
-
-pub fn routes() -> Vec<Route> {
-    routes![instructor]
-}
+use alohomora::{bbox::BBox, policy::NoPolicy};
+use alohomora::context::Context;
+use crate::policies::ContextDataType;
+use alohomora::rocket::get;
 
 #[derive(Debug, Serialize)]
 pub struct InstructorResponse {
@@ -22,12 +22,14 @@ pub struct InstructorResponse {
 }
 
 #[get("/instructor")]
-pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
+pub(crate) fn instructor(token: BBox<FirebaseToken, NoPolicy>, 
+    backend: &State<Arc<Mutex<MySqlBackend>>>,
+    context: Context<ContextDataType>) 
     -> ApiResponse<InstructorResponse> {
-    let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
+    let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
     let email: String = token.email.unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()], context).unwrap();
     // If the instructor is not found, return error
     if user_res.len() == 0 {
         return ApiResponse {
@@ -45,8 +47,8 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
     // Get list of all students in this class
     let mut args: Vec<String> = Vec::new();
     args.push(class_id.to_string());
-    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", args).unwrap();
-    let group_ids_row: Vec<Row> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id]).unwrap();
+    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", args, context).unwrap();
+    let group_ids_row: Vec<Row> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id], context).unwrap();
     let mut group_ids_vec: Vec<i32> = Vec::new();
     for row in group_ids_row.iter() {
         let group_id: i32 = row.get(0).unwrap();
