@@ -2,7 +2,7 @@ extern crate serde;
 extern crate mysql;
 use std::path::Path;
 use std::{sync::Arc, sync::Mutex};
-use mysql::Row;
+use mysql::Value;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -10,7 +10,7 @@ use crate::backend::MySqlBackend;
 use crate::common::{ApiResponse, SuccessResponse};
 use std::fs::File;
 use rocket_firebase_auth::FirebaseToken;
-use alohomora::{bbox::BBox, policy::NoPolicy};
+use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}};
 use alohomora::rocket::post;
 use alohomora::context::Context;
 use crate::policies::ContextDataType;
@@ -23,18 +23,17 @@ pub fn register_instructor(_token: BBox<FirebaseToken, NoPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>, 
     context: Context<ContextDataType>
 ) -> ApiResponse<SuccessResponse> {
-    let instructor_name: &str = instr_name.unwrap();
-    let class_id: &str = instr_class.unwrap();
-    let instructor_email: &str = instr_email.unwrap();
+    // Get the names of everyone currently in the database 
+    let mut bg = backend.lock().unwrap();
+    let all_names: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT user_name FROM users", (), context);
+
     // Create variables for failure
     let mut fail: bool = false;
     let mut fail_message: String = "".to_string();
-    // Get the names of everyone currently in the database 
-    let mut bg = backend.lock().unwrap();
-    let all_names: Vec<Row> = (*bg).prep_exec("SELECT user_name FROM users", ()).unwrap();
+    
     // Check that this name is not already in the database
     for row in all_names {
-        let name: String = row.get(0).unwrap();
+        let name: BBox<String, AnyPolicy> = from_value(row[0]).unwrap();
         if name == *instructor_name {
             fail = true;
             fail_message = format!("Username '{}' was already found in the database", name);
