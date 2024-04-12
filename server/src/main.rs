@@ -62,18 +62,18 @@ async fn main() {
 
     // build and launch
     if let Err(e) = BBoxRocket::build()
-        //.attach(cors.clone())
         .manage(cors)
         .manage(backend)
         .manage(config)
         .manage(firebase_auth)
+        // Potential issues?
+        .attach(cors.clone())
+        .mount("/", rocket_cors::catch_all_options_routes())
         .mount("/", routes![login::login])
         .mount("/", routes![admin::admin])
         .mount("/", routes![student::student, student::update])
         .mount("/", routes![instructor::instructor])
         .mount("/", routes![register::register_instructor, register::register_student])
-        // Potential issue?
-        //.mount("/", rocket_cors::catch_all_options_routes())
         .launch()
         .await 
     {
