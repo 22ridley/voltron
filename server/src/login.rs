@@ -11,7 +11,7 @@ use std::{sync::Arc, sync::Mutex};
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use alohomora::rocket::{get, ContextResponse};
 use alohomora::context::Context;
-use crate::policies::ContextDataType;
+use crate::context::ContextDataType;
 
 #[derive(Debug, Serialize)]
 pub struct LoginResponse {

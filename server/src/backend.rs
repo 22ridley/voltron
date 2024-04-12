@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::result::Result;
 use std::error::Error;
 use alohomora::context::Context;
-use crate::policies::ContextDataType;
+use crate::context::ContextDataType;
 
 pub struct MySqlBackend {
     pub handle: BBoxConn,

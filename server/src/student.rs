@@ -8,7 +8,7 @@ use rocket_firebase_auth::FirebaseToken;
 use crate::backend::MySqlBackend;
 use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}};
 use alohomora::context::Context;
-use crate::policies::ContextDataType;
+use crate::context::ContextDataType;
 use alohomora::rocket::{get, post, ContextResponse};
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 

@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use alohomora::{bbox::BBox, policy::{AnyPolicy, NoPolicy}};
 use rocket_firebase_auth::FirebaseToken;
 use alohomora::context::Context;
-use crate::policies::ContextDataType;
+use crate::context::ContextDataType;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use mysql::Value;
 use alohomora::rocket::{get, ContextResponse};

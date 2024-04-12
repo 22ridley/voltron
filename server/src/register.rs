@@ -14,7 +14,7 @@ use rocket_firebase_auth::FirebaseToken;
 use alohomora::{bbox::BBox, policy::{AnyPolicy, NoPolicy}};
 use alohomora::rocket::{post, ContextResponse};
 use alohomora::context::Context;
-use crate::policies::ContextDataType;
+use crate::context::ContextDataType;
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
 pub fn register_instructor(_token: BBox<FirebaseToken, NoPolicy>, 
