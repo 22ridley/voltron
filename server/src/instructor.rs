@@ -37,7 +37,7 @@ pub(crate) fn instructor(token: BBox<FirebaseToken, NoPolicy>,
     ).unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
-    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context);
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
     // If the instructor is not found, return error
     if user_res.len() == 0 {
         let response: Json<InstructorResponse> = Json(InstructorResponse {
@@ -49,20 +49,20 @@ pub(crate) fn instructor(token: BBox<FirebaseToken, NoPolicy>,
         let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
         return ContextResponse::from((response_bbox, context));
     }
-    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
-    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
-    let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", vec![class_id_bbox], context.clone());
-    let group_ids_row: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id_bbox], context.clone());
+    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
+    let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", vec![class_id_bbox.clone()], context.clone());
+    let group_ids_row: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id_bbox.clone()], context.clone());
     drop(bg);
     let mut group_ids_bbox_vec: Vec<BBox<i32, AnyPolicy>> = Vec::new();
     let mut students_bbox_vec: Vec<BBox<Student, AnyPolicy>> = Vec::new();
     for row in group_ids_row.iter() {
-        let group_id: BBox<i32, AnyPolicy> = from_value(row[0]).unwrap();
+        let group_id: BBox<i32, AnyPolicy> = from_value(row[0].clone()).unwrap();
         group_ids_bbox_vec.push(group_id);
     }
     for row in students_res.iter() {
-        let stud_name_bbox: BBox<String, AnyPolicy> = from_value(row[0]).unwrap();
-        let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
+        let stud_name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
+        let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
         let student_bbox: BBox<Student, AnyPolicy> = execute_pure((stud_name_bbox, group_id_bbox), 
             PrivacyPureRegion::new(|(name, group_id): (String, i32)| {
                 Student{name, group_id, index: 0}
@@ -74,9 +74,10 @@ pub(crate) fn instructor(token: BBox<FirebaseToken, NoPolicy>,
     let group_ids_bbox_vec: BBox<Vec<i32>, AnyPolicy> = fold(group_ids_bbox_vec).unwrap();
     let students_bbox_vec: BBox<Vec<Student>, AnyPolicy> = fold(students_bbox_vec).unwrap();
 
-    let response = execute_pure((class_id_bbox, group_ids_bbox_vec, students_bbox_vec), 
-        PrivacyPureRegion::new(|(class_id, group_ids, students): (i32, Vec<i32>, Vec<Student>)| {
+    let response = execute_pure((class_id_bbox.clone(), group_ids_bbox_vec.clone(), students_bbox_vec), 
+        PrivacyPureRegion::new(|(class_id, group_ids_og, students): (i32, Vec<i32>, Vec<Student>)| {
             // Sort and remove duplicates from list of all group_ids in the class
+            let mut group_ids = group_ids_og.clone();
             group_ids.sort();
             group_ids.dedup();
             let mut groups_res: Vec<StudentGroup> = Vec::new();

@@ -71,7 +71,8 @@ async fn main() {
         .mount("/", routes![admin::admin])
         .mount("/", routes![student::student, student::update])
         .mount("/", routes![instructor::instructor])
-        //.mount("/", register::routes())
+        .mount("/", routes![register::register_instructor, register::register_student])
+        // Potential issue?
         //.mount("/", rocket_cors::catch_all_options_routes())
         .launch()
         .await 

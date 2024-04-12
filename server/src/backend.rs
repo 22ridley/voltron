@@ -90,7 +90,7 @@ impl MySqlBackend {
                 .handle
                 .exec_iter(self.prep_stmts[sql].clone(), params.clone(), context.clone())
             {
-                Err(e) => {}
+                Err(_e) => {}
                 Ok(res) => {
                     let mut rows = vec![];
                     for row in res {
@@ -102,32 +102,5 @@ impl MySqlBackend {
             }
             self.reconnect();
         }
-    }
-
-    fn do_insert<P: Into<BBoxParams>>(&mut self, table: &str, vals: P, replace: bool, context: Context<ContextDataType>) {
-        let vals: BBoxParams = vals.into();
-        let mut param_count = 0;
-        if let BBoxParams::Positional(vec) = &vals {
-          param_count = vec.len();
-        }
-    
-        let op = if replace { "REPLACE" } else { "INSERT" };
-        let q = format!(
-            "{} INTO {} VALUES ({})",
-            op,
-            table,
-            (0..param_count).map(|_| "?").collect::<Vec<&str>>().join(",")
-        );
-        while let Err(e) = self.handle.exec_drop(q.clone(), vals.clone(), context.clone()) {
-            self.reconnect();
-        }
-    }
-
-    pub fn insert<P: Into<BBoxParams>>(&mut self, table: &str, vals: P, context: Context<ContextDataType>) {
-        self.do_insert(table, vals, false, context);
-    }
-
-    pub fn replace<P: Into<BBoxParams>>(&mut self, table: &str, vals: P, context: Context<ContextDataType>) {
-        self.do_insert(table, vals, true, context);
     }
 }

@@ -39,7 +39,7 @@ pub(crate) fn login(
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
     drop(bg);
 
-    let mut response: BBox<Json<LoginResponse>, AnyPolicy>;
+    let response: BBox<Json<LoginResponse>, AnyPolicy>;
     if user_res.len() == 0 {
         response = execute_pure(email_bbox, 
             PrivacyPureRegion::new(|email: String| {
@@ -53,8 +53,8 @@ pub(crate) fn login(
         .unwrap();
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
-        let name_bbox: BBox<String, AnyPolicy> = from_value(row[0]).unwrap();
-        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2]).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
+        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2].clone()).unwrap();
         response = execute_pure((email_bbox, name_bbox, priv_bbox), 
             PrivacyPureRegion::new(|(email, name, privl): (String, String, i32)| {
                 Json(LoginResponse {

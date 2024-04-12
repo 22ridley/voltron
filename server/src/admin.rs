@@ -21,7 +21,7 @@ pub struct AdminResponse {
 }
 
 #[get("/admin")]
-pub(crate) fn admin(token: BBox<FirebaseToken, NoPolicy>, 
+pub(crate) fn admin(_token: BBox<FirebaseToken, NoPolicy>, 
     backend: &State<Arc<Mutex<MySqlBackend>>>, 
     context: Context<ContextDataType>) 
     -> ContextResponse<Json<AdminResponse>, AnyPolicy, ContextDataType> {
@@ -31,10 +31,10 @@ pub(crate) fn admin(token: BBox<FirebaseToken, NoPolicy>,
     let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 1", (), context.clone());
     drop(bg);
 
-    let instr_vec_bbox: Vec<BBox<Instructor, AnyPolicy>> = Vec::new();
+    let mut instr_vec_bbox: Vec<BBox<Instructor, AnyPolicy>> = Vec::new();
     for instr in instructors_bbox.iter() {
-        let name_bbox: BBox<String, AnyPolicy> = from_value(instr[0]).unwrap();
-        let class_id_bbox: BBox<i32, AnyPolicy> = from_value(instr[3]).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(instr[0].clone()).unwrap();
+        let class_id_bbox: BBox<i32, AnyPolicy> = from_value(instr[3].clone()).unwrap();
         let new_instr: BBox<Instructor, AnyPolicy> = execute_pure((name_bbox, class_id_bbox), 
             PrivacyPureRegion::new(|(name, class_id): (String, i32)| {
                 Instructor{name, class_id, index: 0}

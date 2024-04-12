@@ -35,7 +35,7 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
     ).unwrap();
     // let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context);
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
@@ -48,9 +48,9 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
         let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
         return ContextResponse::from((response_bbox, context))
     }
-    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
-    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
-    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4]).unwrap();
+    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
 
     let response = execute_pure((class_id_bbox, group_id_bbox), 
         PrivacyPureRegion::new(|(class_id, group_id): (i32, i32)| {
@@ -69,7 +69,7 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
             })
         })
     ).unwrap();
-    ContextResponse::from((response, context))
+    ContextResponse::from((response, context.clone()))
 }
 
 #[post("/update?<text>")]
@@ -87,7 +87,7 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
         })
     ).unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context);
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
@@ -98,9 +98,9 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
         let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
         return ContextResponse::from((response_bbox, context))
     }
-    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0];
-    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3]).unwrap();
-    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4]).unwrap();
+    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
 
     let response = execute_pure((class_id_bbox, group_id_bbox, text), 
         PrivacyPureRegion::new(|(class_id, group_id, text_u): (i32, i32, String)| {
@@ -118,6 +118,6 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
             })
         })
     ).unwrap();
-    ContextResponse::from((response, context))
+    ContextResponse::from((response, context.clone()))
 }
 
