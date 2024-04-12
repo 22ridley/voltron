@@ -62,13 +62,13 @@ async fn main() {
 
     // build and launch
     if let Err(e) = BBoxRocket::build()
-        .manage(cors)
+        .manage(cors.clone())
         .manage(backend)
         .manage(config)
         .manage(firebase_auth)
         // Potential issues?
         .attach(cors.clone())
-        .mount("/", rocket_cors::catch_all_options_routes())
+        .mount("/", alohomora::rocket::catch_all_options_routes())
         .mount("/", routes![login::login])
         .mount("/", routes![admin::admin])
         .mount("/", routes![student::student, student::update])

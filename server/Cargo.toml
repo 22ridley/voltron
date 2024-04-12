@@ -13,7 +13,7 @@ rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
 chrono = "0.4.31"
 mysql = "21.0.2"
 mysql_common = "0.22"
-rocket_cors = "0.6.0"
+rocket_cors = { git = "https://github.com/KinanBab/rocket_cors.git", branch = "main" }
 rocket_firebase_auth = { path = "../../rocket-firebase-auth" }
 serde = "1.0.195"
 toml = "0.2.1"

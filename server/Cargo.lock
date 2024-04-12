@@ -68,7 +68,7 @@ version = "0.1.0"
 dependencies = [
  "alohomora_derive",
  "alohomora_sandbox",
- "cookie 0.15.2",
+ "cookie",
  "dynfmt",
  "either",
  "erased-serde",
@@ -80,7 +80,8 @@ dependencies = [
  "lazy_static",
  "mysql",
  "mysql_common 0.22.2",
- "rocket 0.5.0-rc.1",
+ "rocket",
+ "rocket_cors",
  "rocket_dyn_templates",
  "sea-orm",
  "sea-orm-rocket",
@@ -97,7 +98,7 @@ dependencies = [
  "attribute-derive",
  "proc-macro2",
  "quote",
- "rocket_http 0.5.0-rc.1",
+ "rocket_http",
  "serde",
  "syn 2.0.52",
 ]
@@ -680,17 +681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cookie"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cd91cf61412820176e137621345ee43b3f4423e589e7ae4e50d601d93e35ef8"
-dependencies = [
- "percent-encoding",
- "time 0.3.34",
- "version_check",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -849,18 +839,8 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50c7580b072f1c8476148f16e0a0d5dedddab787da98d86c5082c5e9ed8ab595"
 dependencies = [
- "devise_codegen 0.3.1",
- "devise_core 0.3.1",
-]
-
-[[package]]
-name = "devise"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6eacefd3f541c66fc61433d65e54e0e46e0a029a819a7dbbc7a7b489e8a85f8"
-dependencies = [
- "devise_codegen 0.4.1",
- "devise_core 0.4.1",
+ "devise_codegen",
+ "devise_core",
 ]
 
 [[package]]
@@ -869,17 +849,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "123c73e7a6e51b05c75fe1a1b2f4e241399ea5740ed810b0e3e6cacd9db5e7b2"
 dependencies = [
- "devise_core 0.3.1",
- "quote",
-]
-
-[[package]]
-name = "devise_codegen"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c8cf4b8dd484ede80fd5c547592c46c3745a617c8af278e2b72bea86b2dfed6"
-dependencies = [
- "devise_core 0.4.1",
+ "devise_core",
  "quote",
 ]
 
@@ -894,19 +864,6 @@ dependencies = [
  "proc-macro2-diagnostics 0.9.1",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "devise_core"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35b50dba0afdca80b187392b24f2499a88c336d5a8493e4b4ccfb608708be56a"
-dependencies = [
- "bitflags 2.4.2",
- "proc-macro2",
- "proc-macro2-diagnostics 0.10.1",
- "quote",
- "syn 2.0.52",
 ]
 
 [[package]]
@@ -1765,7 +1722,6 @@ checksum = "7b0b929d511467233429c45a44ac1dcaa21ba0f5ba11e4879e6ed28ddb4f9df4"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.3",
- "serde",
 ]
 
 [[package]]
@@ -3298,11 +3254,11 @@ dependencies = [
  "pin-project-lite",
  "rand 0.8.5",
  "ref-cast",
- "rocket_codegen 0.5.0-rc.1",
- "rocket_http 0.5.0-rc.1",
+ "rocket_codegen",
+ "rocket_http",
  "serde",
  "serde_json",
- "state 0.5.3",
+ "state",
  "tempfile",
  "time 0.2.27",
  "tokio",
@@ -3314,84 +3270,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "rocket"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e7bb57ccb26670d73b6a47396c83139447b9e7878cab627fdfe9ea8da489150"
-dependencies = [
- "async-stream",
- "async-trait",
- "atomic 0.5.3",
- "binascii",
- "bytes 1.5.0",
- "either",
- "figment",
- "futures",
- "indexmap 2.2.5",
- "log",
- "memchr",
- "multer",
- "num_cpus",
- "parking_lot 0.12.1",
- "pin-project-lite",
- "rand 0.8.5",
- "ref-cast",
- "rocket_codegen 0.5.0",
- "rocket_http 0.5.0",
- "serde",
- "state 0.6.0",
- "tempfile",
- "time 0.3.34",
- "tokio",
- "tokio-stream",
- "tokio-util 0.7.10",
- "ubyte",
- "version_check",
- "yansi 1.0.0-rc.1",
-]
-
-[[package]]
 name = "rocket_codegen"
 version = "0.5.0-rc.1"
 source = "git+https://github.com/KinanBab/Rocket.git?branch=main#ac213c21820c64bcc87b78587e95695d484c7b72"
 dependencies = [
- "devise 0.3.1",
+ "devise",
  "glob",
  "indexmap 1.9.3",
  "proc-macro2",
  "quote",
- "rocket_http 0.5.0-rc.1",
+ "rocket_http",
  "syn 1.0.109",
  "unicode-xid",
 ]
 
 [[package]]
-name = "rocket_codegen"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2238066abf75f21be6cd7dc1a09d5414a671f4246e384e49fe3f8a4936bd04c"
-dependencies = [
- "devise 0.4.1",
- "glob",
- "indexmap 2.2.5",
- "proc-macro2",
- "quote",
- "rocket_http 0.5.0",
- "syn 2.0.52",
- "unicode-xid",
- "version_check",
-]
-
-[[package]]
 name = "rocket_cors"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfac3a1df83f8d4fc96aa41dba3b86c786417b7fc0f52ec76295df2ba781aa69"
+source = "git+https://github.com/KinanBab/rocket_cors.git?branch=main#1c2288e2a40920095e7d0b03351dc430f3f552cf"
 dependencies = [
  "http",
  "log",
  "regex",
- "rocket 0.5.0",
+ "rocket",
  "serde",
  "serde_derive",
  "unicase",
@@ -3408,7 +3309,7 @@ dependencies = [
  "handlebars 3.5.5",
  "normpath",
  "notify",
- "rocket 0.5.0-rc.1",
+ "rocket",
  "serde",
  "serde_json",
  "tera",
@@ -3421,7 +3322,7 @@ dependencies = [
  "dotenvy",
  "jsonwebtoken",
  "reqwest",
- "rocket 0.5.0-rc.1",
+ "rocket",
  "serde",
  "serde_json",
 ]
@@ -3431,7 +3332,7 @@ name = "rocket_http"
 version = "0.5.0-rc.1"
 source = "git+https://github.com/KinanBab/Rocket.git?branch=main#ac213c21820c64bcc87b78587e95695d484c7b72"
 dependencies = [
- "cookie 0.15.2",
+ "cookie",
  "either",
  "http",
  "hyper",
@@ -3447,35 +3348,8 @@ dependencies = [
  "serde",
  "smallvec",
  "stable-pattern",
- "state 0.5.3",
+ "state",
  "time 0.2.27",
- "tokio",
- "uncased",
-]
-
-[[package]]
-name = "rocket_http"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37a1663694d059fe5f943ea5481363e48050acedd241d46deb2e27f71110389e"
-dependencies = [
- "cookie 0.18.0",
- "either",
- "futures",
- "http",
- "hyper",
- "indexmap 2.2.5",
- "log",
- "memchr",
- "pear",
- "percent-encoding",
- "pin-project-lite",
- "ref-cast",
- "serde",
- "smallvec",
- "stable-pattern",
- "state 0.6.0",
- "time 0.3.34",
  "tokio",
  "uncased",
 ]
@@ -3671,7 +3545,7 @@ name = "sea-orm-rocket"
 version = "0.5.4"
 source = "git+https://github.com/KinanBab/sea-orm.git?branch=main#70a69913ab23a49eaa143b333a25756113b3bedf"
 dependencies = [
- "rocket 0.5.0-rc.1",
+ "rocket",
  "sea-orm-rocket-codegen",
 ]
 
@@ -3680,7 +3554,7 @@ name = "sea-orm-rocket-codegen"
 version = "0.5.4"
 source = "git+https://github.com/KinanBab/sea-orm.git?branch=main#70a69913ab23a49eaa143b333a25756113b3bedf"
 dependencies = [
- "devise 0.3.1",
+ "devise",
  "quote",
 ]
 
@@ -4281,15 +4155,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "state"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b8c4a4445d81357df8b1a650d0d0d6fbbbfe99d064aa5e02f3e4022061476d8"
-dependencies = [
- "loom",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4861,8 +4726,8 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
- "rand 0.8.5",
+ "cfg-if 0.1.10",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
@@ -5084,7 +4949,7 @@ dependencies = [
  "handlebars 4.5.0",
  "mysql",
  "mysql_common 0.22.2",
- "rocket 0.5.0-rc.1",
+ "rocket",
  "rocket_cors",
  "rocket_dyn_templates",
  "rocket_firebase_auth",
@@ -5506,9 +5371,6 @@ name = "yansi"
 version = "1.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1367295b8f788d371ce2dbc842c7b709c73ee1364d30351dd300ec2203b12377"
-dependencies = [
- "is-terminal",
-]
 
 [[package]]
 name = "zerocopy"
