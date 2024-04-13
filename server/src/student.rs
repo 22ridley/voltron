@@ -13,7 +13,7 @@ use alohomora::rocket::{get, post, ContextResponse};
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 
 pub struct StudentResponse {
-    pub success: BBox<bool, AnyPolicy>,
+    pub success: BBox<bool, NoPolicy>,
     pub class_id: BBox<i64, AnyPolicy>,
     pub group_id: BBox<i64, AnyPolicy>,
     pub contents: BBox<String, VoltronBufferPolicy>,
@@ -50,7 +50,7 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
     // If the student is not found, return error
     if user_res.len() == 0 {
         let response = StudentResponse {
-            success: BBox::new(false, AnyPolicy::new(NoPolicy{})),
+            success: BBox::new(false, NoPolicy::new()),
             class_id: BBox::new(-1, AnyPolicy::new(NoPolicy{})),
             group_id: BBox::new(-1, AnyPolicy::new(NoPolicy{})),
             contents: BBox::new("".to_string(), VoltronBufferPolicy::new(Some(-1), Some(-1))),
@@ -75,7 +75,7 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
     .specialize_policy::<VoltronBufferPolicy>()
     .unwrap();
     let response : StudentResponse = StudentResponse {
-        success: BBox::new(true, AnyPolicy::new(NoPolicy{})),
+        success: BBox::new(true, NoPolicy::new()),
         class_id: class_id_bbox,
         group_id: group_id_bbox,
         contents: contents,
