@@ -43,10 +43,8 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
     let row: Row = user_res.get(0).unwrap().clone();
     let class_id: i32 = row.get(3).unwrap();
     // Get list of all students in this class
-    let mut args: Vec<String> = Vec::new();
-    args.push(class_id.to_string());
-    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", args).unwrap();
-    let group_ids_row: Vec<Row> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id]).unwrap();
+    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 0 AND class_id = ?", vec![class_id.clone()]).unwrap();
+    let group_ids_row: Vec<Row> = (*bg).prep_exec("SELECT group_id FROM users WHERE class_id = ? AND group_id != -1", vec![class_id.clone()]).unwrap();
     let mut group_ids_vec: Vec<i32> = Vec::new();
     for row in group_ids_row.iter() {
         let group_id: i32 = row.get(0).unwrap();

@@ -65,11 +65,7 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
 pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     text: Option<&str>) -> ApiResponse<SuccessResponse> {
     // Find this student
-    let email_opt: Option<String> = token.email;
-    let mut email: String = "".to_string();
-    if email_opt.is_some() {
-        email = email_opt.unwrap();
-    }
+    let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
