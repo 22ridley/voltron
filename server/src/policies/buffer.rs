@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 use alohomora::AlohomoraType;
 use alohomora::context::{Context, UnprotectedContext};
 use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, schema_policy, SchemaPolicy};
+use serde::Serialize;
 use crate::backend::MySqlBackend;
 use crate::config::Config;
 use crate::context::ContextDataType;
@@ -14,7 +15,7 @@ use crate::context::ContextDataType;
 #[schema_policy(table = "users", column = 4)]
 // We can add multiple #[schema_policy(...)] definitions
 // here to reuse the policy across tables/columns.
-#[derive(Clone)]
+#[derive(Clone, Serialize, Debug)]
 pub struct VoltronBufferPolicy {
     class_id: Option<i32>, // Only students in the proper group in the proper class can access this buffer
     group_id: Option<i32>, 

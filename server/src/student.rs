@@ -1,5 +1,5 @@
 use std::{io::Write, path::Path, sync::Arc, sync::Mutex};
-use crate::common::SuccessResponse;
+use crate::{common::SuccessResponse, policies::VoltronBufferPolicy};
 use mysql::Value;
 use rocket::{serde::json::Json, State};
 use serde::Serialize;
@@ -12,12 +12,12 @@ use crate::context::ContextDataType;
 use alohomora::rocket::{get, post, ContextResponse};
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 pub struct StudentResponse {
     pub success: bool,
     pub class_id: i32,
     pub group_id: i32,
-    pub contents: String,
+    pub contents: BBox<String, VoltronBufferPolicy>,
 }
 
 #[get("/student")]
@@ -59,13 +59,14 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
             
             // Convert group_id to number
             let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
+            let contents_bbox: BBox<String, VoltronBufferPolicy> = BBox::new(contents, VoltronBufferPolicy::new(Some(class_id), Some(group_id)));
 
             // Return response
             Json(StudentResponse {
                 success: true,
                 class_id: class_id,
                 group_id: group_id,
-                contents: contents,
+                contents: contents_bbox,
             })
         })
     ).unwrap();
