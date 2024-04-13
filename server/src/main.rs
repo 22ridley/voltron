@@ -19,6 +19,7 @@ mod instructor;
 mod register;
 mod admin;
 mod context;
+mod policies;
 
 pub fn new_logger() -> slog::Logger {
     use slog::Drain;
