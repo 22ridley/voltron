@@ -4,4 +4,4 @@
 **/mir_dumps/
 **/scrutinizer.log
 **/scrutinizer.result.json
-firebase-credentials.json
+src/firebase-credentials.json

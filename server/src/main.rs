@@ -31,7 +31,7 @@ pub fn new_logger() -> slog::Logger {
 #[rocket::main]
 async fn main() {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
-        .json_file("src/firebase-credentials.json")
+        .json_file("./src/firebase-credentials.json")
         .build()
         .expect("Failed to read firebase credentials");
 
