@@ -1,11 +1,11 @@
-use std::sync::{Arc, Mutex};
-use alohomora::AlohomoraType;
-use alohomora::context::{Context, UnprotectedContext};
-use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, schema_policy, SchemaPolicy};
-use serde::Serialize;
 use crate::backend::MySqlBackend;
 use crate::config::Config;
 use crate::context::ContextDataType;
+use alohomora::context::{Context, UnprotectedContext};
+use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
+use alohomora::AlohomoraType;
+use serde::Serialize;
+use std::sync::{Arc, Mutex};
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -18,7 +18,7 @@ use crate::context::ContextDataType;
 #[derive(Clone, Serialize, Debug)]
 pub struct VoltronBufferPolicy {
     class_id: Option<i32>, // Only students in the proper group in the proper class can access this buffer
-    group_id: Option<i32>, 
+    group_id: Option<i32>,
     // Instructors for this class can also access this buffer
 }
 
@@ -33,7 +33,10 @@ impl VoltronBufferPolicy {
 //   2. Instructors with class_id;
 impl Policy for VoltronBufferPolicy {
     fn name(&self) -> String {
-        format!("VoltronBufferPolicy(class id {:?} and group id {:?})", self.class_id, self.group_id)
+        format!(
+            "VoltronBufferPolicy(class id {:?} and group id {:?})",
+            self.class_id, self.group_id
+        )
     }
 
     fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
@@ -54,10 +57,16 @@ impl Policy for VoltronBufferPolicy {
         let group_id: i32 = self.group_id.unwrap();
         // Check the database
         let mut bg = db.lock().unwrap();
-        let student_res = (*bg).prep_exec("SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?", 
-            vec![user.clone(), class_id.to_string(), group_id.to_string()], Context::empty());
-        let instr_res = (*bg).prep_exec("SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?", 
-            vec![user.clone(), class_id.to_string(), "-1".to_string()], Context::empty());
+        let student_res = (*bg).prep_exec(
+            "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
+            vec![user.clone(), class_id.to_string(), group_id.to_string()],
+            Context::empty(),
+        );
+        let instr_res = (*bg).prep_exec(
+            "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
+            vec![user.clone(), class_id.to_string(), "-1".to_string()],
+            Context::empty(),
+        );
         drop(bg);
 
         // I am a student in this class and group.
@@ -74,14 +83,16 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<VoltronBufferPolicy>() { // Policies are combinable
+        if other.is::<VoltronBufferPolicy>() {
+            // Policies are combinable
             let other = other.specialize::<VoltronBufferPolicy>().unwrap();
             Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {                    //Policies must be stacked
-            Ok(AnyPolicy::new(
-                PolicyAnd::new(
-                    AnyPolicy::new(self.clone()),
-                    other)))
+        } else {
+            //Policies must be stacked
+            Ok(AnyPolicy::new(PolicyAnd::new(
+                AnyPolicy::new(self.clone()),
+                other,
+            )))
         }
     }
 
@@ -98,23 +109,23 @@ impl Policy for VoltronBufferPolicy {
         } else {
             comp_group_id = None;
         }
-        Ok(VoltronBufferPolicy{
+        Ok(VoltronBufferPolicy {
             class_id: comp_class_id,
-            group_id: comp_group_id
+            group_id: comp_group_id,
         })
     }
 }
 
 impl SchemaPolicy for VoltronBufferPolicy {
     fn from_row(table: &str, row: &Vec<mysql::Value>) -> Self
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         VoltronBufferPolicy::new(
             // class_id
             mysql::from_value(row[3].clone()),
             // group_id
-            mysql::from_value(row[4].clone())
+            mysql::from_value(row[4].clone()),
         )
     }
 }

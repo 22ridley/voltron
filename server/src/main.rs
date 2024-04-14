@@ -1,25 +1,25 @@
 extern crate mysql;
-extern crate serde;
 extern crate rocket;
+extern crate serde;
+use crate::policies::VoltronBufferPolicy;
+use alohomora::rocket::{routes, BBoxRocket};
 use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
 use slog::o;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use alohomora::rocket::{BBoxRocket, routes};
-use crate::policies::VoltronBufferPolicy;
 
-mod login;
+mod admin;
 mod backend;
 mod common;
 mod config;
-mod student;
-mod instructor;
-mod register;
-mod admin;
 mod context;
+mod instructor;
+mod login;
 mod policies;
+mod register;
+mod student;
 
 pub fn new_logger() -> slog::Logger {
     use slog::Drain;
@@ -47,13 +47,15 @@ async fn main() {
     let config = config::parse(config_path).unwrap();
     let db_name: &str = "users";
     let backend: Arc<Mutex<MySqlBackend>> = Arc::new(Mutex::new(
-    backend::MySqlBackend::new(
-        &config.db_user,
-        &config.db_password,
-        &format!("{}", db_name),
-        Some(new_logger()),
-        config.prime,
-        ).unwrap(),));
+        backend::MySqlBackend::new(
+            &config.db_user,
+            &config.db_password,
+            &format!("{}", db_name),
+            Some(new_logger()),
+            config.prime,
+        )
+        .unwrap(),
+    ));
 
     // Setup cors
     let cors = CorsOptions::default()
@@ -81,9 +83,12 @@ async fn main() {
         .mount("/", routes![admin::admin])
         .mount("/", routes![student::student, student::update])
         .mount("/", routes![instructor::instructor])
-        .mount("/", routes![register::register_instructor, register::register_student])
+        .mount(
+            "/",
+            routes![register::register_instructor, register::register_student],
+        )
         .launch()
-        .await 
+        .await
     {
         println!("didn't launch properly");
         drop(e);

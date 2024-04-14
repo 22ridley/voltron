@@ -1,10 +1,10 @@
-use alohomora::db::{BBoxConn, BBoxOpts, BBoxParams, BBoxStatement, BBoxValue};
-use slog::o; 
-use std::collections::HashMap;
-use std::result::Result;
-use std::error::Error;
-use alohomora::context::Context;
 use crate::context::ContextDataType;
+use alohomora::context::Context;
+use alohomora::db::{BBoxConn, BBoxOpts, BBoxParams, BBoxStatement, BBoxValue};
+use slog::o;
+use std::collections::HashMap;
+use std::error::Error;
+use std::result::Result;
 
 pub struct MySqlBackend {
     pub handle: BBoxConn,
@@ -23,7 +23,7 @@ impl MySqlBackend {
         dbname: &str,
         log: Option<slog::Logger>,
         prime: bool,
-    ) -> Result<Self, Box<dyn Error>> { 
+    ) -> Result<Self, Box<dyn Error>> {
         let log = match log {
             None => slog::Logger::root(slog::Discard, o!()),
             Some(l) => l,
@@ -31,7 +31,8 @@ impl MySqlBackend {
 
         let schema = std::fs::read_to_string("src/schema.sql")?;
 
-        let mut db = BBoxConn::new( // this is the user and password from the config.toml file
+        let mut db = BBoxConn::new(
+            // this is the user and password from the config.toml file
             BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap(),
         )
         .unwrap();
@@ -75,7 +76,12 @@ impl MySqlBackend {
         .unwrap();
     }
 
-    pub fn prep_exec<P: Into<BBoxParams>>(&mut self, sql: &str, params: P, context: Context<ContextDataType>) -> Vec<Vec<BBoxValue>> {
+    pub fn prep_exec<P: Into<BBoxParams>>(
+        &mut self,
+        sql: &str,
+        params: P,
+        context: Context<ContextDataType>,
+    ) -> Vec<Vec<BBoxValue>> {
         if !self.prep_stmts.contains_key(sql) {
             let stmt = self
                 .handle
@@ -83,13 +89,14 @@ impl MySqlBackend {
                 .expect(&format!("failed to prepare statement \'{}\'", sql));
             self.prep_stmts.insert(sql.to_owned(), stmt);
         }
-        
+
         let params: BBoxParams = params.into();
         loop {
-            match self
-                .handle
-                .exec_iter(self.prep_stmts[sql].clone(), params.clone(), context.clone())
-            {
+            match self.handle.exec_iter(
+                self.prep_stmts[sql].clone(),
+                params.clone(),
+                context.clone(),
+            ) {
                 Err(_e) => {}
                 Ok(res) => {
                     let mut rows = vec![];

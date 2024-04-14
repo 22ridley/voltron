@@ -5,15 +5,15 @@ use toml;
 #[derive(Debug, Clone)]
 pub struct Config {
     // User for the mySQL database
-    pub db_user : String,
+    pub db_user: String,
     // Password for the mySQL database
-    pub db_password : String,
+    pub db_password: String,
     // Directory for page templates
-    pub template_dir : String,
+    pub template_dir: String,
     pub prime: bool,
 }
 
-pub(crate) fn parse(path: &str) -> Result<Config, Error>{
+pub(crate) fn parse(path: &str) -> Result<Config, Error> {
     let mut file = fs::File::open(path)?;
     let mut buffer = String::new();
 

@@ -1,13 +1,15 @@
-use std::sync::{Arc, Mutex};
-use alohomora::AlohomoraType;
-use alohomora::context::{Context, UnprotectedContext};
-use alohomora::policy::{schema_policy, AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
-use rocket::http::Cookie;
-use rocket::Request;
-use serde::Serialize;
 use crate::backend::MySqlBackend;
 use crate::config::Config;
 use crate::context::ContextDataType;
+use alohomora::context::{Context, UnprotectedContext};
+use alohomora::policy::{
+    schema_policy, AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason, SchemaPolicy,
+};
+use alohomora::AlohomoraType;
+use rocket::http::Cookie;
+use rocket::Request;
+use serde::Serialize;
+use std::sync::{Arc, Mutex};
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -18,8 +20,7 @@ use crate::context::ContextDataType;
 // We can add multiple #[schema_policy(...)] definitions
 // here to reuse the policy across tables/columns.
 #[derive(Clone, Serialize, Debug)]
-pub struct InstructorPolicy {
-}
+pub struct InstructorPolicy {}
 
 impl InstructorPolicy {
     pub fn new() -> InstructorPolicy {
@@ -33,7 +34,11 @@ impl FrontendPolicy for InstructorPolicy {
         InstructorPolicy::new()
     }
 
-    fn from_cookie<'a, 'r>(_name: &str, _cookie: &'a Cookie<'static>, _request: &'a Request<'r>) -> Self {
+    fn from_cookie<'a, 'r>(
+        _name: &str,
+        _cookie: &'a Cookie<'static>,
+        _request: &'a Request<'r>,
+    ) -> Self {
         InstructorPolicy::new()
     }
 }
@@ -51,14 +56,16 @@ impl Policy for InstructorPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<InstructorPolicy>() { // Policies are combinable
+        if other.is::<InstructorPolicy>() {
+            // Policies are combinable
             let other = other.specialize::<InstructorPolicy>().unwrap();
             Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {                    //Policies must be stacked
-            Ok(AnyPolicy::new(
-                PolicyAnd::new(
-                    AnyPolicy::new(self.clone()),
-                    other)))
+        } else {
+            //Policies must be stacked
+            Ok(AnyPolicy::new(PolicyAnd::new(
+                AnyPolicy::new(self.clone()),
+                other,
+            )))
         }
     }
 

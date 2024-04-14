@@ -1,11 +1,11 @@
+use mysql::from_value;
+use mysql::prelude::FromRow;
 use mysql::serde::Serialize;
+use mysql::Row;
 use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
-use mysql::Row;
-use mysql::prelude::FromRow;
-use mysql::from_value;
 
 /// The struct we return for success responses (200s)
 #[derive(Debug)]
@@ -20,7 +20,7 @@ where
 #[derive(Debug, Serialize)]
 pub struct SuccessResponse {
     pub success: bool,
-    pub message: String
+    pub message: String,
 }
 
 /// Implements the `Responder` trait for Rocket, so we can simply return a for
@@ -37,25 +37,25 @@ impl<'r, T: Serialize> response::Responder<'r, 'r> for ApiResponse<T> {
 // The context needed for rendering the login page
 #[derive(Serialize)]
 pub struct LoginContext {
-    pub failed: bool
+    pub failed: bool,
 }
 
 // The structure representing student groups and their code
 #[derive(Debug, Serialize)]
-pub struct StudentGroup{
+pub struct StudentGroup {
     pub group_id: i32,
     pub code: String,
-    pub index: usize
+    pub index: usize,
 }
 
-impl StudentGroup{
+impl StudentGroup {
     pub fn new(row: Row, index: usize) -> Self {
-        StudentGroup{
+        StudentGroup {
             group_id: from_value(row[0].clone()),
             code: from_value(row[1].clone()),
-            index: index
+            index: index,
         }
-    } 
+    }
 }
 
 impl FromRow for StudentGroup {
@@ -70,20 +70,20 @@ impl FromRow for StudentGroup {
 
 // The structure representing instructors
 #[derive(Debug, Serialize)]
-pub struct Instructor{
+pub struct Instructor {
     pub name: String,
     pub class_id: i32,
-    pub index: usize
+    pub index: usize,
 }
 
-impl Instructor{
+impl Instructor {
     pub fn new(row: Row, index: usize) -> Self {
-        Instructor{
+        Instructor {
             name: from_value(row[0].clone()),
             class_id: from_value(row[3].clone()),
-            index: index
+            index: index,
         }
-    } 
+    }
 }
 
 impl FromRow for Instructor {
@@ -98,20 +98,20 @@ impl FromRow for Instructor {
 
 // The structure representing students
 #[derive(Debug, Serialize)]
-pub struct Student{
+pub struct Student {
     pub name: String,
     pub group_id: i32,
-    pub index: usize
+    pub index: usize,
 }
 
-impl Student{
+impl Student {
     pub fn new(row: Row, index: usize) -> Self {
-        Student{
+        Student {
             name: from_value(row[0].clone()),
             group_id: from_value(row[4].clone()),
-            index: index
+            index: index,
         }
-    } 
+    }
 }
 
 impl FromRow for Student {

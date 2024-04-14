@@ -1,13 +1,13 @@
+use crate::backend::MySqlBackend;
+use crate::config::Config;
+use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
-use rocket::State;
 use alohomora::{bbox::BBox, policy::NoPolicy};
+use rocket::State;
 use rocket_firebase_auth::{BearerToken, FirebaseAuth};
-use crate::config::Config;
-use crate::backend::MySqlBackend;
 use std::convert::TryFrom;
 use std::{sync::Arc, sync::Mutex};
-use alohomora::pure::PrivacyPureRegion;
 
 // Custom developer defined payload attached to every context.
 #[derive(AlohomoraType, Clone)]
@@ -21,12 +21,10 @@ pub struct ContextDataType {
 async fn firebase_auth_helper(token: String, firebase_auth: &FirebaseAuth) -> Option<String> {
     match BearerToken::try_from(token.as_str()) {
         Err(_) => None,
-        Ok(token) => {
-            match firebase_auth.verify(token.as_str()).await {
-                Err(_) => None,
-                Ok(token) => Some(token.email.unwrap()),
-            }
-        }
+        Ok(token) => match firebase_auth.verify(token.as_str()).await {
+            Err(_) => None,
+            Ok(token) => Some(token.email.unwrap()),
+        },
     }
 }
 
@@ -47,11 +45,9 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
             .headers()
             .get_one::<NoPolicy>("Authorization")
             .map(|token| {
-                token.into_ppr(
-                    PrivacyPureRegion::new(|token| {
-                        firebase_auth_helper(token, &firebase_auth)
-                    })
-                )
+                token.into_ppr(PrivacyPureRegion::new(|token| {
+                    firebase_auth_helper(token, &firebase_auth)
+                }))
             });
 
         let user = match token {

@@ -1,16 +1,26 @@
-use std::{collections::HashMap, io::Write, path::Path, sync::{Arc, Mutex}};
+use crate::backend::MySqlBackend;
+use crate::context::ContextDataType;
 use crate::{common::SuccessResponse, policies::VoltronBufferPolicy};
+use alohomora::context::Context;
+use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
+use alohomora::rocket::{get, post, ContextResponse};
+use alohomora::{
+    bbox::BBox,
+    db::from_value,
+    policy::{AnyPolicy, NoPolicy},
+    rocket::JsonResponse,
+};
 use mysql::Value;
 use rocket::{serde::json::Json, State};
-use std::fs::{self, File};
 use rocket_firebase_auth::FirebaseToken;
-use crate::backend::MySqlBackend;
-use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}, rocket::JsonResponse};
-use alohomora::context::Context;
-use crate::context::ContextDataType;
-use alohomora::rocket::{get, post, ContextResponse};
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
+use std::fs::{self, File};
+use std::{
+    collections::HashMap,
+    io::Write,
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 #[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
@@ -21,50 +31,60 @@ pub struct StudentResponse {
 }
 
 #[get("/student")]
-pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>, 
-    backend: &State<Arc<Mutex<MySqlBackend>>>, 
-    context: Context<ContextDataType>) 
--> JsonResponse<StudentResponse, ContextDataType> {
+pub(crate) fn student(
+    token: BBox<FirebaseToken, NoPolicy>,
+    backend: &State<Arc<Mutex<MySqlBackend>>>,
+    context: Context<ContextDataType>,
+) -> JsonResponse<StudentResponse, ContextDataType> {
     // Find this student
-    let email_bbox: BBox<String, AnyPolicy> = execute_pure(token, 
+    let email_bbox: BBox<String, AnyPolicy> = execute_pure(
+        token,
         PrivacyPureRegion::new(|token: FirebaseToken| {
             // Need the following separate lines to give email a type
             let email: String = token.email.unwrap();
             email
-        })
-    ).unwrap();
+        }),
+    )
+    .unwrap();
     // let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+        "SELECT * FROM users WHERE email = ?",
+        vec![email_bbox.clone()],
+        context.clone(),
+    );
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
         let response = StudentResponse {
             success: BBox::new(false, NoPolicy::new()),
-            class_id: BBox::new(-1, AnyPolicy::new(NoPolicy{})),
-            group_id: BBox::new(-1, AnyPolicy::new(NoPolicy{})),
+            class_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
+            group_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
             contents: BBox::new("".to_string(), VoltronBufferPolicy::new(Some(-1), Some(-1))),
         };
-        return JsonResponse::from((response, context))
+        return JsonResponse::from((response, context));
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
     let class_id_bbox: BBox<i64, AnyPolicy> = from_value(row[3].clone()).unwrap();
     let group_id_bbox: BBox<i64, AnyPolicy> = from_value(row[4].clone()).unwrap();
 
-    let contents = execute_pure((class_id_bbox.clone(), group_id_bbox.clone()), 
+    let contents = execute_pure(
+        (class_id_bbox.clone(), group_id_bbox.clone()),
         PrivacyPureRegion::new(|(class_id, group_id): (i64, i64)| {
             // File path to read and write from
-            let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-            
+            let filepath: String =
+                format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+
             // Convert group_id to number
             let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
             // let contents_bbox: BBox<String, AnyPolicy> = BBox::new(contents, AnyPolicy::new(VoltronBufferPolicy::new(Some(class_id), Some(group_id))));
             contents
-        })
-    ).unwrap()
+        }),
+    )
+    .unwrap()
     .specialize_policy::<VoltronBufferPolicy>()
     .unwrap();
-    let response : StudentResponse = StudentResponse {
+    let response: StudentResponse = StudentResponse {
         success: BBox::new(true, NoPolicy::new()),
         class_id: class_id_bbox,
         group_id: group_id_bbox,
@@ -74,39 +94,48 @@ pub(crate) fn student(token: BBox<FirebaseToken, NoPolicy>,
 }
 
 #[post("/update?<text>")]
-pub fn update(token: BBox<FirebaseToken, NoPolicy>, 
+pub fn update(
+    token: BBox<FirebaseToken, NoPolicy>,
     text: BBox<String, NoPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
-    context: Context<ContextDataType>) 
-    -> ContextResponse<Json<SuccessResponse>, AnyPolicy, ContextDataType> {
+    context: Context<ContextDataType>,
+) -> ContextResponse<Json<SuccessResponse>, AnyPolicy, ContextDataType> {
     // Find this student
-    let email_bbox: BBox<String, AnyPolicy> = execute_pure(token, 
+    let email_bbox: BBox<String, AnyPolicy> = execute_pure(
+        token,
         PrivacyPureRegion::new(|token: FirebaseToken| {
             // Need the following separate lines to give email a type
             let email: String = token.email.unwrap();
             email
-        })
-    ).unwrap();
+        }),
+    )
+    .unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email_bbox.clone()], context.clone());
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+        "SELECT * FROM users WHERE email = ?",
+        vec![email_bbox.clone()],
+        context.clone(),
+    );
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
         let response = Json(SuccessResponse {
             success: false,
-            message: "Student not found".to_string()
+            message: "Student not found".to_string(),
         });
-        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy{}));
-        return ContextResponse::from((response_bbox, context))
+        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy {}));
+        return ContextResponse::from((response_bbox, context));
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
     let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
     let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
 
-    let response = execute_pure((class_id_bbox, group_id_bbox, text), 
+    let response = execute_pure(
+        (class_id_bbox, group_id_bbox, text),
         PrivacyPureRegion::new(|(class_id, group_id, text_u): (i32, i32, String)| {
             // Open a file in write-only mode, returns `io::Result<File>`
-            let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+            let filepath: String =
+                format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
             let path: &Path = Path::new(&filepath);
             let mut file: File = File::create(&path).unwrap();
 
@@ -115,10 +144,10 @@ pub fn update(token: BBox<FirebaseToken, NoPolicy>,
             // Return response
             Json(SuccessResponse {
                 success: true,
-                message: "".to_string()
+                message: "".to_string(),
             })
-        })
-    ).unwrap();
+        }),
+    )
+    .unwrap();
     ContextResponse::from((response, context.clone()))
 }
-
