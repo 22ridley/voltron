@@ -9,6 +9,7 @@ import {
   signOut,
 } from "firebase/auth";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { firebaseConfig } from "./firebase.tsx";
 
 interface SignInProps {
   setToken: Dispatch<SetStateAction<string>>;
@@ -17,16 +18,6 @@ interface SignInProps {
   setEmail: Dispatch<SetStateAction<string>>;
   setName: Dispatch<SetStateAction<string>>;
 }
-
-export const firebaseConfig = {
-  apiKey: "AIzaSyBhZq1cflqUOXts2-1dtCDl7j-NBhpE7tw",
-  authDomain: "voltron-1ea5c.firebaseapp.com",
-  projectId: "voltron-1ea5c",
-  storageBucket: "voltron-1ea5c.appspot.com",
-  messagingSenderId: "1074514211093",
-  appId: "1:1074514211093:web:ce0aa886c2224ccbb9b91c",
-  baseURL: "http://127.0.0.1:8000",
-};
 
 const firebaseApp = initializeApp(firebaseConfig);
 var provider = new GoogleAuthProvider();

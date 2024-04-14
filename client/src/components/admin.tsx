@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/admin.css";
-import { firebaseConfig } from "./sign-in.tsx";
+import { firebaseConfig } from "./firebase.tsx";
 
 interface AdminProps {
   token: string;
