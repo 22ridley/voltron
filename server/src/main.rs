@@ -7,8 +7,8 @@ use rocket_firebase_auth::FirebaseAuth;
 use slog::o;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use alohomora::rocket::BBoxRocket;
-use alohomora_derive::routes;
+use alohomora::rocket::{BBoxRocket, routes};
+use crate::policies::VoltronBufferPolicy;
 
 mod login;
 mod backend;
@@ -34,6 +34,13 @@ async fn main() {
         .json_file("src/firebase-credentials.json")
         .build()
         .expect("Failed to read firebase credentials");
+
+    // Register all policies. #[schema_policy(...)] does not work on mac.
+    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 0);
+    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 1);
+    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 2);
+    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 3);
+    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 4);
 
     // Initialize the backend
     let config_path = "config.toml";

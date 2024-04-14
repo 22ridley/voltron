@@ -1,3 +1,7 @@
 /target
-
+.idea
+**/nll-facts/
+**/mir_dumps/
+**/scrutinizer.log
+**/scrutinizer.result.json
 firebase-credentials.json

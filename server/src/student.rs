@@ -6,28 +6,18 @@ use rocket::{serde::json::Json, State};
 use std::fs::{self, File};
 use rocket_firebase_auth::FirebaseToken;
 use crate::backend::MySqlBackend;
-use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}, rocket::{JsonResponse, OutputBBoxValue}};
+use alohomora::{bbox::BBox, db::from_value, policy::{AnyPolicy, NoPolicy}, rocket::JsonResponse};
 use alohomora::context::Context;
 use crate::context::ContextDataType;
 use alohomora::rocket::{get, post, ContextResponse};
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 
+#[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
     pub success: BBox<bool, NoPolicy>,
     pub class_id: BBox<i64, AnyPolicy>,
     pub group_id: BBox<i64, AnyPolicy>,
     pub contents: BBox<String, VoltronBufferPolicy>,
-}
-
-impl ResponseBBoxJson for StudentResponse {
-    fn to_json(self) -> OutputBBoxValue {
-        OutputBBoxValue::Object(HashMap::from([
-            (String::from("success"), self.success.to_json()),
-            (String::from("class_id"), self.class_id.to_json()),
-            (String::from("group_id"), self.group_id.to_json()),
-            (String::from("contents"), self.contents.to_json()),
-        ]))
-    }
 }
 
 #[get("/student")]

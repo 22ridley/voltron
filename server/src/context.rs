@@ -1,13 +1,13 @@
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
-use rocket::http::Status;
-use rocket::outcome::IntoOutcome;
 use rocket::State;
 use alohomora::{bbox::BBox, policy::NoPolicy};
-use rocket_firebase_auth::{BearerToken, FirebaseAuth, FirebaseToken};
+use rocket_firebase_auth::{BearerToken, FirebaseAuth};
 use crate::config::Config;
 use crate::backend::MySqlBackend;
+use std::convert::TryFrom;
 use std::{sync::Arc, sync::Mutex};
+use alohomora::pure::PrivacyPureRegion;
 
 // Custom developer defined payload attached to every context.
 #[derive(AlohomoraType, Clone)]
@@ -16,6 +16,18 @@ pub struct ContextDataType {
     pub user: Option<BBox<String, NoPolicy>>,
     pub db: Arc<Mutex<MySqlBackend>>,
     pub config: Config,
+}
+
+async fn firebase_auth_helper(token: String, firebase_auth: &FirebaseAuth) -> Option<String> {
+    match BearerToken::try_from(token.as_str()) {
+        Err(_) => None,
+        Ok(token) => {
+            match firebase_auth.verify(token.as_str()).await {
+                Err(_) => None,
+                Ok(token) => Some(token.email.unwrap()),
+            }
+        }
+    }
 }
 
 // Build the custom payload for the context given HTTP request.
@@ -28,42 +40,30 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
     ) -> BBoxRequestOutcome<Self, Self::BBoxError> {
         let db: &State<Arc<Mutex<MySqlBackend>>> = request.guard().await.unwrap();
         let config: &State<Config> = request.guard().await.unwrap();
-
-        // Firebase auth
-        let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
-            .json_file("src/firebase-credentials.json")
-            .build()
-            .expect("Failed to read firebase credentials");
+        let firebase_auth: &State<FirebaseAuth> = request.guard().await.unwrap();
 
         // Get token from headers
-        let bearer_token: BearerToken = request
-            .token()
-            .and_then(|token| BearerToken::try_from(token).ok()).unwrap();
-        let token: Option<FirebaseToken> = match firebase_auth.verify(bearer_token.as_str()).await {
-            Ok(firebase_token) => Some(firebase_token),
-            Err(_) => None
-        };
-        // Get user email from token
-        // Replace with firebase token stuff
+        let token = request
+            .headers()
+            .get_one::<NoPolicy>("Authorization")
+            .map(|token| {
+                token.into_ppr(
+                    PrivacyPureRegion::new(|token| {
+                        firebase_auth_helper(token, &firebase_auth)
+                    })
+                )
+            });
+
         let user = match token {
             None => None,
-            Some(tok) => {
-                Some(BBox::new(tok.email.unwrap(), NoPolicy{}))
-            }
+            Some(bbox) => bbox.await.transpose(),
         };
 
-        request
-            .route()
-            .and_then(|_| {
-                Some(ContextDataType {
-                    user,
-                    db: db.inner().clone(),
-                    config: config.inner().clone(),
-                })
-            })
-            .into_outcome((
-                Status::InternalServerError,
-                (),
-            ))
+        // Return resulting context.
+        BBoxRequestOutcome::Success(ContextDataType {
+            user,
+            db: db.inner().clone(),
+            config: config.inner().clone(),
+        })
     }
 }

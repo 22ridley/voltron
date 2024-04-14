@@ -23,8 +23,8 @@ pub struct LoginResponse {
 
 #[get("/login")]
 pub(crate) fn login(
-    token: BBox<FirebaseToken, NoPolicy>, 
-    backend: &State<Arc<Mutex<MySqlBackend>>>, 
+    token: BBox<FirebaseToken, NoPolicy>,
+    backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>
 ) -> ContextResponse<Json<LoginResponse>, AnyPolicy, ContextDataType> {
     let email_bbox: BBox<String, AnyPolicy> = execute_pure(token, 

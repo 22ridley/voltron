@@ -1,20 +1,20 @@
 [package]
 name = "voltron"
 version = "0.1.0"
-edition = "2021"
+edition = "2018"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-alohomora = { path = "../../alohomora/alohomora" }
-alohomora_derive = { path = "../../alohomora/alohomora_derive" }
+alohomora = { path = "../../alohomora", default_features = false, features = ["derive"] }
 bitvec = "0.22.3"
 rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
 chrono = "0.4.31"
 mysql = "21.0.2"
 mysql_common = "0.22"
 rocket_cors = { git = "https://github.com/KinanBab/rocket_cors.git", branch = "main" }
-rocket_firebase_auth = { path = "../../rocket-firebase-auth" }
+rocket_firebase_auth = { git = "https://github.com/22ridley/rocket-firebase-auth.git" }
 serde = "1.0.195"
 toml = "0.2.1"
 slog = { version = "2.4.0", features = ["max_level_trace", "release_max_level_trace"] }
@@ -27,6 +27,9 @@ features = ["handlebars", "tera"]
 
 [dependencies.handlebars]
 features = ["dir_source"]
+
+[build-dependencies]
+alohomora_build = { path = "../../alohomora_build" }
 
 [patch.crates-io]
 funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
