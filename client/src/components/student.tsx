@@ -46,7 +46,7 @@ export default function Student(props: StudentProps) {
         Authorization: `Bearer ${props.token}`,
       },
     });
-  }, [bufferText, props.token]);
+  }, [bufferText]);
   return (
     <div>
       <div className="header">
