@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/student.css";
-import { firebaseConfig } from "./sign-in.tsx";
+import { firebaseConfig } from "./firebase.tsx";
 
 interface StudentProps {
   token: string;
