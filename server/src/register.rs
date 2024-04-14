@@ -61,12 +61,12 @@ pub fn register_instructor(
     )
     .unwrap();
 
-    let result = fold(result);
+    let result = result.transpose();
     match result {
         Err(e) => {
             let response = Json(SuccessResponse {
                 success: false,
-                message: "Username was already found in the database".to_string(),
+                message: e,
             });
             return ContextResponse::from((BBox::new(response, NoPolicy {}), context));
         }

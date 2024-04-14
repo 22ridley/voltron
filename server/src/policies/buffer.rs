@@ -1,8 +1,7 @@
 use crate::backend::MySqlBackend;
-use crate::config::Config;
 use crate::context::ContextDataType;
 use alohomora::context::{Context, UnprotectedContext};
-use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
+use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -45,7 +44,6 @@ impl Policy for VoltronBufferPolicy {
 
         let user: &Option<String> = &context.user;
         let db: &Arc<Mutex<MySqlBackend>> = &context.db;
-        let config: &Config = &context.config;
 
         // I am not an authenticated user. I cannot see any buffers!
         if user.is_none() {
@@ -117,7 +115,7 @@ impl Policy for VoltronBufferPolicy {
 }
 
 impl SchemaPolicy for VoltronBufferPolicy {
-    fn from_row(table: &str, row: &Vec<mysql::Value>) -> Self
+    fn from_row(_table: &str, row: &Vec<mysql::Value>) -> Self
     where
         Self: Sized,
     {

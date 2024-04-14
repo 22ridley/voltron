@@ -1,5 +1,5 @@
 mod buffer;
-mod instructor;
+mod instructor_pol;
 
 pub use buffer::*;
-pub use instructor::*;
+pub use instructor_pol::*;
