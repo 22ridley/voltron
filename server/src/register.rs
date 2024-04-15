@@ -32,7 +32,7 @@ pub fn register_instructor(
     // Get the names of everyone currently in the database
     let mut bg = backend.lock().unwrap();
     let all_names: Vec<Vec<BBox<Value, AnyPolicy>>> =
-        (*bg).prep_exec("SELECT user_name FROM users", (), context.clone());
+        (*bg).prep_exec("SELECT * FROM users", (), context.clone());
     drop(bg);
     let all_names_folded: BBox<Vec<Vec<Value>>, AnyPolicy> = fold(all_names).unwrap();
 

@@ -30,7 +30,7 @@ pub(crate) fn admin(
     context: Context<ContextDataType>,
 ) -> ContextResponse<Json<AdminResponse>, AnyPolicy, ContextDataType> {
     // Verify that this user is admin?
-    // Get list of all students
+    // Get list of all instructors
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE privilege = 1",

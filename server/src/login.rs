@@ -51,7 +51,7 @@ pub(crate) fn login(
             email_bbox,
             PrivacyPureRegion::new(|email: String| {
                 Json(LoginResponse {
-                    success: true,
+                    success: false,
                     name: "".to_string(),
                     privilege: -1,
                     email: email,

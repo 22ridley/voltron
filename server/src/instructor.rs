@@ -32,6 +32,7 @@ pub(crate) fn instructor(
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> ContextResponse<Json<InstructorResponse>, AnyPolicy, ContextDataType> {
+    print!("INSTRUCTOR\n");
     // Find this instructor
     let email_bbox: BBox<String, AnyPolicy> = execute_pure(
         token,
@@ -51,6 +52,7 @@ pub(crate) fn instructor(
     );
     // If the instructor is not found, return error
     if user_res.len() == 0 {
+        print!("FAILING EARLY\n");
         let response: Json<InstructorResponse> = Json(InstructorResponse {
             success: false,
             class_id: -1,
@@ -62,11 +64,13 @@ pub(crate) fn instructor(
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
     let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
+    print!("SECOND QUERY\n");
     let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE privilege = 0 AND class_id = ?",
-        vec![class_id_bbox.clone()],
+        vec![class_id_bbox.clone()], // hangs because of class_id_bbox
         context.clone(),
     );
+    print!("AFTER SECOND QUERY\n");
     let group_ids_row: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT group_id FROM users WHERE class_id = ? AND group_id != -1",
         vec![class_id_bbox.clone()],
@@ -119,7 +123,7 @@ pub(crate) fn instructor(
                     let stud_group: StudentGroup = StudentGroup {
                         group_id: *group_id,
                         code,
-                        index: index,
+                        index,
                     };
                     groups_res.push(stud_group);
                 }
@@ -127,8 +131,8 @@ pub(crate) fn instructor(
                 // Return response
                 Json(InstructorResponse {
                     success: true,
-                    class_id: class_id,
-                    students: students,
+                    class_id,
+                    students,
                     student_groups: groups_res,
                 })
             },

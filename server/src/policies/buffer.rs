@@ -39,6 +39,7 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
+        print!("Checking policy\n");
         type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
 
@@ -54,12 +55,15 @@ impl Policy for VoltronBufferPolicy {
         let class_id: i32 = self.class_id.unwrap();
         let group_id: i32 = self.group_id.unwrap();
         // Check the database
+        print!("Trying to acquire lock\n");
         let mut bg = db.lock().unwrap();
+        print!("Before first query\n");
         let student_res = (*bg).prep_exec(
             "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
             vec![user.clone(), class_id.to_string(), group_id.to_string()],
             Context::empty(),
         );
+        print!("After first query\n");
         let instr_res = (*bg).prep_exec(
             "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
             vec![user.clone(), class_id.to_string(), "-1".to_string()],
@@ -119,6 +123,7 @@ impl SchemaPolicy for VoltronBufferPolicy {
     where
         Self: Sized,
     {
+        print!("From row called\n");
         VoltronBufferPolicy::new(
             // class_id
             mysql::from_value(row[3].clone()),
