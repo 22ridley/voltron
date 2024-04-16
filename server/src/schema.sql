@@ -1,7 +1,8 @@
 --INITIALIZING TABLE STRUCTURE:
 
 -- One table containing users, and one table specifying group information
-CREATE TABLE users (user_name varchar(255), email varchar(255), privilege int, class_id int, group_id int);
+-- privilege 0 => student, 1 => instructor, 2 => admin
+CREATE TABLE users (user_name varchar(255), email varchar(255), privilege int, class_id int, group_id int, PRIMARY KEY (email));
 
 -- Adding root instructor and one sample instructor
 -- Also adding sample students

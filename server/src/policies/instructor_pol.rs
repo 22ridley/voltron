@@ -10,6 +10,7 @@ use rocket::http::Cookie;
 use rocket::Request;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
+use crate::mysql::prelude::Queryable;
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -61,23 +62,21 @@ impl Policy for InstructorPolicy {
         // If they are the admin (by checking database)
         type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
+        let mut db = context.db.lock().unwrap();
         let user: &Option<String> = &context.user;
-        let db: &Arc<Mutex<MySqlBackend>> = &context.db;
         let user: String = user.as_ref().unwrap().to_string();
+
         // Check the database
-        let mut bg = db.lock().unwrap();
-        let admin_res = (*bg).prep_exec(
-            "SELECT * FROM users WHERE email = ? AND privilege = ?",
-            vec![user.clone(), "2".to_string()],
-            Context::empty(),
-        );
-        drop(bg);
+        let mut admin_res = db.exec_iter(
+            "SELECT * FROM users WHERE email = ? AND privilege = 2",
+            (user.clone(),),
+        ).unwrap();
 
         // I am the admin.
-        if admin_res.len() > 0 {
-            return true;
+        if let None = admin_res.next() {
+            return false;
         }
-        return false;
+        return true;
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {

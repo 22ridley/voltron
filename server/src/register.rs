@@ -28,80 +28,22 @@ pub fn register_instructor(
     instr_email: BBox<String, InstructorPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
-) -> ContextResponse<Json<SuccessResponse>, NoPolicy, ContextDataType> {
-    // Get the names of everyone currently in the database
-    let mut bg = backend.lock().unwrap();
-    let all_names: Vec<Vec<BBox<Value, AnyPolicy>>> =
-        (*bg).prep_exec("SELECT * FROM users", (), context.clone());
-    drop(bg);
-    let all_names_folded: BBox<Vec<Vec<Value>>, AnyPolicy> = fold(all_names).unwrap();
-
-    let result = execute_pure(
-        (
-            instr_name.clone(),
-            instr_class.clone(),
-            instr_email.clone(),
-            all_names_folded,
-        ),
-        PrivacyPureRegion::new(
-            |(i_name, i_class, i_email, names): (String, i32, String, Vec<Vec<Value>>)| {
-                // Check that this name is not already in the database
-                for row in names {
-                    let name: String = mysql::from_value::<String>(row[0].clone());
-                    if name == *i_name {
-                        return Err(format!(
-                            "Username '{}' was already found in the database",
-                            name
-                        ));
-                    }
-                }
-                return Ok(());
-            },
-        ),
-    )
-    .unwrap();
-
-    let result = result.transpose();
-    match result {
-        Err(e) => {
-            let response = Json(SuccessResponse {
-                success: false,
-                message: e,
-            });
-            return ContextResponse::from((BBox::new(response, NoPolicy {}), context));
-        }
-        _ => {}
-    }
-    // PPR to convert int to string for instr_class
-    let instr_class_int: BBox<String, InstructorPolicy> = execute_pure(
-        (instr_class),
-        PrivacyPureRegion::new(|(i_class): (i32)| format!("{}", i_class)),
-    )
-    .unwrap()
-    .specialize_policy::<InstructorPolicy>()
-    .unwrap();
-    // Assemble values to insert
-    let users_row: Vec<BBox<String, InstructorPolicy>> = vec![
-        instr_name,
-        instr_email,
-        BBox::new("1".to_string(), InstructorPolicy::new()),
-        instr_class_int,
-        BBox::new("1".to_string(), InstructorPolicy::new()),
-    ];
-
+) -> Json<SuccessResponse> {
     // Make insert query to add this new instructor
     let mut bg = backend.lock().unwrap();
-    let q = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
-
+    
     // send insert query to db
-    (*bg).prep_exec(q, users_row, context.clone());
+    bg.prep_exec(
+        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
+        (instr_name, instr_email, 1i32, instr_class, -1i32),
+        context.clone(),
+    );
     drop(bg);
 
-    let response = Json(SuccessResponse {
+    Json(SuccessResponse {
         success: true,
         message: "".to_string(),
-    });
-    ContextResponse::from((BBox::new(response, NoPolicy {}), context))
+    })
 }
 
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]

@@ -5,6 +5,8 @@ use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
+use mysql::prelude::Queryable;
+
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -16,13 +18,12 @@ use std::sync::{Arc, Mutex};
 // here to reuse the policy across tables/columns.
 #[derive(Clone, Serialize, Debug)]
 pub struct VoltronBufferPolicy {
-    class_id: Option<i32>, // Only students in the proper group in the proper class can access this buffer
-    group_id: Option<i32>,
-    // Instructors for this class can also access this buffer
+    class_id: i32, // Only students in the proper group in the proper class can access this buffer
+    group_id: i32, // Instructors for this class can also access this buffer
 }
 
 impl VoltronBufferPolicy {
-    pub fn new(class_id: Option<i32>, group_id: Option<i32>) -> VoltronBufferPolicy {
+    pub fn new(class_id: i32, group_id: i32) -> VoltronBufferPolicy {
         VoltronBufferPolicy { class_id, group_id }
     }
 }
@@ -44,44 +45,39 @@ impl Policy for VoltronBufferPolicy {
         let context: &ContextDataOut = context.downcast_ref().unwrap();
 
         let user: &Option<String> = &context.user;
-        let db: &Arc<Mutex<MySqlBackend>> = &context.db;
+        let mut db = context.db.lock().unwrap();
 
         // I am not an authenticated user. I cannot see any buffers!
         if user.is_none() {
             return false;
         }
 
-        let user: String = user.as_ref().unwrap().to_string();
-        let class_id: i32 = self.class_id.unwrap();
-        let group_id: i32 = self.group_id.unwrap();
+        let user: &String = user.as_ref().unwrap();
+
         // Check the database
-        print!("Trying to acquire lock\n");
-        let mut bg = db.lock().unwrap();
-        print!("Before first query\n");
-        let student_res = (*bg).prep_exec(
-            "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
-            vec![user.clone(), class_id.to_string(), group_id.to_string()],
-            Context::empty(),
-        );
-        print!("After first query\n");
-        let instr_res = (*bg).prep_exec(
-            "SELECT * FROM users WHERE email = ? AND class_id = ? AND group_id = ?",
-            vec![user.clone(), class_id.to_string(), "-1".to_string()],
-            Context::empty(),
-        );
-        drop(bg);
+        let mut result = db.exec_iter(
+            "SELECT * FROM users WHERE email = ?",
+            (user,)
+        ).unwrap();
 
-        // I am a student in this class and group.
-        if student_res.len() > 0 {
-            return true;
+        // Find out if we are an instructor for the class, or a student in the class and group.
+        match result.next() {
+            _ => false,
+            Some(Ok(row)) => {
+                let privilege: i32 = mysql::from_value(row.get(2).unwrap());
+                let class_id: i32 = mysql::from_value(row.get(3).unwrap());
+                let group_id: i32 = mysql::from_value(row.get(4).unwrap());
+                if privilege == 1 && class_id == self.class_id {
+                    // I am an instructor of this class.
+                    true
+                } else if privilege == 0 && class_id == self.class_id && group_id == self.group_id {
+                    // I am a student in this class and group.
+                    true
+                } else {
+                    false
+                }
+            }
         }
-
-        // I am an instructor of this class.
-        if instr_res.len() > 0 {
-            return true;
-        }
-
-        return false;
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
@@ -99,17 +95,17 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join_logic(&self, p2: Self) -> Result<Self, ()> {
-        let comp_class_id: Option<i32>;
-        let comp_group_id: Option<i32>;
-        if self.class_id.eq(&p2.class_id) {
-            comp_class_id = self.class_id.clone();
+        let comp_class_id: i32;
+        let comp_group_id: i32;
+        if self.class_id == p2.class_id {
+            comp_class_id = self.class_id;
         } else {
-            comp_class_id = None;
+            comp_class_id = -10;
         }
-        if self.group_id.eq(&p2.group_id) {
-            comp_group_id = self.group_id.clone();
+        if self.group_id == p2.group_id {
+            comp_group_id = self.group_id;
         } else {
-            comp_group_id = None;
+            comp_group_id = -10;
         }
         Ok(VoltronBufferPolicy {
             class_id: comp_class_id,

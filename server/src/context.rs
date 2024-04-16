@@ -4,17 +4,19 @@ use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
 use alohomora::{bbox::BBox, policy::NoPolicy};
+use alohomora::db::{BBoxConn, BBoxOpts};
 use rocket::State;
 use rocket_firebase_auth::{BearerToken, FirebaseAuth};
 use std::convert::TryFrom;
 use std::{sync::Arc, sync::Mutex};
+use std::boxed::Box;
 
 // Custom developer defined payload attached to every context.
 #[derive(AlohomoraType, Clone)]
-#[alohomora_out_type(verbatim = [db, config])]
+#[alohomora_out_type(verbatim = [config])]
 pub struct ContextDataType {
     pub user: Option<BBox<String, NoPolicy>>,
-    pub db: Arc<Mutex<MySqlBackend>>,
+    pub db: Arc<Mutex<BBoxConn>>,
     pub config: Config,
 }
 
@@ -36,9 +38,16 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
     async fn from_bbox_request(
         request: BBoxRequest<'a, 'r>,
     ) -> BBoxRequestOutcome<Self, Self::BBoxError> {
-        let db: &State<Arc<Mutex<MySqlBackend>>> = request.guard().await.unwrap();
         let config: &State<Config> = request.guard().await.unwrap();
         let firebase_auth: &State<FirebaseAuth> = request.guard().await.unwrap();
+
+        // Connect to the DB.
+        let mut db = BBoxConn::new(
+            // this is the user and password from the config.toml file
+            BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", config.db_user, config.db_password)).unwrap(),
+        ).unwrap();
+        db.query_drop("USE users").unwrap();
+
 
         // Get token from headers
         let token = request
@@ -58,7 +67,7 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
         // Return resulting context.
         BBoxRequestOutcome::Success(ContextDataType {
             user,
-            db: db.inner().clone(),
+            db: Arc::new(Mutex::new(db)),
             config: config.inner().clone(),
         })
     }

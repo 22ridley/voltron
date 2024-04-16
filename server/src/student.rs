@@ -27,7 +27,7 @@ pub struct StudentResponse {
     pub success: BBox<bool, NoPolicy>,
     pub class_id: BBox<i64, AnyPolicy>,
     pub group_id: BBox<i64, AnyPolicy>,
-    pub contents: BBox<String, VoltronBufferPolicy>,
+    pub contents: Option<BBox<String, VoltronBufferPolicy>>,
 }
 
 #[get("/student")]
@@ -46,6 +46,7 @@ pub(crate) fn student(
         }),
     )
     .unwrap();
+
     // let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
@@ -60,7 +61,7 @@ pub(crate) fn student(
             success: BBox::new(false, NoPolicy::new()),
             class_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
             group_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
-            contents: BBox::new("".to_string(), VoltronBufferPolicy::new(Some(-1), Some(-1))),
+            contents: None,
         };
         return JsonResponse::from((response, context));
     }
@@ -88,7 +89,7 @@ pub(crate) fn student(
         success: BBox::new(true, NoPolicy::new()),
         class_id: class_id_bbox,
         group_id: group_id_bbox,
-        contents: contents,
+        contents: Some(contents),
     };
     JsonResponse::from((response, context.clone()))
 }
