@@ -48,7 +48,7 @@ impl Policy for StudentPolicy {
     fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
         // Check if the Reason involves the database (match on Reason, anything other than DB is false)
         match reason {
-            Reason::DB(query) => {
+            Reason::DB(query, params) => {
                 // If they are an instructor (by checking database)
                 type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
                 let context: &ContextDataOut = context.downcast_ref().unwrap();
@@ -69,18 +69,17 @@ impl Policy for StudentPolicy {
                 let instructor_class: i32 = mysql::from_value(row[3].clone());
 
                 // Get the class_id that the instructor is trying to put a student into
-                println!("{}", query);
-                let split_commas: Vec<&str> = query.split(",").collect();
-                let query_class_id: &str = split_commas.get(7).unwrap().trim();
+                println!("{} with {:?}", query, params);
+                let query_class_id: i32 = mysql::from_value(params[3].clone());
                 println!("{} vs {}", instructor_class, query_class_id);
 
                 // Fail if the instructor is trying to place a student into a class that is not the instructor's class
-                if format!("{}", instructor_class) != query_class_id {
+                if instructor_class != query_class_id {
                     return true;
                 }
                 return true;
             }
-            Reason::Custom => true,
+            Reason::Custom(_) => true,
             _ => return false,
         }
     }

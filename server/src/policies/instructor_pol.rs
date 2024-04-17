@@ -48,7 +48,7 @@ impl Policy for InstructorPolicy {
     fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
         // Check if the Reason involves the database (match on Reason, anything other than DB is false)
         match reason {
-            Reason::DB(_) => (),
+            Reason::DB(_, _) => (),
             _ => return false,
         }
 

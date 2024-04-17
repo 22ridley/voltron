@@ -19,6 +19,7 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
+use crate::policies::WriteBufferPolicy;
 
 #[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
@@ -76,7 +77,7 @@ pub(crate) fn student(
 #[post("/update?<text>")]
 pub fn update(
     token: BBox<FirebaseToken, NoPolicy>,
-    text: BBox<String, NoPolicy>,
+    text: BBox<String, WriteBufferPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {

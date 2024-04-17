@@ -15,7 +15,7 @@ use rocket::{Request, Response};
 use std::fs::{self, File};
 
 use crate::context::ContextDataType;
-use crate::policies::VoltronBufferPolicy;
+use crate::policies::{VoltronBufferPolicy, WriteBufferPolicy};
 
 /// The struct we return for success responses (200s)
 #[derive(Debug)]
@@ -122,17 +122,16 @@ pub fn write_buffer<P: Policy + Clone + 'static>(
     class_id: BBox<i32, P>,
     group_id: BBox<i32, P>,
     context: Context<ContextDataType>,
-    contents: BBox<String, NoPolicy>,
+    contents: BBox<String, WriteBufferPolicy>,
 ) {
-    unbox(
-        (contents, class_id, group_id),
+    contents.into_unbox(
         context,
-        PrivacyCriticalRegion::new(|(contents, class_id, group_id): (String, i32, i32), ()| {
+        PrivacyCriticalRegion::new(|contents: String, (class_id, group_id): (i32, i32)| {
             let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
             let mut file: File = File::create(&path).unwrap();
             let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
         }),
-        (),
+        (class_id, group_id),
     )
     .unwrap();
 }
