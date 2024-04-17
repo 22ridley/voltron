@@ -1,6 +1,6 @@
 use crate::context::ContextDataType;
 use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
+use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use serde::Serialize;

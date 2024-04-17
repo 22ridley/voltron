@@ -5,15 +5,11 @@ use crate::common::SuccessResponse;
 use crate::context::ContextDataType;
 use crate::policies::{InstructorPolicy, StudentPolicy};
 use alohomora::context::Context;
-use alohomora::pcr::PrivacyCriticalRegion;
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::post;
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
-use std::fs::File;
-use std::path::Path;
 use std::{sync::Arc, sync::Mutex};
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
@@ -65,30 +61,30 @@ pub fn register_student(
     (*bg).prep_exec(q, users_row, context.clone());
     drop(bg);
 
-    let path: BBox<String, StudentPolicy> = execute_pure(
-        (stud_group, stud_class),
-        PrivacyPureRegion::new(|(s_group, s_class): (i32, i32)| {
-            format!("../group_code/class{}_group{}_code.txt", s_class, s_group)
-        }),
-    )
-    .unwrap()
-    .specialize_policy()
-    .unwrap();
+    // let path: BBox<String, StudentPolicy> = execute_pure(
+    //     (stud_group, stud_class),
+    //     PrivacyPureRegion::new(|(s_group, s_class): (i32, i32)| {
+    //         format!("../group_code/class{}_group{}_code.txt", s_class, s_group)
+    //     }),
+    // )
+    // .unwrap()
+    // .specialize_policy()
+    // .unwrap();
 
     // Opening a new file
     // Needs to be a privacy critical region, or moved into other pcr
-    path.unbox(
-        context.clone(),
-        PrivacyCriticalRegion::new(|path, ()| {
-            let file_name: &Path = Path::new(&path);
-            if !file_name.is_file() {
-                // Open a new file
-                let _ = File::create(file_name);
-            }
-        }),
-        (),
-    )
-    .unwrap();
+    // path.unbox(
+    //     context.clone(),
+    //     PrivacyCriticalRegion::new(|path, ()| {
+    //         let file_name: &Path = Path::new(&path);
+    //         if !file_name.is_file() {
+    //             // Open a new file
+    //             let _ = File::create(file_name);
+    //         }
+    //     }),
+    //     (),
+    // )
+    // .unwrap();
 
     return Json(SuccessResponse {
         success: true,

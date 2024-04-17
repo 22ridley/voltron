@@ -2,7 +2,6 @@ use alohomora::bbox::BBox;
 use alohomora::context::Context;
 use alohomora::pcr::PrivacyCriticalRegion;
 use alohomora::policy::{NoPolicy, Policy};
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::unbox::unbox;
 use mysql::from_value;
@@ -104,7 +103,13 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
         context,
         PrivacyCriticalRegion::new(|(class_id, group_id), ()| {
             let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-            let content = fs::read_to_string(path).expect("Unable to read file");
+            let content_result = fs::read_to_string(path);
+            let content: String = match content_result {
+                // If this file does not exist, return empty string
+                Err(_) => "".to_string(),
+                // Otherwise, return the file content
+                Ok(msg) => msg.to_string(),
+            };
             BBox::new(content, VoltronBufferPolicy::new(class_id, group_id))
         }),
         (),

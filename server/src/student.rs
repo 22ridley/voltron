@@ -15,11 +15,8 @@ use alohomora::{
 use mysql::Value;
 use rocket::{serde::json::Json, State};
 use rocket_firebase_auth::FirebaseToken;
-use std::fs::{self, File};
 use std::{
     collections::HashMap,
-    io::Write,
-    path::Path,
     sync::{Arc, Mutex},
 };
 

@@ -4,7 +4,7 @@ use crate::context::ContextDataType;
 use crate::policies::VoltronBufferPolicy;
 use alohomora::context::Context;
 use alohomora::fold::fold;
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
+use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
 use alohomora::{
     bbox::BBox,
@@ -15,7 +15,6 @@ use mysql::Value;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
 use std::collections::{BTreeSet, HashMap};
-use std::fs;
 use std::iter::FromIterator;
 use std::sync::{Arc, Mutex};
 
