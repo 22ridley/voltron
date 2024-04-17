@@ -88,14 +88,11 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        println!("Trying to join buffer pols {}", other.name());
         if other.is::<VoltronBufferPolicy>() {
-            println!("case1");
             // Policies are combinable
             let other = other.specialize::<VoltronBufferPolicy>().unwrap();
             Ok(AnyPolicy::new(self.join_logic(other)?))
         } else {
-            println!("case2");
             //Policies must be stacked
             Ok(AnyPolicy::new(PolicyAnd::new(
                 AnyPolicy::new(self.clone()),
@@ -117,10 +114,6 @@ impl Policy for VoltronBufferPolicy {
         } else {
             comp_group_id = -10;
         }
-        println!(
-            "Successfully joined policies: class_id = {} and group_id = {}",
-            comp_class_id, comp_group_id
-        );
         Ok(VoltronBufferPolicy {
             class_id: comp_class_id,
             group_id: comp_group_id,

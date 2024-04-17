@@ -1,13 +1,10 @@
 use alohomora::bbox::BBox;
 use alohomora::context::Context;
 use alohomora::pcr::PrivacyCriticalRegion;
-use alohomora::policy::{NoPolicy, Policy};
+use alohomora::policy::{AnyPolicy, NoPolicy, Policy};
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::unbox::unbox;
-use mysql::from_value;
-use mysql::prelude::FromRow;
 use mysql::serde::Serialize;
-use mysql::Row;
 use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
@@ -58,31 +55,10 @@ pub struct StudentGroup {
 }
 
 // The structure representing instructors
-#[derive(Debug, Serialize)]
+#[derive(ResponseBBoxJson)]
 pub struct Instructor {
-    pub name: String,
-    pub class_id: i32,
-    pub index: usize,
-}
-
-impl Instructor {
-    pub fn new(row: Row, index: usize) -> Self {
-        Instructor {
-            name: from_value(row[0].clone()),
-            class_id: from_value(row[3].clone()),
-            index: index,
-        }
-    }
-}
-
-impl FromRow for Instructor {
-    fn from_row_opt(row: Row) -> Result<Self, mysql::FromRowError> {
-        Ok(Instructor::new(row, 0))
-    }
-
-    fn from_row(row: Row) -> Self {
-        Instructor::new(row, 0)
-    }
+    pub name: BBox<String, AnyPolicy>,
+    pub class_id: BBox<i32, AnyPolicy>,
 }
 
 // The structure representing students
@@ -98,13 +74,10 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
     group_id: BBox<i32, P>,
     context: Context<ContextDataType>,
 ) -> BBox<String, VoltronBufferPolicy> {
-    println!("{}", class_id.policy().name());
-    println!("{}", group_id.policy().name());
     unbox(
         (class_id, group_id),
         context,
         PrivacyCriticalRegion::new(|(class_id, group_id): (i32, i32), ()| {
-            println!("Inside pcr");
             let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
             let content_result = fs::read_to_string(path);
             let content: String = match content_result {
@@ -113,7 +86,6 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
                 // Otherwise, return the file content
                 Ok(msg) => msg.to_string(),
             };
-            println!("Content: {}", content);
             BBox::new(content, VoltronBufferPolicy::new(class_id, group_id))
         }),
         (),
