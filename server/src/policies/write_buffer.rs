@@ -1,6 +1,6 @@
 use crate::context::ContextDataType;
 use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, CloneableAny, FrontendPolicy, Policy, Reason};
+use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, Reason};
 use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use rocket::http::Cookie;
@@ -53,7 +53,7 @@ impl Policy for WriteBufferPolicy {
         // Find out if we are an instructor for the class, or a student in the class and group.
         match result.next() {
             None => false,
-            Some(res) => true,
+            Some(_res) => true,
         }
     }
 

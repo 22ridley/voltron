@@ -98,10 +98,13 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
     group_id: BBox<i32, P>,
     context: Context<ContextDataType>,
 ) -> BBox<String, VoltronBufferPolicy> {
+    println!("{}", class_id.policy().name());
+    println!("{}", group_id.policy().name());
     unbox(
         (class_id, group_id),
         context,
-        PrivacyCriticalRegion::new(|(class_id, group_id), ()| {
+        PrivacyCriticalRegion::new(|(class_id, group_id): (i32, i32), ()| {
+            println!("Inside pcr");
             let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
             let content_result = fs::read_to_string(path);
             let content: String = match content_result {
@@ -110,6 +113,7 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
                 // Otherwise, return the file content
                 Ok(msg) => msg.to_string(),
             };
+            println!("Content: {}", content);
             BBox::new(content, VoltronBufferPolicy::new(class_id, group_id))
         }),
         (),
@@ -124,14 +128,15 @@ pub fn write_buffer<P: Policy + Clone + 'static>(
     context: Context<ContextDataType>,
     contents: BBox<String, WriteBufferPolicy>,
 ) {
-    contents.into_unbox(
-        context,
-        PrivacyCriticalRegion::new(|contents: String, (class_id, group_id): (i32, i32)| {
-            let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-            let mut file: File = File::create(&path).unwrap();
-            let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
-        }),
-        (class_id, group_id),
-    )
-    .unwrap();
+    contents
+        .into_unbox(
+            context,
+            PrivacyCriticalRegion::new(|contents: String, (class_id, group_id): (i32, i32)| {
+                let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+                let mut file: File = File::create(&path).unwrap();
+                let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
+            }),
+            (class_id, group_id),
+        )
+        .unwrap();
 }
