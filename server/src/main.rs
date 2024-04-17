@@ -1,7 +1,7 @@
 extern crate mysql;
 extern crate rocket;
 extern crate serde;
-use crate::policies::VoltronBufferPolicy;
+use crate::policies::ReadBufferPolicy;
 use alohomora::rocket::{routes, BBoxRocket};
 use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
@@ -38,8 +38,8 @@ async fn main() {
         .expect("Failed to read firebase credentials");
 
     // Register all policies. #[schema_policy(...)] does not work on mac.
-    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 3);
-    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 4);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 3);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 4);
 
     // Initialize the backend
     let config_path = "config.toml";

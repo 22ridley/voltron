@@ -1,7 +1,7 @@
 use crate::backend::MySqlBackend;
 use crate::common::{read_buffer, Student, StudentGroup};
 use crate::context::ContextDataType;
-use crate::policies::VoltronBufferPolicy;
+use crate::policies::ReadBufferPolicy;
 use alohomora::context::Context;
 use alohomora::fold::fold;
 use alohomora::pure::PrivacyPureRegion;
@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 #[derive(ResponseBBoxJson)]
 pub struct InstructorResponse {
     pub success: bool,
-    pub class_id: BBox<i64, VoltronBufferPolicy>,
+    pub class_id: BBox<i64, ReadBufferPolicy>,
     pub students: Vec<Student>,
     pub student_groups: Vec<StudentGroup>,
 }
@@ -46,22 +46,9 @@ pub(crate) fn instructor(
         vec![email_bbox.clone()],
         context.clone(),
     );
-    // If the instructor is not found, return error
-    if user_res.len() == 0 {
-        /*
-        let response: Json<InstructorResponse> = Json(InstructorResponse {
-            success: false,
-            class_id: -1,
-            students: vec![],
-            student_groups: vec![],
-        });
-        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy {}));
-        return ContextResponse::from((response_bbox, context));
-        */
-        panic!("bad user");
-    }
+
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
 
     let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE privilege = 0 AND class_id = ?",
@@ -70,11 +57,11 @@ pub(crate) fn instructor(
     );
     drop(bg);
 
-    let mut group_ids_bbox_vec: Vec<BBox<i32, VoltronBufferPolicy>> = Vec::new();
+    let mut group_ids_bbox_vec: Vec<BBox<i32, ReadBufferPolicy>> = Vec::new();
     let mut students_bbox_vec: Vec<Student> = Vec::new();
     for row in students_res.iter() {
         let stud_name_bbox: BBox<String, NoPolicy> = from_value(row[0].clone()).unwrap();
-        let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
+        let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
         let student_bbox: Student = Student {
             name: stud_name_bbox,
             group_id: group_id_bbox.clone().into_bbox(),
@@ -87,7 +74,7 @@ pub(crate) fn instructor(
     let group_ids_bbox_vec = group_ids_bbox_vec.into_ppr(PrivacyPureRegion::new(|v: Vec<i32>| {
         Vec::from_iter(BTreeSet::from_iter(v.into_iter()).into_iter())
     }));
-    let group_ids_bbox_vec: BBox<_, VoltronBufferPolicy> =
+    let group_ids_bbox_vec: BBox<_, ReadBufferPolicy> =
         group_ids_bbox_vec.specialize_policy().unwrap();
     let group_ids_bbox_vec: Vec<_> = group_ids_bbox_vec.into();
 

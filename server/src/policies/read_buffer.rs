@@ -14,14 +14,14 @@ use serde::Serialize;
 // We can add multiple #[schema_policy(...)] definitions
 // here to reuse the policy across tables/columns.
 #[derive(Clone, Serialize, Debug)]
-pub struct VoltronBufferPolicy {
+pub struct ReadBufferPolicy {
     class_id: i32, // Only students in the proper group in the proper class can access this buffer
     group_id: i32, // Instructors for this class can also access this buffer
 }
 
-impl VoltronBufferPolicy {
-    pub fn new(class_id: i32, group_id: i32) -> VoltronBufferPolicy {
-        VoltronBufferPolicy { class_id, group_id }
+impl ReadBufferPolicy {
+    pub fn new(class_id: i32, group_id: i32) -> ReadBufferPolicy {
+        ReadBufferPolicy { class_id, group_id }
     }
 }
 
@@ -29,10 +29,10 @@ impl VoltronBufferPolicy {
 //   1. Students with group_id and class_id;
 //   2. Instructors with class_id;
 //   3. Admins
-impl Policy for VoltronBufferPolicy {
+impl Policy for ReadBufferPolicy {
     fn name(&self) -> String {
         format!(
-            "VoltronBufferPolicy(class id {:?} and group id {:?})",
+            "ReadBufferPolicy(class id {:?} and group id {:?})",
             self.class_id, self.group_id
         )
     }
@@ -88,9 +88,9 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<VoltronBufferPolicy>() {
+        if other.is::<ReadBufferPolicy>() {
             // Policies are combinable
-            let other = other.specialize::<VoltronBufferPolicy>().unwrap();
+            let other = other.specialize::<ReadBufferPolicy>().unwrap();
             Ok(AnyPolicy::new(self.join_logic(other)?))
         } else {
             //Policies must be stacked
@@ -114,19 +114,19 @@ impl Policy for VoltronBufferPolicy {
         } else {
             comp_group_id = -10;
         }
-        Ok(VoltronBufferPolicy {
+        Ok(ReadBufferPolicy {
             class_id: comp_class_id,
             group_id: comp_group_id,
         })
     }
 }
 
-impl SchemaPolicy for VoltronBufferPolicy {
+impl SchemaPolicy for ReadBufferPolicy {
     fn from_row(_table: &str, row: &Vec<mysql::Value>) -> Self
     where
         Self: Sized,
     {
-        VoltronBufferPolicy::new(
+        ReadBufferPolicy::new(
             // class_id
             mysql::from_value(row[3].clone()),
             // group_id

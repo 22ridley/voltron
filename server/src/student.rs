@@ -1,7 +1,8 @@
 use crate::backend::MySqlBackend;
 use crate::common::{read_buffer, write_buffer};
 use crate::context::ContextDataType;
-use crate::{common::SuccessResponse, policies::VoltronBufferPolicy};
+use crate::policies::WriteBufferPolicy;
+use crate::{common::SuccessResponse, policies::ReadBufferPolicy};
 use alohomora::context::Context;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
@@ -19,14 +20,13 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
-use crate::policies::WriteBufferPolicy;
 
 #[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
     pub success: BBox<bool, NoPolicy>,
-    pub class_id: BBox<i64, VoltronBufferPolicy>,
-    pub group_id: BBox<i64, VoltronBufferPolicy>,
-    pub contents: Option<BBox<String, VoltronBufferPolicy>>,
+    pub class_id: BBox<i64, ReadBufferPolicy>,
+    pub group_id: BBox<i64, ReadBufferPolicy>,
+    pub contents: Option<BBox<String, ReadBufferPolicy>>,
 }
 
 #[get("/student")]
@@ -53,13 +53,10 @@ pub(crate) fn student(
         context.clone(),
     );
     drop(bg);
-    // If the student is not found, return error
-    if user_res.len() == 0 {
-        panic!("bad user");
-    }
+
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
     let contents = read_buffer(
         class_id_bbox.clone(),
         group_id_bbox.clone(),
@@ -106,8 +103,8 @@ pub fn update(
         });
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
 
     // Needs to be privacy critical region
     write_buffer(class_id_bbox, group_id_bbox, context.clone(), text);

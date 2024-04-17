@@ -12,7 +12,7 @@ use rocket::{Request, Response};
 use std::fs::{self, File};
 
 use crate::context::ContextDataType;
-use crate::policies::{VoltronBufferPolicy, WriteBufferPolicy};
+use crate::policies::{ReadBufferPolicy, WriteBufferPolicy};
 
 /// The struct we return for success responses (200s)
 #[derive(Debug)]
@@ -50,8 +50,8 @@ pub struct LoginContext {
 // The structure representing student groups and their code
 #[derive(ResponseBBoxJson)]
 pub struct StudentGroup {
-    pub group_id: BBox<i64, VoltronBufferPolicy>,
-    pub code: BBox<String, VoltronBufferPolicy>,
+    pub group_id: BBox<i64, ReadBufferPolicy>,
+    pub code: BBox<String, ReadBufferPolicy>,
 }
 
 // The structure representing instructors
@@ -66,14 +66,14 @@ use std::collections::HashMap;
 #[derive(ResponseBBoxJson)]
 pub struct Student {
     pub name: BBox<String, NoPolicy>,
-    pub group_id: BBox<i64, VoltronBufferPolicy>,
+    pub group_id: BBox<i64, ReadBufferPolicy>,
 }
 
 pub fn read_buffer<P: Policy + Clone + 'static>(
     class_id: BBox<i32, P>,
     group_id: BBox<i32, P>,
     context: Context<ContextDataType>,
-) -> BBox<String, VoltronBufferPolicy> {
+) -> BBox<String, ReadBufferPolicy> {
     unbox(
         (class_id, group_id),
         context,
@@ -86,7 +86,7 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
                 // Otherwise, return the file content
                 Ok(msg) => msg.to_string(),
             };
-            BBox::new(content, VoltronBufferPolicy::new(class_id, group_id))
+            BBox::new(content, ReadBufferPolicy::new(class_id, group_id))
         }),
         (),
     )
