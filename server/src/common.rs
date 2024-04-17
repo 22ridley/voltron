@@ -1,5 +1,4 @@
 use alohomora::bbox::BBox;
-use alohomora::db::BBoxRow;
 use alohomora::policy::NoPolicy;
 use alohomora::rocket::ResponseBBoxJson;
 use mysql::from_value;

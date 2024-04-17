@@ -28,6 +28,7 @@ impl VoltronBufferPolicy {
 // Content of a buffer can only be accessed by:
 //   1. Students with group_id and class_id;
 //   2. Instructors with class_id;
+//   3. Admins
 impl Policy for VoltronBufferPolicy {
     fn name(&self) -> String {
         format!(
@@ -37,7 +38,6 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
-        print!("Checking policy\n");
         type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
 
@@ -51,7 +51,6 @@ impl Policy for VoltronBufferPolicy {
 
         let user: &String = user.as_ref().unwrap();
 
-        println!("Before checking the database");
         // Check the database
         let mut result = db
             .exec_iter("SELECT * FROM users WHERE email = ?", (user,))
@@ -64,11 +63,13 @@ impl Policy for VoltronBufferPolicy {
                 match res {
                     Err(_) => false,
                     Ok(row) => {
-                        println!("Reached inside match");
                         let privilege: i32 = mysql::from_value(row.get(2).unwrap());
                         let class_id: i32 = mysql::from_value(row.get(3).unwrap());
                         let group_id: i32 = mysql::from_value(row.get(4).unwrap());
-                        if privilege == 1 && class_id == self.class_id {
+                        if privilege == 2 {
+                            // I am an admin
+                            true
+                        } else if privilege == 1 && class_id == self.class_id {
                             // I am an instructor of this class.
                             true
                         } else if privilege == 0
@@ -87,7 +88,6 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        print!("Buffer join\n");
         if other.is::<VoltronBufferPolicy>() {
             // Policies are combinable
             let other = other.specialize::<VoltronBufferPolicy>().unwrap();
@@ -102,7 +102,6 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join_logic(&self, p2: Self) -> Result<Self, ()> {
-        print!("Buffer join logic\n");
         let comp_class_id: i32;
         let comp_group_id: i32;
         if self.class_id == p2.class_id {
@@ -127,7 +126,6 @@ impl SchemaPolicy for VoltronBufferPolicy {
     where
         Self: Sized,
     {
-        print!("From row called\n");
         VoltronBufferPolicy::new(
             // class_id
             mysql::from_value(row[3].clone()),

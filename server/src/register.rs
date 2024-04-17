@@ -57,7 +57,13 @@ pub fn register_student(
 ) -> Json<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
     // Make insert query to add this new student into users
-    let users_row = (stud_name, stud_email, "0", stud_class.clone(), stud_group.clone());
+    let users_row = (
+        stud_name,
+        stud_email,
+        "0",
+        stud_class.clone(),
+        stud_group.clone(),
+    );
     let q: &str = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
     let _res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(q, users_row, context.clone());
     drop(bg);
@@ -76,7 +82,8 @@ pub fn register_student(
                 let _ = File::create(file_name);
             }
         }),
-    ).unwrap();
+    )
+    .unwrap();
 
     return Json(SuccessResponse {
         success: true,

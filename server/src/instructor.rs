@@ -5,14 +5,13 @@ use crate::policies::VoltronBufferPolicy;
 use alohomora::context::Context;
 use alohomora::fold::fold;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
-use alohomora::rocket::{get, ContextResponse, JsonResponse, ResponseBBoxJson};
+use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
 use alohomora::{
     bbox::BBox,
     db::from_value,
     policy::{AnyPolicy, NoPolicy},
 };
 use mysql::Value;
-use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
 use std::collections::{BTreeSet, HashMap};
@@ -34,7 +33,6 @@ pub(crate) fn instructor(
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<InstructorResponse, ContextDataType> {
-    print!("INSTRUCTOR\n");
     // Find this instructor
     let email_bbox: BBox<String, NoPolicy> =
         token.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
@@ -77,7 +75,7 @@ pub(crate) fn instructor(
     let mut students_bbox_vec: Vec<Student> = Vec::new();
     for row in students_res.iter() {
         let stud_name_bbox: BBox<String, NoPolicy> = from_value(row[0].clone()).unwrap();
-        let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
+        let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
         let student_bbox: Student = Student {
             name: stud_name_bbox,
             group_id: group_id_bbox.clone().into_bbox(),
@@ -121,53 +119,4 @@ pub(crate) fn instructor(
         },
         context,
     ))
-
-    /*
-    println!("Creating response:");
-    use alohomora::policy::Policy;
-    println!("{}", class_id_bbox.policy().name());
-    println!("{}", group_ids_bbox_vec.policy().name());
-    println!("{}", students_bbox_vec.policy().name());
-    let response = execute_pure(
-        (
-            class_id_bbox.clone(),
-            group_ids_bbox_vec.clone(),
-            students_bbox_vec,
-        ),
-        PrivacyPureRegion::new(
-            |(class_id, group_ids_og, students): (i32, Vec<i32>, Vec<Student>)| {
-                println!("Entered the ppr");
-                // Sort and remove duplicates from list of all group_ids in the class
-                let mut group_ids = group_ids_og.clone();
-                group_ids.sort();
-                group_ids.dedup();
-                let mut groups_res: Vec<StudentGroup> = Vec::new();
-                // Read from the files to create StudentGroup vector
-                for (index, group_id) in group_ids.iter().enumerate() {
-                    let filepath: String =
-                        format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-                    let code: String =
-                        fs::read_to_string(filepath).expect("Unable to read the file");
-                    let stud_group: StudentGroup = StudentGroup {
-                        group_id: *group_id,
-                        code,
-                        index,
-                    };
-                    groups_res.push(stud_group);
-                }
-
-                println!("About to return success json from the ppr");
-                // Return response
-                Json(InstructorResponse {
-                    success: true,
-                    class_id,
-                    students,
-                    student_groups: groups_res,
-                })
-            },
-        ),
-    )
-    .unwrap();
-    ContextResponse::from((response, context))
-    */
 }
