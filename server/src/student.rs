@@ -1,4 +1,5 @@
 use crate::backend::MySqlBackend;
+use crate::common::{read_buffer, write_buffer};
 use crate::context::ContextDataType;
 use crate::{common::SuccessResponse, policies::VoltronBufferPolicy};
 use alohomora::context::Context;
@@ -25,8 +26,8 @@ use std::{
 #[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
     pub success: BBox<bool, NoPolicy>,
-    pub class_id: BBox<i64, AnyPolicy>,
-    pub group_id: BBox<i64, AnyPolicy>,
+    pub class_id: BBox<i64, VoltronBufferPolicy>,
+    pub group_id: BBox<i64, VoltronBufferPolicy>,
     pub contents: Option<BBox<String, VoltronBufferPolicy>>,
 }
 
@@ -56,38 +57,20 @@ pub(crate) fn student(
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
-        let response = StudentResponse {
-            success: BBox::new(false, NoPolicy::new()),
-            class_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
-            group_id: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
-            contents: None,
-        };
-        return JsonResponse::from((response, context));
+        panic!("bad user");
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i64, AnyPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i64, AnyPolicy> = from_value(row[4].clone()).unwrap();
-
-    let contents = execute_pure(
-        (class_id_bbox.clone(), group_id_bbox.clone()),
-        PrivacyPureRegion::new(|(class_id, group_id): (i64, i64)| {
-            // File path to read and write from
-            let filepath: String =
-                format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-
-            // Convert group_id to number
-            let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
-            // let contents_bbox: BBox<String, AnyPolicy> = BBox::new(contents, AnyPolicy::new(VoltronBufferPolicy::new(Some(class_id), Some(group_id))));
-            contents
-        }),
-    )
-    .unwrap()
-    .specialize_policy::<VoltronBufferPolicy>()
-    .unwrap();
+    let class_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
+    let contents = read_buffer(
+        class_id_bbox.clone(),
+        group_id_bbox.clone(),
+        context.clone(),
+    );
     let response: StudentResponse = StudentResponse {
         success: BBox::new(true, NoPolicy::new()),
-        class_id: class_id_bbox,
-        group_id: group_id_bbox,
+        class_id: class_id_bbox.into_bbox(),
+        group_id: group_id_bbox.into_bbox(),
         contents: Some(contents),
     };
     JsonResponse::from((response, context.clone()))
@@ -125,24 +108,12 @@ pub fn update(
         });
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
+    let class_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, VoltronBufferPolicy> = from_value(row[4].clone()).unwrap();
 
     // Needs to be privacy critical region
-    execute_pure(
-        (class_id_bbox, group_id_bbox, text),
-        PrivacyPureRegion::new(|(class_id, group_id, text_u): (i32, i32, String)| {
-            // Open a file in write-only mode, returns `io::Result<File>`
-            let filepath: String =
-                format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-            let path: &Path = Path::new(&filepath);
-            let mut file: File = File::create(&path).unwrap();
+    write_buffer(class_id_bbox, group_id_bbox, context.clone(), text);
 
-            // Write the new text to the file
-            let _bytes_written: Result<usize, std::io::Error> = file.write(text_u.as_bytes());
-            // Return response
-        }),
-    ).unwrap();
     return Json(SuccessResponse {
         success: true,
         message: "".to_string(),

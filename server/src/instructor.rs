@@ -1,5 +1,5 @@
 use crate::backend::MySqlBackend;
-use crate::common::{Student, StudentGroup};
+use crate::common::{read_buffer, Student, StudentGroup};
 use crate::context::ContextDataType;
 use crate::policies::VoltronBufferPolicy;
 use alohomora::context::Context;
@@ -94,18 +94,9 @@ pub(crate) fn instructor(
 
     let mut group_bbox_vec: Vec<StudentGroup> = Vec::new();
     for group_id in group_ids_bbox_vec {
-        let code = execute_pure(
-            (class_id_bbox.clone(), group_id.clone()),
-            PrivacyPureRegion::new(|(class_id, group_id)| {
-                let filepath: String =
-                    format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-                fs::read_to_string(filepath).expect("Unable to read the file")
-            }),
-        )
-        .unwrap();
         let group = StudentGroup {
             group_id: group_id.clone().into_bbox(),
-            code: code.specialize_policy().unwrap(),
+            code: read_buffer(class_id_bbox.clone(), group_id, context.clone()),
         };
         group_bbox_vec.push(group);
     }

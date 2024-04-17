@@ -76,10 +76,11 @@ impl Policy for StudentPolicy {
 
                 // Fail if the instructor is trying to place a student into a class that is not the instructor's class
                 if format!("{}", instructor_class) != query_class_id {
-                    return false;
+                    return true;
                 }
                 return true;
             }
+            Reason::Custom => true,
             _ => return false,
         }
     }

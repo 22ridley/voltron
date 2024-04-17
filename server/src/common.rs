@@ -1,6 +1,10 @@
 use alohomora::bbox::BBox;
-use alohomora::policy::NoPolicy;
+use alohomora::context::Context;
+use alohomora::pcr::PrivacyCriticalRegion;
+use alohomora::policy::{NoPolicy, Policy};
+use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
+use alohomora::unbox::unbox;
 use mysql::from_value;
 use mysql::prelude::FromRow;
 use mysql::serde::Serialize;
@@ -9,7 +13,9 @@ use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
+use std::fs::{self, File};
 
+use crate::context::ContextDataType;
 use crate::policies::VoltronBufferPolicy;
 
 /// The struct we return for success responses (200s)
@@ -86,4 +92,42 @@ use std::collections::HashMap;
 pub struct Student {
     pub name: BBox<String, NoPolicy>,
     pub group_id: BBox<i64, VoltronBufferPolicy>,
+}
+
+pub fn read_buffer<P: Policy + Clone + 'static>(
+    class_id: BBox<i32, P>,
+    group_id: BBox<i32, P>,
+    context: Context<ContextDataType>,
+) -> BBox<String, VoltronBufferPolicy> {
+    unbox(
+        (class_id, group_id),
+        context,
+        PrivacyCriticalRegion::new(|(class_id, group_id), ()| {
+            let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+            let content = fs::read_to_string(path).expect("Unable to read file");
+            BBox::new(content, VoltronBufferPolicy::new(class_id, group_id))
+        }),
+        (),
+    )
+    .unwrap()
+}
+
+use std::io::Write;
+pub fn write_buffer<P: Policy + Clone + 'static>(
+    class_id: BBox<i32, P>,
+    group_id: BBox<i32, P>,
+    context: Context<ContextDataType>,
+    contents: BBox<String, NoPolicy>,
+) {
+    unbox(
+        (contents, class_id, group_id),
+        context,
+        PrivacyCriticalRegion::new(|(contents, class_id, group_id): (String, i32, i32), ()| {
+            let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+            let mut file: File = File::create(&path).unwrap();
+            let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
+        }),
+        (),
+    )
+    .unwrap();
 }
