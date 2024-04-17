@@ -7,6 +7,7 @@ use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
 use slog::o;
+use std::env;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -30,15 +31,13 @@ pub fn new_logger() -> slog::Logger {
 
 #[rocket::main]
 async fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
         .json_file("./src/firebase-credentials.json")
         .build()
         .expect("Failed to read firebase credentials");
 
     // Register all policies. #[schema_policy(...)] does not work on mac.
-    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 0);
-    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 1);
-    alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 2);
     alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 3);
     alohomora::policy::add_schema_policy::<VoltronBufferPolicy>(String::from("users"), 4);
 

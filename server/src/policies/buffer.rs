@@ -1,12 +1,9 @@
-use crate::backend::MySqlBackend;
 use crate::context::ContextDataType;
-use alohomora::context::{Context, UnprotectedContext};
+use alohomora::context::UnprotectedContext;
 use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
-use serde::Serialize;
-use std::sync::{Arc, Mutex};
 use mysql::prelude::Queryable;
-
+use serde::Serialize;
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -54,33 +51,43 @@ impl Policy for VoltronBufferPolicy {
 
         let user: &String = user.as_ref().unwrap();
 
+        println!("Before checking the database");
         // Check the database
-        let mut result = db.exec_iter(
-            "SELECT * FROM users WHERE email = ?",
-            (user,)
-        ).unwrap();
+        let mut result = db
+            .exec_iter("SELECT * FROM users WHERE email = ?", (user,))
+            .unwrap();
 
         // Find out if we are an instructor for the class, or a student in the class and group.
         match result.next() {
-            _ => false,
-            Some(Ok(row)) => {
-                let privilege: i32 = mysql::from_value(row.get(2).unwrap());
-                let class_id: i32 = mysql::from_value(row.get(3).unwrap());
-                let group_id: i32 = mysql::from_value(row.get(4).unwrap());
-                if privilege == 1 && class_id == self.class_id {
-                    // I am an instructor of this class.
-                    true
-                } else if privilege == 0 && class_id == self.class_id && group_id == self.group_id {
-                    // I am a student in this class and group.
-                    true
-                } else {
-                    false
+            None => false,
+            Some(res) => {
+                match res {
+                    Err(_) => false,
+                    Ok(row) => {
+                        println!("Reached inside match");
+                        let privilege: i32 = mysql::from_value(row.get(2).unwrap());
+                        let class_id: i32 = mysql::from_value(row.get(3).unwrap());
+                        let group_id: i32 = mysql::from_value(row.get(4).unwrap());
+                        if privilege == 1 && class_id == self.class_id {
+                            // I am an instructor of this class.
+                            true
+                        } else if privilege == 0
+                            && class_id == self.class_id
+                            && group_id == self.group_id
+                        {
+                            // I am a student in this class and group.
+                            true
+                        } else {
+                            false
+                        }
+                    }
                 }
             }
         }
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
+        print!("Buffer join\n");
         if other.is::<VoltronBufferPolicy>() {
             // Policies are combinable
             let other = other.specialize::<VoltronBufferPolicy>().unwrap();
@@ -95,6 +102,7 @@ impl Policy for VoltronBufferPolicy {
     }
 
     fn join_logic(&self, p2: Self) -> Result<Self, ()> {
+        print!("Buffer join logic\n");
         let comp_class_id: i32;
         let comp_group_id: i32;
         if self.class_id == p2.class_id {

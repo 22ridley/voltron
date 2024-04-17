@@ -1,3 +1,7 @@
+use alohomora::bbox::BBox;
+use alohomora::db::BBoxRow;
+use alohomora::policy::NoPolicy;
+use alohomora::rocket::ResponseBBoxJson;
 use mysql::from_value;
 use mysql::prelude::FromRow;
 use mysql::serde::Serialize;
@@ -6,6 +10,8 @@ use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
+
+use crate::policies::VoltronBufferPolicy;
 
 /// The struct we return for success responses (200s)
 #[derive(Debug)]
@@ -41,31 +47,10 @@ pub struct LoginContext {
 }
 
 // The structure representing student groups and their code
-#[derive(Debug, Serialize)]
+#[derive(ResponseBBoxJson)]
 pub struct StudentGroup {
-    pub group_id: i32,
-    pub code: String,
-    pub index: usize,
-}
-
-impl StudentGroup {
-    pub fn new(row: Row, index: usize) -> Self {
-        StudentGroup {
-            group_id: from_value(row[0].clone()),
-            code: from_value(row[1].clone()),
-            index: index,
-        }
-    }
-}
-
-impl FromRow for StudentGroup {
-    fn from_row_opt(row: Row) -> Result<Self, mysql::FromRowError> {
-        Ok(StudentGroup::new(row, 0))
-    }
-
-    fn from_row(row: Row) -> Self {
-        StudentGroup::new(row, 0)
-    }
+    pub group_id: BBox<i64, VoltronBufferPolicy>,
+    pub code: BBox<String, VoltronBufferPolicy>,
 }
 
 // The structure representing instructors
@@ -97,29 +82,9 @@ impl FromRow for Instructor {
 }
 
 // The structure representing students
-#[derive(Debug, Serialize)]
+use std::collections::HashMap;
+#[derive(ResponseBBoxJson)]
 pub struct Student {
-    pub name: String,
-    pub group_id: i32,
-    pub index: usize,
-}
-
-impl Student {
-    pub fn new(row: Row, index: usize) -> Self {
-        Student {
-            name: from_value(row[0].clone()),
-            group_id: from_value(row[4].clone()),
-            index: index,
-        }
-    }
-}
-
-impl FromRow for Student {
-    fn from_row_opt(row: Row) -> Result<Self, mysql::FromRowError> {
-        Ok(Student::new(row, 0))
-    }
-
-    fn from_row(row: Row) -> Self {
-        Student::new(row, 0)
-    }
+    pub name: BBox<String, NoPolicy>,
+    pub group_id: BBox<i64, VoltronBufferPolicy>,
 }

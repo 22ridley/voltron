@@ -1,23 +1,43 @@
-use crate::backend::MySqlBackend;
 use crate::config::Config;
+use alohomora::db::{BBoxConn, BBoxOpts};
 use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
 use alohomora::{bbox::BBox, policy::NoPolicy};
-use alohomora::db::{BBoxConn, BBoxOpts};
 use rocket::State;
 use rocket_firebase_auth::{BearerToken, FirebaseAuth};
+use std::boxed::Box;
 use std::convert::TryFrom;
 use std::{sync::Arc, sync::Mutex};
-use std::boxed::Box;
 
 // Custom developer defined payload attached to every context.
-#[derive(AlohomoraType, Clone)]
+#[derive(AlohomoraType)]
 #[alohomora_out_type(verbatim = [config])]
 pub struct ContextDataType {
     pub user: Option<BBox<String, NoPolicy>>,
     pub db: Arc<Mutex<BBoxConn>>,
     pub config: Config,
+}
+impl Clone for ContextDataType {
+    fn clone(&self) -> Self {
+        // Connect to the DB.
+        let mut db = BBoxConn::new(
+            // this is the user and password from the config.toml file
+            BBoxOpts::from_url(&format!(
+                "mysql://{}:{}@127.0.0.1/",
+                self.config.db_user, self.config.db_password
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        db.query_drop("USE users").unwrap(); // Connect to the DB.
+
+        Self {
+            user: self.user.clone(),
+            db: Arc::new(Mutex::new(db)),
+            config: self.config.clone(),
+        }
+    }
 }
 
 async fn firebase_auth_helper(token: String, firebase_auth: &FirebaseAuth) -> Option<String> {
@@ -44,10 +64,14 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
         // Connect to the DB.
         let mut db = BBoxConn::new(
             // this is the user and password from the config.toml file
-            BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", config.db_user, config.db_password)).unwrap(),
-        ).unwrap();
+            BBoxOpts::from_url(&format!(
+                "mysql://{}:{}@127.0.0.1/",
+                config.db_user, config.db_password
+            ))
+            .unwrap(),
+        )
+        .unwrap();
         db.query_drop("USE users").unwrap();
-
 
         // Get token from headers
         let token = request

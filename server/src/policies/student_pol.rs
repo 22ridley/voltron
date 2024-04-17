@@ -1,15 +1,11 @@
-use crate::backend::MySqlBackend;
-use crate::config::Config;
 use crate::context::ContextDataType;
-use alohomora::context::{Context, UnprotectedContext};
-use alohomora::policy::{
-    schema_policy, AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason, SchemaPolicy,
-};
+use crate::mysql::prelude::Queryable;
+use alohomora::context::UnprotectedContext;
+use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason};
 use alohomora::AlohomoraType;
 use rocket::http::Cookie;
 use rocket::Request;
 use serde::Serialize;
-use std::sync::{Arc, Mutex};
 
 // Access control policy.
 // #[schema_policy(table = "users", column = 0)]
@@ -20,18 +16,18 @@ use std::sync::{Arc, Mutex};
 // We can add multiple #[schema_policy(...)] definitions
 // here to reuse the policy across tables/columns.
 #[derive(Clone, Serialize, Debug)]
-pub struct InstructorPolicy {}
+pub struct StudentPolicy {}
 
-impl InstructorPolicy {
-    pub fn new() -> InstructorPolicy {
-        InstructorPolicy {}
+impl StudentPolicy {
+    pub fn new() -> StudentPolicy {
+        StudentPolicy {}
     }
 }
 
-impl FrontendPolicy for InstructorPolicy {
+impl FrontendPolicy for StudentPolicy {
     fn from_request(request: &rocket::Request<'_>) -> Self {
         // Set the fields in the instructor policy
-        InstructorPolicy::new()
+        StudentPolicy::new()
     }
 
     fn from_cookie<'a, 'r>(
@@ -39,26 +35,58 @@ impl FrontendPolicy for InstructorPolicy {
         _cookie: &'a Cookie<'static>,
         _request: &'a Request<'r>,
     ) -> Self {
-        InstructorPolicy::new()
+        StudentPolicy::new()
     }
 }
 
-// Content of a buffer can only be accessed by:
-//   1. Students with group_id and class_id;
-//   2. Instructors with class_id;
-impl Policy for InstructorPolicy {
+// Only instructors can register students for their own class
+impl Policy for StudentPolicy {
     fn name(&self) -> String {
-        format!("InstructorPolicy")
+        format!("StudentPolicy")
     }
 
-    fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
-        return false;
+    fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
+        // Check if the Reason involves the database (match on Reason, anything other than DB is false)
+        match reason {
+            Reason::DB(query) => {
+                // If they are an instructor (by checking database)
+                type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
+                let context: &ContextDataOut = context.downcast_ref().unwrap();
+                let mut db = context.db.lock().unwrap();
+                let user: &Option<String> = &context.user;
+                let user: String = user.as_ref().unwrap().to_string();
+
+                // Check the database
+                let mut instructor_res = db
+                    .exec_iter(
+                        "SELECT * FROM users WHERE email = ? AND privilege = 1",
+                        (user.clone(),),
+                    )
+                    .unwrap();
+
+                // Get the instructor's class_id
+                let row = instructor_res[0];
+                let instructor_class: i32 = mysql::from_value(row[3]);
+
+                // Get the class_id that the instructor is trying to put a student into
+                print!(query);
+                let split_commas: Vec<&str> = query.split(",").collect();
+                let query_class_id: &str = split_commas.get(7).unwrap().trim();
+
+                // Fail if the instructor is trying to place a student into a class that is not the instructor's class
+                if format!("{}", instructor_class) != query_class_id {
+                    return false;
+                }
+                return true;
+            }
+            _ => return false,
+        }
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<InstructorPolicy>() {
+        if other.is::<StudentPolicy>() {
             // Policies are combinable
-            let other = other.specialize::<InstructorPolicy>().unwrap();
+            let other = other.specialize::<StudentPolicy>().unwrap();
             Ok(AnyPolicy::new(self.join_logic(other)?))
         } else {
             //Policies must be stacked

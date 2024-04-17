@@ -4,7 +4,7 @@ use crate::{common::SuccessResponse, policies::VoltronBufferPolicy};
 use alohomora::context::Context;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
-use alohomora::rocket::{get, post, ContextResponse};
+use alohomora::rocket::{get, post};
 use alohomora::{
     bbox::BBox,
     db::from_value,
@@ -47,7 +47,6 @@ pub(crate) fn student(
     )
     .unwrap();
 
-    // let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE email = ?",
@@ -100,7 +99,7 @@ pub fn update(
     text: BBox<String, NoPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
-) -> ContextResponse<Json<SuccessResponse>, AnyPolicy, ContextDataType> {
+) -> Json<SuccessResponse> {
     // Find this student
     let email_bbox: BBox<String, AnyPolicy> = execute_pure(
         token,
@@ -120,18 +119,17 @@ pub fn update(
     drop(bg);
     // If the student is not found, return error
     if user_res.len() == 0 {
-        let response = Json(SuccessResponse {
+        return Json(SuccessResponse {
             success: false,
             message: "Student not found".to_string(),
         });
-        let response_bbox = BBox::new(response, AnyPolicy::new(NoPolicy {}));
-        return ContextResponse::from((response_bbox, context));
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
     let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
     let group_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
 
-    let response = execute_pure(
+    // Needs to be privacy critical region
+    execute_pure(
         (class_id_bbox, group_id_bbox, text),
         PrivacyPureRegion::new(|(class_id, group_id, text_u): (i32, i32, String)| {
             // Open a file in write-only mode, returns `io::Result<File>`
@@ -143,12 +141,10 @@ pub fn update(
             // Write the new text to the file
             let _bytes_written: Result<usize, std::io::Error> = file.write(text_u.as_bytes());
             // Return response
-            Json(SuccessResponse {
-                success: true,
-                message: "".to_string(),
-            })
         }),
-    )
-    .unwrap();
-    ContextResponse::from((response, context.clone()))
+    ).unwrap();
+    return Json(SuccessResponse {
+        success: true,
+        message: "".to_string(),
+    });
 }
