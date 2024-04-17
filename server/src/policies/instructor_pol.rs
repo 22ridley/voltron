@@ -89,6 +89,6 @@ impl Policy for InstructorPolicy {
     }
 
     fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
-        unimplemented!()
+        Ok(InstructorPolicy {})
     }
 }

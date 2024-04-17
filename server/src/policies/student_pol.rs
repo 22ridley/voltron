@@ -25,7 +25,7 @@ impl StudentPolicy {
 }
 
 impl FrontendPolicy for StudentPolicy {
-    fn from_request(request: &rocket::Request<'_>) -> Self {
+    fn from_request(_request: &rocket::Request<'_>) -> Self {
         // Set the fields in the instructor policy
         StudentPolicy::new()
     }
@@ -65,13 +65,14 @@ impl Policy for StudentPolicy {
                     .unwrap();
 
                 // Get the instructor's class_id
-                let row = instructor_res[0];
-                let instructor_class: i32 = mysql::from_value(row[3]);
+                let row = instructor_res.next().unwrap().unwrap();
+                let instructor_class: i32 = mysql::from_value(row[3].clone());
 
                 // Get the class_id that the instructor is trying to put a student into
-                print!(query);
+                println!("{}", query);
                 let split_commas: Vec<&str> = query.split(",").collect();
                 let query_class_id: &str = split_commas.get(7).unwrap().trim();
+                println!("{} vs {}", instructor_class, query_class_id);
 
                 // Fail if the instructor is trying to place a student into a class that is not the instructor's class
                 if format!("{}", instructor_class) != query_class_id {
@@ -97,7 +98,7 @@ impl Policy for StudentPolicy {
         }
     }
 
-    fn join_logic(&self, p2: Self) -> Result<Self, ()> {
-        unimplemented!()
+    fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
+        Ok(StudentPolicy {})
     }
 }

@@ -3,15 +3,11 @@ extern crate serde;
 use crate::backend::MySqlBackend;
 use crate::common::SuccessResponse;
 use crate::context::ContextDataType;
-use crate::policies::InstructorPolicy;
+use crate::policies::{InstructorPolicy, StudentPolicy};
 use alohomora::context::Context;
 use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::post;
-use alohomora::{
-    bbox::BBox,
-    policy::{AnyPolicy, NoPolicy},
-};
-use mysql::Value;
+use alohomora::{bbox::BBox, policy::NoPolicy};
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
@@ -48,10 +44,10 @@ pub fn register_instructor(
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student(
     _token: BBox<FirebaseToken, NoPolicy>,
-    stud_group: BBox<i32, NoPolicy>,
-    stud_name: BBox<String, NoPolicy>,
-    stud_class: BBox<i32, NoPolicy>,
-    stud_email: BBox<String, NoPolicy>,
+    stud_group: BBox<i32, StudentPolicy>,
+    stud_name: BBox<String, StudentPolicy>,
+    stud_class: BBox<i32, StudentPolicy>,
+    stud_email: BBox<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
@@ -60,12 +56,12 @@ pub fn register_student(
     let users_row = (
         stud_name,
         stud_email,
-        "0",
+        0i32,
         stud_class.clone(),
         stud_group.clone(),
     );
     let q: &str = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
-    let _res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(q, users_row, context.clone());
+    (*bg).prep_exec(q, users_row, context.clone());
     drop(bg);
 
     // Opening a new file
