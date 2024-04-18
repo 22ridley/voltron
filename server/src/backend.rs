@@ -11,9 +11,6 @@ pub struct MySqlBackend {
     pub log: slog::Logger,
     _schema: String,
     prep_stmts: HashMap<String, BBoxStatement>,
-    db_user: String,
-    db_password: String,
-    db_name: String,
 }
 
 impl MySqlBackend {
@@ -59,21 +56,7 @@ impl MySqlBackend {
             log: log,
             _schema: schema.to_owned(),
             prep_stmts: HashMap::new(),
-            db_user: String::from(user),
-            db_password: String::from(password),
-            db_name: String::from(dbname),
         })
-    }
-
-    fn reconnect(&mut self) {
-        self.handle = BBoxConn::new(
-            BBoxOpts::from_url(&format!(
-                "mysql://{}:{}@127.0.0.1/{}",
-                self.db_user, self.db_password, self.db_name
-            ))
-            .unwrap(),
-        )
-        .unwrap();
     }
 
     pub fn prep_exec<P: Into<BBoxParams>>(
@@ -97,7 +80,9 @@ impl MySqlBackend {
                 params.clone(),
                 context.clone(),
             ) {
-                Err(_e) => {}
+                Err(_e) => {
+                    panic!()
+                }
                 Ok(res) => {
                     let mut rows = vec![];
                     for row in res {
@@ -107,7 +92,6 @@ impl MySqlBackend {
                     return rows;
                 }
             }
-            self.reconnect();
         }
     }
 }
