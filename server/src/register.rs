@@ -50,15 +50,11 @@ pub fn register_student(
 ) -> Json<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
     // Make insert query to add this new student into users
-    let users_row = (
-        stud_name,
-        stud_email,
-        0i32,
-        stud_class.clone(),
-        stud_group.clone(),
+    (*bg).prep_exec(
+        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)", 
+        (stud_name, stud_email, 0i32, stud_class.clone(), stud_group.clone()), 
+        context.clone()
     );
-    let q: &str = "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)";
-    (*bg).prep_exec(q, users_row, context.clone());
     drop(bg);
 
     return Json(SuccessResponse {

@@ -1,6 +1,6 @@
 use crate::context::ContextDataType;
 use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, Reason};
+use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason};
 use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use rocket::http::Cookie;
@@ -25,8 +25,10 @@ impl Policy for WriteBufferPolicy {
                 let arg = &*arg;
                 let tup: &(i32, i32) = arg.cast().downcast_ref().unwrap();
                 (tup.0, tup.1)
-            },
-            _ => { return false; },
+            }
+            _ => {
+                return false;
+            }
         };
 
         type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
@@ -46,7 +48,7 @@ impl Policy for WriteBufferPolicy {
         let mut result = db
             .exec_iter(
                 "SELECT * FROM users WHERE email = ? AND clasS_id = ? AND group_id = ?",
-                (user, class_id, group_id)
+                (user, class_id, group_id),
             )
             .unwrap();
 
@@ -58,19 +60,39 @@ impl Policy for WriteBufferPolicy {
     }
 
     fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        todo!()
+        if other.is::<WriteBufferPolicy>() {
+            // Policies are combinable
+            let other = other.specialize::<WriteBufferPolicy>().unwrap();
+            Ok(AnyPolicy::new(self.join_logic(other)?))
+        } else {
+            //Policies must be stacked
+            Ok(AnyPolicy::new(PolicyAnd::new(
+                AnyPolicy::new(self.clone()),
+                other,
+            )))
+        }
     }
 
-    fn join_logic(&self, p2: Self) -> Result<Self, ()> {
-        todo!()
+    fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
+        Ok(WriteBufferPolicy {})
     }
 }
 
 impl FrontendPolicy for WriteBufferPolicy {
-    fn from_cookie<'a, 'r>(name: &str, cookie: &'a Cookie<'static>, request: &'a Request<'r>) -> Self where Self: Sized {
+    fn from_cookie<'a, 'r>(
+        _name: &str,
+        _cookie: &'a Cookie<'static>,
+        _request: &'a Request<'r>,
+    ) -> Self
+    where
+        Self: Sized,
+    {
         WriteBufferPolicy {}
     }
-    fn from_request<'a, 'r>(request: &'a Request<'r>) -> Self where Self: Sized {
+    fn from_request<'a, 'r>(_request: &'a Request<'r>) -> Self
+    where
+        Self: Sized,
+    {
         WriteBufferPolicy {}
     }
 }

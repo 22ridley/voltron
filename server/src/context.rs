@@ -1,14 +1,12 @@
 use crate::config::Config;
-use alohomora::context::Context;
 use alohomora::db::{BBoxConn, BBoxOpts};
 use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use rocket::State;
-use rocket_firebase_auth::{BearerToken, FirebaseAuth, FirebaseToken};
+use rocket_firebase_auth::{FirebaseAuth, FirebaseToken};
 use std::boxed::Box;
-use std::convert::TryFrom;
 use std::{sync::Arc, sync::Mutex};
 
 // Custom developer defined payload attached to every context.
