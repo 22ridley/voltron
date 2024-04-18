@@ -1,4 +1,5 @@
 use crate::backend::MySqlBackend;
+use crate::common::email_bbox_from_token;
 use crate::context::ContextDataType;
 use alohomora::context::Context;
 use alohomora::db::from_value;
@@ -27,15 +28,7 @@ pub(crate) fn login(
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> ContextResponse<Json<LoginResponse>, AnyPolicy, ContextDataType> {
-    let email_bbox: BBox<String, AnyPolicy> = execute_pure(
-        token,
-        PrivacyPureRegion::new(|token: FirebaseToken| {
-            // Need the following separate lines to give email a type
-            let email: String = token.email.unwrap();
-            email
-        }),
-    )
-    .unwrap();
+    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
 
     let mut bg = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(

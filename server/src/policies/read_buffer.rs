@@ -5,14 +5,6 @@ use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use serde::Serialize;
 
-// Access control policy.
-// #[schema_policy(table = "users", column = 0)]
-// #[schema_policy(table = "users", column = 1)]
-// #[schema_policy(table = "users", column = 2)]
-// #[schema_policy(table = "users", column = 3)]
-// #[schema_policy(table = "users", column = 4)]
-// We can add multiple #[schema_policy(...)] definitions
-// here to reuse the policy across tables/columns.
 #[derive(Clone, Serialize, Debug)]
 pub struct ReadBufferPolicy {
     class_id: i32, // Only students in the proper group in the proper class can access this buffer

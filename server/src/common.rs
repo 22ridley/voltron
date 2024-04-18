@@ -2,6 +2,7 @@ use alohomora::bbox::BBox;
 use alohomora::context::Context;
 use alohomora::pcr::PrivacyCriticalRegion;
 use alohomora::policy::{AnyPolicy, NoPolicy, Policy};
+use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::unbox::unbox;
 use mysql::serde::Serialize;
@@ -9,6 +10,7 @@ use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
+use rocket_firebase_auth::FirebaseToken;
 use std::fs::{self, File};
 
 use crate::context::ContextDataType;
@@ -67,6 +69,15 @@ use std::collections::HashMap;
 pub struct Student {
     pub name: BBox<String, NoPolicy>,
     pub group_id: BBox<i64, ReadBufferPolicy>,
+}
+
+pub fn email_bbox_from_token(token: BBox<FirebaseToken, NoPolicy>) -> BBox<String, NoPolicy> {
+    let email_bbox: BBox<String, NoPolicy> =
+        token.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
+            let email: String = token.email.unwrap();
+            email
+        }));
+    email_bbox
 }
 
 pub fn read_buffer<P: Policy + Clone + 'static>(

@@ -1,5 +1,5 @@
 use crate::backend::MySqlBackend;
-use crate::common::{read_buffer, Student, StudentGroup};
+use crate::common::{email_bbox_from_token, read_buffer, Student, StudentGroup};
 use crate::context::ContextDataType;
 use crate::policies::ReadBufferPolicy;
 use alohomora::context::Context;
@@ -33,12 +33,7 @@ pub(crate) fn instructor(
     context: Context<ContextDataType>,
 ) -> JsonResponse<InstructorResponse, ContextDataType> {
     // Find this instructor
-    let email_bbox: BBox<String, NoPolicy> =
-        token.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
-            // Need the following separate lines to give email a type
-            let email: String = token.email.unwrap();
-            email
-        }));
+    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(

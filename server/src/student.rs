@@ -1,10 +1,9 @@
 use crate::backend::MySqlBackend;
-use crate::common::{read_buffer, write_buffer};
+use crate::common::{email_bbox_from_token, read_buffer, write_buffer};
 use crate::context::ContextDataType;
 use crate::policies::WriteBufferPolicy;
 use crate::{common::SuccessResponse, policies::ReadBufferPolicy};
 use alohomora::context::Context;
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::rocket::{get, post};
 use alohomora::{
@@ -36,15 +35,7 @@ pub(crate) fn student(
     context: Context<ContextDataType>,
 ) -> JsonResponse<StudentResponse, ContextDataType> {
     // Find this student
-    let email_bbox: BBox<String, AnyPolicy> = execute_pure(
-        token,
-        PrivacyPureRegion::new(|token: FirebaseToken| {
-            // Need the following separate lines to give email a type
-            let email: String = token.email.unwrap();
-            email
-        }),
-    )
-    .unwrap();
+    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
 
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
@@ -79,15 +70,7 @@ pub fn update(
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
     // Find this student
-    let email_bbox: BBox<String, AnyPolicy> = execute_pure(
-        token,
-        PrivacyPureRegion::new(|token: FirebaseToken| {
-            // Need the following separate lines to give email a type
-            let email: String = token.email.unwrap();
-            email
-        }),
-    )
-    .unwrap();
+    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE email = ?",
