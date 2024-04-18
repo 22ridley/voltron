@@ -27,18 +27,7 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
-    // If the student is not found, return error
-    if user_res.len() == 0 {
-        return ApiResponse {
-            json: Some(Json(StudentResponse {
-                success: false,
-                class_id: -1,
-                group_id: -1,
-                contents: "".to_string(),
-            })),
-            status: Status::InternalServerError,
-        }
-    }
+
     let row: Row = user_res.get(0).unwrap().clone();
     let class_id: i32 = row.get(3).unwrap();
     let group_id: i32 = row.get(4).unwrap();
@@ -47,15 +36,21 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
     let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
     
     // Convert group_id to number
-    let contents: String = fs::read_to_string(filepath).expect("Unable to read file");
+    let content_result = fs::read_to_string(filepath);
+    let contents: String = match content_result {
+        // If this file does not exist, return empty string
+        Err(_) => "".to_string(),
+        // Otherwise, return the file content
+        Ok(msg) => msg.to_string(),
+    };
 
     // Return response
     ApiResponse {
         json: Some(Json(StudentResponse {
             success: true,
-            class_id: class_id,
-            group_id: group_id,
-            contents: contents,
+            class_id,
+            group_id,
+            contents,
         })),
         status: Status::Ok,
     }
@@ -69,16 +64,7 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
-    // If the student is not found, return error
-    if user_res.len() == 0 {
-        return ApiResponse {
-            json: Some(Json(SuccessResponse {
-                success: false,
-                message: "Student not found".to_string()
-            })),
-            status: Status::InternalServerError,
-        }
-    }
+
     let row: Row = user_res.get(0).unwrap().clone();
     let class_id: i32 = row.get(3).unwrap();
     let group_id: i32 = row.get(4).unwrap();
