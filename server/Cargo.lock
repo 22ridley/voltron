@@ -59,6 +59,7 @@ dependencies = [
  "rocket",
  "rocket_cors",
  "rocket_dyn_templates",
+ "rocket_firebase_auth",
  "sea-orm-rocket",
  "serde",
  "serde_json",
