@@ -1,6 +1,7 @@
 use crate::config::Config;
+use alohomora::context::Context;
 use alohomora::db::{BBoxConn, BBoxOpts};
-use alohomora::pure::PrivacyPureRegion;
+use alohomora::pcr::PrivacyCriticalRegion;
 use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
 use alohomora::AlohomoraType;
 use alohomora::{bbox::BBox, policy::NoPolicy};
@@ -78,14 +79,14 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
             .headers()
             .get_one::<NoPolicy>("Authorization")
             .map(|token| {
-                token.into_ppr(PrivacyPureRegion::new(|token| {
+                token.into_unbox(Context::<ContextDataType>::empty(), PrivacyCriticalRegion::new(|token, _| {
                     firebase_auth_helper(token, &firebase_auth)
-                }))
+                }), ()).unwrap()
             });
 
         let user = match token {
             None => None,
-            Some(bbox) => bbox.await.transpose(),
+            Some(bbox) => BBox::new(bbox.await, NoPolicy::new()).transpose(),
         };
 
         // Return resulting context.

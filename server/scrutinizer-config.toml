@@ -198,4 +198,5 @@ trusted_stdlib = [
   'alloc\[\w*\]::vec',
   'alloc\[\w*\]::slice',
   'std\[\w*\]::collections::hash::map',
+  'alloc\[\w*\]::collections::btree'
 ]
