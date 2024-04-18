@@ -3,10 +3,10 @@ extern crate serde;
 use crate::backend::MySqlBackend;
 use crate::common::SuccessResponse;
 use crate::context::ContextDataType;
-use crate::policies::{InstructorPolicy, StudentPolicy};
+use crate::policies::{AuthStatePolicy, InstructorPolicy, StudentPolicy};
 use alohomora::context::Context;
 use alohomora::rocket::post;
-use alohomora::{bbox::BBox, policy::NoPolicy};
+use alohomora::bbox::BBox;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
@@ -14,7 +14,7 @@ use std::{sync::Arc, sync::Mutex};
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
 pub fn register_instructor(
-    _token: BBox<FirebaseToken, NoPolicy>,
+    _token: BBox<FirebaseToken, AuthStatePolicy>,
     instr_name: BBox<String, InstructorPolicy>,
     instr_class: BBox<i32, InstructorPolicy>,
     instr_email: BBox<String, InstructorPolicy>,
@@ -40,7 +40,7 @@ pub fn register_instructor(
 
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student(
-    _token: BBox<FirebaseToken, NoPolicy>,
+    _token: BBox<FirebaseToken, AuthStatePolicy>,
     stud_group: BBox<i32, StudentPolicy>,
     stud_name: BBox<String, StudentPolicy>,
     stud_class: BBox<i32, StudentPolicy>,

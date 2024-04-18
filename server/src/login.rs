@@ -1,6 +1,7 @@
 use crate::backend::MySqlBackend;
 use crate::common::email_bbox_from_token;
 use crate::context::ContextDataType;
+use crate::policies::{AuthStatePolicy, EmailPolicy};
 use alohomora::context::Context;
 use alohomora::db::from_value;
 use alohomora::policy::AnyPolicy;
@@ -16,17 +17,17 @@ use std::{sync::Arc, sync::Mutex};
 pub struct LoginResponse {
     pub success: bool,
     pub name: BBox<String, AnyPolicy>,
-    pub email: BBox<String, NoPolicy>,
+    pub email: BBox<String, EmailPolicy>,
     pub privilege: BBox<i32, AnyPolicy>,
 }
 
 #[get("/login")]
 pub(crate) fn login(
-    token: BBox<FirebaseToken, NoPolicy>,
+    token: BBox<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<LoginResponse, ContextDataType> {
-    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
+    let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
 
     let mut bg = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
@@ -35,6 +36,8 @@ pub(crate) fn login(
         context.clone(),
     );
     drop(bg);
+    let email_value: BBox<Value, AnyPolicy> = user_res[0][1].clone();
+    let email: BBox<String, EmailPolicy> = from_value(email_value).unwrap();
 
     let response: LoginResponse;
     if user_res.len() == 0 {
@@ -42,7 +45,7 @@ pub(crate) fn login(
             success: false,
             name: BBox::new("".to_string(), AnyPolicy::new(NoPolicy {})),
             privilege: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
-            email: email_bbox,
+            email: email,
         };
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
@@ -52,7 +55,7 @@ pub(crate) fn login(
             success: true,
             name: name_bbox,
             privilege: priv_bbox,
-            email: email_bbox,
+            email: email,
         };
     }
     JsonResponse::from((response, context.clone()))

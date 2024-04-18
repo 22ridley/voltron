@@ -4,6 +4,7 @@ extern crate serde;
 use crate::policies::ReadBufferPolicy;
 use alohomora::rocket::{routes, BBoxRocket};
 use backend::MySqlBackend;
+use policies::EmailPolicy;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
 use slog::o;
@@ -38,6 +39,7 @@ async fn main() {
         .expect("Failed to read firebase credentials");
 
     // Register all policies. #[schema_policy(...)] does not work on mac.
+    alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("users"), 1);
     alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 3);
     alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 4);
 

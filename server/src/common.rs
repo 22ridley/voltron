@@ -1,7 +1,7 @@
 use alohomora::bbox::BBox;
 use alohomora::context::Context;
 use alohomora::pcr::PrivacyCriticalRegion;
-use alohomora::policy::{AnyPolicy, NoPolicy, Policy};
+use alohomora::policy::{AnyPolicy, Policy};
 use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::unbox::unbox;
@@ -14,7 +14,7 @@ use rocket_firebase_auth::FirebaseToken;
 use std::fs::{self, File};
 
 use crate::context::ContextDataType;
-use crate::policies::{ReadBufferPolicy, WriteBufferPolicy};
+use crate::policies::{AuthStatePolicy, ReadBufferPolicy, WriteBufferPolicy};
 
 /// The struct we return for success responses (200s)
 #[derive(Debug)]
@@ -67,12 +67,14 @@ pub struct Instructor {
 use std::collections::HashMap;
 #[derive(ResponseBBoxJson)]
 pub struct Student {
-    pub name: BBox<String, NoPolicy>,
+    pub name: BBox<String, AnyPolicy>,
     pub group_id: BBox<i64, ReadBufferPolicy>,
 }
 
-pub fn email_bbox_from_token(token: BBox<FirebaseToken, NoPolicy>) -> BBox<String, NoPolicy> {
-    let email_bbox: BBox<String, NoPolicy> =
+pub fn email_bbox_from_token(
+    token: BBox<FirebaseToken, AuthStatePolicy>,
+) -> BBox<String, AuthStatePolicy> {
+    let email_bbox: BBox<String, AuthStatePolicy> =
         token.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
             let email: String = token.email.unwrap();
             email

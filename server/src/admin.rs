@@ -1,13 +1,11 @@
 use crate::backend::MySqlBackend;
 use crate::common::Instructor;
 use crate::context::ContextDataType;
+use crate::policies::AuthStatePolicy;
 use alohomora::context::Context;
 use alohomora::db::from_value;
 use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
-use alohomora::{
-    bbox::BBox,
-    policy::{AnyPolicy, NoPolicy},
-};
+use alohomora::{bbox::BBox, policy::AnyPolicy};
 use mysql::Value;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
@@ -22,7 +20,7 @@ pub struct AdminResponse {
 
 #[get("/admin")]
 pub(crate) fn admin(
-    _token: BBox<FirebaseToken, NoPolicy>,
+    _token: BBox<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<AdminResponse, ContextDataType> {

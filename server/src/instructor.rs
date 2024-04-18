@@ -1,16 +1,12 @@
 use crate::backend::MySqlBackend;
 use crate::common::{email_bbox_from_token, read_buffer, Student, StudentGroup};
 use crate::context::ContextDataType;
-use crate::policies::ReadBufferPolicy;
+use crate::policies::{AuthStatePolicy, ReadBufferPolicy};
 use alohomora::context::Context;
 use alohomora::fold::fold;
 use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
-use alohomora::{
-    bbox::BBox,
-    db::from_value,
-    policy::{AnyPolicy, NoPolicy},
-};
+use alohomora::{bbox::BBox, db::from_value, policy::AnyPolicy};
 use mysql::Value;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
@@ -28,12 +24,12 @@ pub struct InstructorResponse {
 
 #[get("/instructor")]
 pub(crate) fn instructor(
-    token: BBox<FirebaseToken, NoPolicy>,
+    token: BBox<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<InstructorResponse, ContextDataType> {
     // Find this instructor
-    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
+    let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
@@ -55,7 +51,7 @@ pub(crate) fn instructor(
     let mut group_ids_bbox_vec: Vec<BBox<i32, ReadBufferPolicy>> = Vec::new();
     let mut students_bbox_vec: Vec<Student> = Vec::new();
     for row in students_res.iter() {
-        let stud_name_bbox: BBox<String, NoPolicy> = from_value(row[0].clone()).unwrap();
+        let stud_name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
         let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
         let student_bbox: Student = Student {
             name: stud_name_bbox,

@@ -1,17 +1,12 @@
 use crate::backend::MySqlBackend;
 use crate::common::{email_bbox_from_token, read_buffer, write_buffer};
 use crate::context::ContextDataType;
-use crate::policies::WriteBufferPolicy;
+use crate::policies::{AuthStatePolicy, WriteBufferPolicy};
 use crate::{common::SuccessResponse, policies::ReadBufferPolicy};
 use alohomora::context::Context;
 use alohomora::rocket::ResponseBBoxJson;
 use alohomora::rocket::{get, post};
-use alohomora::{
-    bbox::BBox,
-    db::from_value,
-    policy::{AnyPolicy, NoPolicy},
-    rocket::JsonResponse,
-};
+use alohomora::{bbox::BBox, db::from_value, policy::AnyPolicy, rocket::JsonResponse};
 use mysql::Value;
 use rocket::{serde::json::Json, State};
 use rocket_firebase_auth::FirebaseToken;
@@ -22,7 +17,7 @@ use std::{
 
 #[derive(ResponseBBoxJson)]
 pub struct StudentResponse {
-    pub success: BBox<bool, NoPolicy>,
+    pub success: bool,
     pub class_id: BBox<i64, ReadBufferPolicy>,
     pub group_id: BBox<i64, ReadBufferPolicy>,
     pub contents: Option<BBox<String, ReadBufferPolicy>>,
@@ -30,12 +25,12 @@ pub struct StudentResponse {
 
 #[get("/student")]
 pub(crate) fn student(
-    token: BBox<FirebaseToken, NoPolicy>,
+    token: BBox<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<StudentResponse, ContextDataType> {
     // Find this student
-    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
+    let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
 
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
@@ -54,7 +49,7 @@ pub(crate) fn student(
         context.clone(),
     );
     let response: StudentResponse = StudentResponse {
-        success: BBox::new(true, NoPolicy::new()),
+        success: true,
         class_id: class_id_bbox.into_bbox(),
         group_id: group_id_bbox.into_bbox(),
         contents: Some(contents),
@@ -64,13 +59,13 @@ pub(crate) fn student(
 
 #[post("/update?<text>")]
 pub fn update(
-    token: BBox<FirebaseToken, NoPolicy>,
+    token: BBox<FirebaseToken, AuthStatePolicy>,
     text: BBox<String, WriteBufferPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
     // Find this student
-    let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
+    let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE email = ?",
