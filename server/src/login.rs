@@ -4,22 +4,20 @@ use crate::context::ContextDataType;
 use alohomora::context::Context;
 use alohomora::db::from_value;
 use alohomora::policy::AnyPolicy;
-use alohomora::pure::{execute_pure, PrivacyPureRegion};
-use alohomora::rocket::{get, ContextResponse};
+use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
 use alohomora::{bbox::BBox, policy::NoPolicy};
 use mysql::Value;
-use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
-use serde::Serialize;
+use std::collections::HashMap;
 use std::{sync::Arc, sync::Mutex};
 
-#[derive(Debug, Serialize)]
+#[derive(ResponseBBoxJson)]
 pub struct LoginResponse {
     pub success: bool,
-    pub name: String,
-    pub email: String,
-    pub privilege: i32,
+    pub name: BBox<String, AnyPolicy>,
+    pub email: BBox<String, NoPolicy>,
+    pub privilege: BBox<i32, AnyPolicy>,
 }
 
 #[get("/login")]
@@ -27,7 +25,7 @@ pub(crate) fn login(
     token: BBox<FirebaseToken, NoPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
-) -> ContextResponse<Json<LoginResponse>, AnyPolicy, ContextDataType> {
+) -> JsonResponse<LoginResponse, ContextDataType> {
     let email_bbox: BBox<String, NoPolicy> = email_bbox_from_token(token);
 
     let mut bg = backend.lock().unwrap();
@@ -38,36 +36,24 @@ pub(crate) fn login(
     );
     drop(bg);
 
-    let response: BBox<Json<LoginResponse>, AnyPolicy>;
+    let response: LoginResponse;
     if user_res.len() == 0 {
-        response = execute_pure(
-            email_bbox,
-            PrivacyPureRegion::new(|email: String| {
-                Json(LoginResponse {
-                    success: false,
-                    name: "".to_string(),
-                    privilege: -1,
-                    email: email,
-                })
-            }),
-        )
-        .unwrap();
+        response = LoginResponse {
+            success: false,
+            name: BBox::new("".to_string(), AnyPolicy::new(NoPolicy {})),
+            privilege: BBox::new(-1, AnyPolicy::new(NoPolicy {})),
+            email: email_bbox,
+        };
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
         let name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
         let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2].clone()).unwrap();
-        response = execute_pure(
-            (email_bbox, name_bbox, priv_bbox),
-            PrivacyPureRegion::new(|(email, name, privl): (String, String, i32)| {
-                Json(LoginResponse {
-                    success: true,
-                    name: name,
-                    privilege: privl,
-                    email: email,
-                })
-            }),
-        )
-        .unwrap();
+        response = LoginResponse {
+            success: true,
+            name: name_bbox,
+            privilege: priv_bbox,
+            email: email_bbox,
+        };
     }
-    ContextResponse::from((response, context))
+    JsonResponse::from((response, context.clone()))
 }
