@@ -74,23 +74,21 @@ impl MySqlBackend {
         }
 
         let params: BBoxParams = params.into();
-        loop {
-            match self.handle.exec_iter(
-                self.prep_stmts[sql].clone(),
-                params.clone(),
-                context.clone(),
-            ) {
-                Err(_e) => {
-                    panic!()
+        match self.handle.exec_iter(
+            self.prep_stmts[sql].clone(),
+            params.clone(),
+            context.clone(),
+        ) {
+            Err(_e) => {
+                panic!()
+            }
+            Ok(res) => {
+                let mut rows = vec![];
+                for row in res {
+                    rows.push(row.unwrap().unwrap());
                 }
-                Ok(res) => {
-                    let mut rows = vec![];
-                    for row in res {
-                        rows.push(row.unwrap().unwrap());
-                    }
-                    //debug!(self.log, "executed query {}, got {} rows", sql, rows.len());
-                    return rows;
-                }
+                //debug!(self.log, "executed query {}, got {} rows", sql, rows.len());
+                return rows;
             }
         }
     }
