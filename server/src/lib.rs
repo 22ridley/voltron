@@ -89,7 +89,7 @@ pub fn build_server() -> BBoxRocket<rocket::Build> {
 
 pub fn build_server_jwk() -> BBoxRocket<rocket::Build> {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
-        .json_file("./src/firebase-credentials.json")
+        .json_file("./src/dummy-firebase-creds.json")
         .jwks_url("http://localhost:8888/jwks_url")
         .build()
         .expect("Failed to read firebase credentials");
