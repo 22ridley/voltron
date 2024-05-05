@@ -1,10 +1,9 @@
 extern crate mysql;
 extern crate rocket;
 extern crate serde;
-use crate::policies::ReadBufferPolicy;
+use crate::policies::{ReadBufferPolicy, EmailPolicy};
 use alohomora::rocket::{routes, BBoxRocket};
 use backend::MySqlBackend;
-use policies::EmailPolicy;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
 use slog::o;
