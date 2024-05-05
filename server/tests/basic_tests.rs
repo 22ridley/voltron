@@ -34,6 +34,7 @@ async fn test_connect() {
         .await;
 
     let firebase_auth = FirebaseAuth::builder()
+        //.json_file("./src/firebase-credentials.json")
         .json_file("./src/dummy-firebase-creds.json")
         .jwks_url(TEST_JWKS_URL)
         .build()
@@ -45,6 +46,7 @@ async fn test_connect() {
     let decoded_token = decoded_token.unwrap();
 
     assert_eq!(decoded_token.sub, "some-uid");
+    assert_eq!(decoded_token.email, Some("sarah_ridley@brown.edu".to_string()));
     assert!(decoded_token.exp > decoded_token.iat);
 
     // Now send a request
@@ -53,7 +55,7 @@ async fn test_connect() {
         let client: BBoxClient = BBoxClient::tracked(server).unwrap();
 
         // check to make sure we can connect
-        // let value = "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjE3MTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.XwxlXdkvcdVstZ3O_DXoDv4_03m1CBOCV2Uutq-SpAZOY2iEsf_yCuVPagbgt8Pu-oIMfJTf5aLnjktyHefhVr6YCeD0xTo8xF-yPSNrwKDI1uf_ftQCdhuS5fLLynH9I74aE5tM8nfXY20_iUbO3a-XHFQRwovlMYwGRhT2X461m-nnlGHeVhxcnG5l1hg1vnm8E8ZEkttrOGq49TDzzpbourOxgnZqSkzIjrT-a-rXy02LDep_E7o92J9anMbIk_rorJ29q0tNAAJg4QhljPA5O_EcGITqVS1rxVYM-ufhIAJDy0AoCkUmDe_qSH_USJ5VLaaQf3pTfz6vzY-Fbw";
+        let value = "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjE3MTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.XwxlXdkvcdVstZ3O_DXoDv4_03m1CBOCV2Uutq-SpAZOY2iEsf_yCuVPagbgt8Pu-oIMfJTf5aLnjktyHefhVr6YCeD0xTo8xF-yPSNrwKDI1uf_ftQCdhuS5fLLynH9I74aE5tM8nfXY20_iUbO3a-XHFQRwovlMYwGRhT2X461m-nnlGHeVhxcnG5l1hg1vnm8E8ZEkttrOGq49TDzzpbourOxgnZqSkzIjrT-a-rXy02LDep_E7o92J9anMbIk_rorJ29q0tNAAJg4QhljPA5O_EcGITqVS1rxVYM-ufhIAJDy0AoCkUmDe_qSH_USJ5VLaaQf3pTfz6vzY-Fbw";
         let value = "Bearer ".to_owned() + SCENARIO_HAPPY_PATH.clone().token.as_str();
         let header = Header::new("Authorization", value);
         let mut request = client.get("/login");
@@ -61,17 +63,6 @@ async fn test_connect() {
         let response = request.dispatch();
         assert!(response.status() == Status::Ok);
     }).join().expect("Thread panicked")
-    
-    //let client: BBoxClient = BBoxClient::tracked(server).unwrap();
-
-    // check to make sure we can connect
-    // let value = "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjE3MTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.XwxlXdkvcdVstZ3O_DXoDv4_03m1CBOCV2Uutq-SpAZOY2iEsf_yCuVPagbgt8Pu-oIMfJTf5aLnjktyHefhVr6YCeD0xTo8xF-yPSNrwKDI1uf_ftQCdhuS5fLLynH9I74aE5tM8nfXY20_iUbO3a-XHFQRwovlMYwGRhT2X461m-nnlGHeVhxcnG5l1hg1vnm8E8ZEkttrOGq49TDzzpbourOxgnZqSkzIjrT-a-rXy02LDep_E7o92J9anMbIk_rorJ29q0tNAAJg4QhljPA5O_EcGITqVS1rxVYM-ufhIAJDy0AoCkUmDe_qSH_USJ5VLaaQf3pTfz6vzY-Fbw";
-    // let value = "Bearer ".to_owned() + scenario.token.as_str();
-    // let header = Header::new("Authorization", value);
-    // let mut request = client.get("/login");
-    // request.add_header(header);
-    // let response = request.dispatch();
-    // assert!(response.status() == Status::Ok);
 }
 
 // #[test]
@@ -100,110 +91,24 @@ async fn test_connect() {
 //     assert!(decoded_token.exp > decoded_token.iat);
 // }
 
-// #[test]
-// async fn should_succeed_with_env_with_filename() {
-//     let mock_server = setup_mock_server().await;
-//     let scenario = SCENARIO_HAPPY_PATH.clone();
-//     let jwk = Jwk::new(scenario.kid.as_str(), scenario.jwk_n.as_str());
-
-//     mock_jwk_issuer(vec![jwk].as_slice())
-//         .expect(1)
-//         .mount(&mock_server)
-//         .await;
-
-//     let firebase_auth = FirebaseAuth::builder()
-//         .env_file("tests/env_files/.env.test", "FIREBASE_CREDS")
-//         .jwks_url(TEST_JWKS_URL)
-//         .build()
-//         .unwrap();
-//     let decoded_token = firebase_auth.verify(scenario.token.as_str()).await;
-
-//     assert!(decoded_token.is_ok());
-
-//     let decoded_token = decoded_token.unwrap();
-
-//     assert_eq!(decoded_token.sub, "some-uid");
-//     assert!(decoded_token.exp > decoded_token.iat);
-// }
-
-// #[test]
-// async fn should_succeed_with_json_file() {
-//     let mock_server = setup_mock_server().await;
-//     let scenario = SCENARIO_HAPPY_PATH.clone();
-//     let jwk = Jwk::new(scenario.kid.as_str(), scenario.jwk_n.as_str());
-
-//     mock_jwk_issuer(vec![jwk].as_slice())
-//         .expect(1)
-//         .mount(&mock_server)
-//         .await;
-
-//     let firebase_auth = FirebaseAuth::builder()
-//         .json_file("tests/env_files/firebase-creds.json")
-//         .jwks_url(TEST_JWKS_URL)
-//         .build()
-//         .unwrap();
-//     let decoded_token = firebase_auth.verify(scenario.token.as_str()).await;
-
-//     assert!(decoded_token.is_ok());
-
-//     let decoded_token = decoded_token.unwrap();
-
-//     assert_eq!(decoded_token.sub, "some-uid");
-//     assert!(decoded_token.exp > decoded_token.iat);
-// }
-
-// #[test]
-// async fn missing_kid() {
-//     let token_without_kid = SCENARIO_MISSING_KID.clone().token;
-//     let decoded_token = FirebaseAuth::default().verify(&token_without_kid).await;
-
-//     assert!(decoded_token.is_err());
-//     assert!(matches!(
-//         decoded_token.err().unwrap(),
-//         Error::InvalidJwt(InvalidJwt::MissingKid)
-//     ));
-// }
-
-// // Test for when the JWK issuer return empty list
-// #[test]
-// async fn missing_jwk() {
-//     let mock_server = setup_mock_server().await;
-//     let scenario = SCENARIO_MISSING_JWK.clone();
-
-//     // JWK issue returns empty list of jwks
-//     mock_jwk_issuer(Vec::new().as_slice())
-//         .expect(1)
-//         .mount(&mock_server)
-//         .await;
-
-//     let decoded_token = FirebaseAuth::builder()
-//         .jwks_url(TEST_JWKS_URL)
-//         .build()
-//         .unwrap()
-//         .verify(scenario.token.as_str())
-//         .await;
-
-//     assert!(decoded_token.is_err());
-//     assert!(matches!(
-//         decoded_token.err().unwrap(),
-//         Error::InvalidJwt(InvalidJwt::MatchingJwkNotFound)
-//     ))
-// }
-
 // HELPERS
 
-static SCENARIO_MISSING_KID: Lazy<Scenario> = Lazy::new(|| {
+static SCENARIO: Lazy<Scenario> = Lazy::new(|| {
     Scenario {
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.L8i6g3PfcHlioHCCPURC9pmXT7gdJpx3kOoyAfNUwCc".to_string(),
-    jwk_n: "qPSOdIwB1PidjFSY_dLckUu1Y4rPnP5nvOtMy_wMToekETe-h3P_FGVh_OA8E1J6stkeoWpqigfzuMIA6Ccc5BGC-xrt3jYgWSGtES8dKrPLjSFRmKOGk6IuosGvILpNRT-a9gocZOnRDGU9sE04vM2OfLQVc9kk-7tCWIirbu58DkpTYySZMaq-qLrbNUZg8w9MGZ0_wQabhiGaM1wfFJ9lV6uqL4CPkcdMvhaTQMV7lZStbApYUFiPBzIeKW6jrfB-dlkk08g_eluPkQHlHEGtH_5pTnBm9RIwzhHhP4hddc6LzdWAVfDe2DPrrFDfmUv45ejkIf4wmAreodjfPw".to_string(),
-    kid: "test_private_kid".to_string(),
-    ..Default::default()
-}
+        //token: "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjE3MTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.XwxlXdkvcdVstZ3O_DXoDv4_03m1CBOCV2Uutq-SpAZOY2iEsf_yCuVPagbgt8Pu-oIMfJTf5aLnjktyHefhVr6YCeD0xTo8xF-yPSNrwKDI1uf_ftQCdhuS5fLLynH9I74aE5tM8nfXY20_iUbO3a-XHFQRwovlMYwGRhT2X461m-nnlGHeVhxcnG5l1hg1vnm8E8ZEkttrOGq49TDzzpbourOxgnZqSkzIjrT-a-rXy02LDep_E7o92J9anMbIk_rorJ29q0tNAAJg4QhljPA5O_EcGITqVS1rxVYM-ufhIAJDy0AoCkUmDe_qSH_USJ5VLaaQf3pTfz6vzY-Fbw".to_string(),
+        token: "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjUwMTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.rtSyIyf9luiwRsPgU-h1Deku0qWqi93t9F4HHomEgfQdGmenpUGIG3yTsUqiH1xV-kthckS2ZfqgNoaEwfaM8NmONVFpXbwBPiqVcoRcwmNAe57DJJF9quO3qvlJHbMfqDMBaLSYnWdOnimmfRtsiFaVwN2FSYrwMRl7e0k0YIP5DiMeWMc0zGMlNLENXQXzTDLePnCYsDDuaaPXoyi_LRiE_JZp9-fo5Su6wcWhwS1JagR5eQiLqTiQkRLVO_Xo_QGKs-GbLXTTzxJb6z59kcNV5Q1kpiMTWUe_PWkill1xbYDQwewMcO2NabmqQgoREEgAlyCeHa4PC_v0u66z_w".to_string(),
+        jwk_n: "meR-imFrj9fksArDfbUF7A-CV4ouxRCa_zRqEJx3jwaG6zsx2kncsaL-6N16raLl5kQ3rVaQDXaYdq-fq0xWNdt9SnoUBfR6LGAwOM0_z4d9mfpKUvV5ZIPudeZaMELWBp8JQJpx4q4r04FJqx0exmlVTqOyuXqw9bWxYiI04LRzUY5cVUu_OlhHbzpFaHSUHCl-f-RQ5SNNQAG52y3_oiqQqv21zRhUCP-q-O006PahJlAB6D2qlti3HhqR9aqqAaAUX7EuKmlmwMbB47NHLq-MeAItXPoiWxTR0H24rPwczOXeQywxVeJ92T4ntN2iaKJ1m4iV9Xk1tTaOF8qM3w".to_string(),
+        kid: "7602712682df99cfb891aa037d73bcc6a3970084".to_string(),
+        // kid: "0922171885ba7cffaf40b2d4afd363d259e4e633",
+        public_key: Some("-----BEGIN CERTIFICATE-----\nMIIDHTCCAgWgAwIBAgIJALeM3DBeoI3wMA0GCSqGSIb3DQEBBQUAMDExLzAtBgNV\nBAMMJnNlY3VyZXRva2VuLnN5c3RlbS5nc2VydmljZWFjY291bnQuY29tMB4XDTI0\nMDQzMDA3MzIyMVoXDTI0MDUxNjE5NDcyMVowMTEvMC0GA1UEAwwmc2VjdXJldG9r\nZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wggEiMA0GCSqGSIb3DQEBAQUA\nA4IBDwAwggEKAoIBAQCZ5H6KYWuP1+SwCsN9tQXsD4JXii7FEJr/NGoQnHePBobr\nOzHaSdyxov7o3XqtouXmRDetVpANdph2r5+rTFY1231KehQF9HosYDA4zT/Ph32Z\n+kpS9Xlkg+515lowQtYGnwlAmnHirivTgUmrHR7GaVVOo7K5erD1tbFiIjTgtHNR\njlxVS786WEdvOkVodJQcKX5/5FDlI01AAbnbLf+iKpCq/bXNGFQI/6r47TTo9qEm\nUAHoPaqW2LceGpH1qqoBoBRfsS4qaWbAxsHjs0cur4x4Ai1c+iJbFNHQfbis/BzM\n5d5DLDFV4n3ZPie03aJoonWbiJX1eTW1No4XyozfAgMBAAGjODA2MAwGA1UdEwEB\n/wQCMAAwDgYDVR0PAQH/BAQDAgeAMBYGA1UdJQEB/wQMMAoGCCsGAQUFBwMCMA0G\nCSqGSIb3DQEBBQUAA4IBAQBGERUt+83Ar/OjpwpG9n1hsgM5X5TBrZXMPLpzlr0Y\nDOSB3svrvwBOcJftddUIStJKaEaFwuK+N6TuxtYbcE8tBF7QG1H1M7OdIb8j1o4j\naGggP9ziXiFgRHBADd8o4gHgeBygfZQUU73XHDu1jSzNsUELF0mUt5ffKxSoRtq2\ne1ng74n9sBmExN7HNW8DnyXyF21AnFeCqY3ttTY4KttsGKIXJB1PKXZ31wbTTeVH\njmn+QRC6co2ENNCgCtWr1GiBrgkve8HbtR1qbSDnpBiGAdH+yxBWCRNTEEPW4E7b\nZTGhgbFh1YNFf/+ihvomrfCeCdfwbQEkvs6hhQAI4nTC\n-----END CERTIFICATE-----\n".to_string()),
+        private_key: Some("-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC4Z4wOp4PhsLKb\n0euTbjIxvG5J7Nvf9rVI9IlmO35hHC5McXKa8LzfawD/fFRg2eiUT0/DJ4SNZtUb\n3miLKUn0FwLAAq5QtnRCHez+I6XnnpvJZMBbkUQS4tIIj0U1DPPPp8zTY3GVM+Re\nHx3Si5mu8uyesQDoczOdSQIep17slIxgztuEUTdfulEBTZJ9oyyBbKztlsnZ9vVp\nqnfRU2sM6Tu2Voi0yIiAyP1Fh+WUfTpqoGlSgPveqxEfLEndMlO1r2bbBnXDYjkY\n07YMBMkWi0L946DUipMx/A0HXJ1zPRrjZZZmxPUGFx9CqboSrGER8kvgQzJClBaZ\nF7EOmkR7AgMBAAECggEAO6d7vo3gcxVnYlMRg3slj8NmZlHSe2xjDvvUqxbZ9m5Y\nZ/BXY9o3L4t9IilFXqN/wuK5aeeR0PCQRli3tzUfMHB1Okpju8aaa30k2r4LgJdl\nzEvkknq26+kmixBWEihjgyzEbSoBZ4QG/4/PZPo2OEtr0pZuNcR20Q36OpJoed2z\nFmtAdbgBujdgY6r2JCqHiS/g69K0vl3ucoSkL1XKlmBZpfx7q3P4GK6wQUDbp9VR\nON4mKLeGP1hAU++HFmpjuc4z9dy0Xn26fol9tZlb1D5fKFpWIWCQfs2EfcSiLseZ\nq+tAWVcziAJfWqsFZH6nSqRhxo7FnuWapLSrPE2SYQKBgQDwP5DHeHn36a1VxiKq\ncUmGc8x0SuWhbvtl3/FM9YbGDMXhciJkJ+VcCzGZW3gMgtuWl7PshfbdLPg3gazY\ntvL5WBDEDbrNRtL69V11+P6JWXAD9Q/C+jIy9a1fVckLlRpUReC4wLbgJGSNNv9U\n+8Tt0VdiHhw8tqtQ8eYGJwX5cQKBgQDEfqyKfURNkvHXfScX07wlsDizqIEqVkEE\njOj2paG1BZvZBlF2/IlLJVgbQqRbtgHjaHqiBwvXS/xXhJniwDJb0wyITw51snkJ\ng0zzfoOtimOw2AC4EvGoAR2y+qDK2zRKg+i41lLl4jGbLHf1EHrNhVC1MnRI4SGX\nDWRoNAQGqwKBgCSdS29bCRujXWtpGvdm9JGtLEe88mo8A8xu6NOVx8h/QdkuD9e7\nzNTOT+zTZ+RgPR8iV6WAdTMYG2w6MyGEIFun9EYs4X9Pf/AHXQsRu5krLEsuGgzZ\nHLVvg9C3vkAppS2ayLjfhf97DGgJLbjB9i1Ybjzh4ePO4yUe+LOPVvXBAoGABAbQ\nhFoCz1AmkpLm/S8CmQceclgOpY508KHumDdWs/30bqMZgkW0joyqXIymD5cQPNfE\nQ5O/Y18UQbre6G2l2ondpOFx22mX32EIb6j1C9ZdKp+SjDMfLqEvOZ63MtEBJlHD\nsB38Pue+un5TyvrWeWW0/LGW/nNWm+DTYOtH9dcCgYB+ciejpE4irtBotoiW2QZL\nFERzJFY8gof/vLRbuyZhgLG/gm5fnWUhx0iRcyM0knSWCWDm2xKeQ2jj3RGdVGRk\nSLUCeMo8MF8piBDpgAT9Rj2zaqwGI+B7B1M03e5enZeLpbeb4Ke9Wx5eCagM024Z\ndoDFYwUmOYE0PhGGrCaDpw==\n-----END PRIVATE KEY-----\n".to_string()),
+    }
 });
 
 static SCENARIO_HAPPY_PATH: Lazy<Scenario> = Lazy::new(|| {
     Scenario {
-        token: "eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Rfa2lkIn0.eyJzdWIiOiJzb21lLXVpZCIsImF1ZCI6ImR1bW15LXByb2plY3QtaWQiLCJpYXQiOjE2NjcwOTc2MjMsImV4cCI6NTAwNzA5OTYyMywiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL2R1bW15LXByb2plY3QtaWQifQ.A0ljz9xFb9p2CC6MzOlm-In-1wLIbbZVx3YgSTeajxEIYdrqNBVp-wh00mfwPM9ZGtuPmOUP8wbEzY_XjClNFCWdExmRY-UTLga0IeAekDgo8uWgr4g3cVQ5-RSK-mSDl1svzaZBq2YYyWpYZkfcsp2eoJhS04A4t9d_ADnvzNTC9YlPAyDp6DeDvyUE9K6B6_xIj2murScOz9CKijJq1rzItl1Ip8JVlNrEVFeiF5a7MZTMZYkV6ZN31hOCqc1N4eIhxHJ3ZvvM6YbZva-pdFsu_XGroYIb4Ar_hDpa3i4KrM517mp9e_nocGFKkjfQpNUnp0lsJ_PzRZZvHZ5rrQ".to_string(),
+        //token: "eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Rfa2lkIn0.eyJzdWIiOiJzb21lLXVpZCIsImF1ZCI6ImR1bW15LXByb2plY3QtaWQiLCJpYXQiOjE2NjcwOTc2MjMsImV4cCI6NTAwNzA5OTYyMywiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL2R1bW15LXByb2plY3QtaWQifQ.A0ljz9xFb9p2CC6MzOlm-In-1wLIbbZVx3YgSTeajxEIYdrqNBVp-wh00mfwPM9ZGtuPmOUP8wbEzY_XjClNFCWdExmRY-UTLga0IeAekDgo8uWgr4g3cVQ5-RSK-mSDl1svzaZBq2YYyWpYZkfcsp2eoJhS04A4t9d_ADnvzNTC9YlPAyDp6DeDvyUE9K6B6_xIj2murScOz9CKijJq1rzItl1Ip8JVlNrEVFeiF5a7MZTMZYkV6ZN31hOCqc1N4eIhxHJ3ZvvM6YbZva-pdFsu_XGroYIb4Ar_hDpa3i4KrM517mp9e_nocGFKkjfQpNUnp0lsJ_PzRZZvHZ5rrQ".to_string(),
+        token: "eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Rfa2lkIn0.eyJzdWIiOiJzb21lLXVpZCIsImF1ZCI6ImR1bW15LXByb2plY3QtaWQiLCJpYXQiOjE2NjcwOTc2MjMsImV4cCI6NTAwNzA5OTYyMywiZW1haWwiOiJzYXJhaF9yaWRsZXlAYnJvd24uZWR1IiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL2R1bW15LXByb2plY3QtaWQifQ.RCRV9iT6245UMQEJ8App7rkMHqicLDkPC4ENgy3wxPECLRltpNfA6PADUZ_krxqcKto93thJjjAtujIAj7BXIhADOt2WPGCWcG1pC1zIZxNZ3mPBNQ62WuZNn7aoUAOxU6YuFHLXQP99goZmyw3fAX5N2PP5TWKfl8XoVAL2bl_s8WG5ogqJCCVfx3zM4fzJSbGuIphL51r8DjF_mPmfBs-EoBC1N8z8xZXKyVn0gR0aZM_lWb2ClJ-RNvW5yNdvlr_SwjUEXW6iZ1UL5tq-C-_Vae0hNzTaey-Uu98dEQk6STOR23ZZWtEwCzIr6hCUn1xkKpvdgmwPSP7JNqsllg".to_string(),
         jwk_n: "XiqTPp559nQUm1dxEecu1HT_yD0Vv4OY9uVG-YNCy8NU2ceaqoUfF05luJ9xtmf-D3PQjpwSouA2ejxr_GSD2VQ99our7CDe5t5jdNEXyXSrXJDua5-lEETT-fOmnAuhti9m86w7Jd2HafJCq9sGEuQc4-CM1-2faerEGGl9iyNGQEZBnS_ExDJOJnbI8J6JZnWhL_rjwkVcM6_MX9bDA1Hi4fosMW1V-WhnZUJ5-WvNfX_2feXfQ0qq5kH9BWhbYCxwwT2d_0xkdL0aItEB_nqZSS9yIDiGQATjf_P708dEo9A0tVZg9HUtLY5k4-JCrOUayJOYJ5b-YGETzSbELw".to_string(),
         kid: "test_kid".to_string(),
         public_key: Some(r#"-----BEGIN RSA PUBLIC KEY-----
@@ -239,51 +144,6 @@ Cm9flz88RbOLF/TuSWk/jsh7TtSXt8jL/bR4EdXlwqTFoexpXg==
     }
 });
 
-static SCENARIO_MISSING_JWK: Lazy<Scenario> = Lazy::new(|| {
-    Scenario {
-        token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InRlc3RfcHJpdmF0ZV9raWQifQ.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.VygXMjyLQeUH845pS9aNW5knx_0Kv9KgJ9AZFcYaZFpMMM--Liir7TodF02o9schMCpu0E90foJFtI0aS-JWXqTcVi7Yvp9XzLlLG8P0WNcVeP3eDU-1QoHiDKhvW4Awbvzy-VyqAStvkq_1FCtQMq0qA3F5Y5lXkUFpgcRpaXJ1xzwSNEne16JuGK_Pqt8I00Ps0yI7Mz5VB0LmyLK2l7RGATZ1mZti0Eisak48fAwJqPgjsX6eJkR9I4PfNpb5swIswV_nh1bTLMrCxVWzc4e7mGSEbjP8l2VDQBk3dCMogp7Ep5sMXrEsZCnJIxUdw2xilo0GRY5htxCMPbX10g".to_string(),
-        jwk_n: "gRtjwICtIC_4ae33Ks7S80n32PLFEC4UtBanBFE9Pjzcpp4XWDPgbbOkNC9BZ-Jkyq6aoP_UknfJPI-cIvE6IE96bPNGs6DcfZ73Cq2A9ZXTdiuuOiqMwhEgLKFVRUZZ50calENLGyi96-6lcDnwLehh-kEg7ARITmrBO0iAjFU".to_string(),
-        kid: "test_private_kid".to_string(),
-        public_key: Some(r#"-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo
-4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u
-+qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyeh
-kd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ
-0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdg
-cKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc
-mwIDAQAB
------END RSA PUBLIC KEY-----"#.to_string()),
-        private_key: Some(r#"-----BEGIN PRIVATE KEY-----
-MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC7VJTUt9Us8cKj
-MzEfYyjiWA4R4/M2bS1GB4t7NXp98C3SC6dVMvDuictGeurT8jNbvJZHtCSuYEvu
-NMoSfm76oqFvAp8Gy0iz5sxjZmSnXyCdPEovGhLa0VzMaQ8s+CLOyS56YyCFGeJZ
-qgtzJ6GR3eqoYSW9b9UMvkBpZODSctWSNGj3P7jRFDO5VoTwCQAWbFnOjDfH5Ulg
-p2PKSQnSJP3AJLQNFNe7br1XbrhV//eO+t51mIpGSDCUv3E0DDFcWDTH9cXDTTlR
-ZVEiR2BwpZOOkE/Z0/BVnhZYL71oZV34bKfWjQIt6V/isSMahdsAASACp4ZTGtwi
-VuNd9tybAgMBAAECggEBAKTmjaS6tkK8BlPXClTQ2vpz/N6uxDeS35mXpqasqskV
-laAidgg/sWqpjXDbXr93otIMLlWsM+X0CqMDgSXKejLS2jx4GDjI1ZTXg++0AMJ8
-sJ74pWzVDOfmCEQ/7wXs3+cbnXhKriO8Z036q92Qc1+N87SI38nkGa0ABH9CN83H
-mQqt4fB7UdHzuIRe/me2PGhIq5ZBzj6h3BpoPGzEP+x3l9YmK8t/1cN0pqI+dQwY
-dgfGjackLu/2qH80MCF7IyQaseZUOJyKrCLtSD/Iixv/hzDEUPfOCjFDgTpzf3cw
-ta8+oE4wHCo1iI1/4TlPkwmXx4qSXtmw4aQPz7IDQvECgYEA8KNThCO2gsC2I9PQ
-DM/8Cw0O983WCDY+oi+7JPiNAJwv5DYBqEZB1QYdj06YD16XlC/HAZMsMku1na2T
-N0driwenQQWzoev3g2S7gRDoS/FCJSI3jJ+kjgtaA7Qmzlgk1TxODN+G1H91HW7t
-0l7VnL27IWyYo2qRRK3jzxqUiPUCgYEAx0oQs2reBQGMVZnApD1jeq7n4MvNLcPv
-t8b/eU9iUv6Y4Mj0Suo/AU8lYZXm8ubbqAlwz2VSVunD2tOplHyMUrtCtObAfVDU
-AhCndKaA9gApgfb3xw1IKbuQ1u4IF1FJl3VtumfQn//LiH1B3rXhcdyo3/vIttEk
-48RakUKClU8CgYEAzV7W3COOlDDcQd935DdtKBFRAPRPAlspQUnzMi5eSHMD/ISL
-DY5IiQHbIH83D4bvXq0X7qQoSBSNP7Dvv3HYuqMhf0DaegrlBuJllFVVq9qPVRnK
-xt1Il2HgxOBvbhOT+9in1BzA+YJ99UzC85O0Qz06A+CmtHEy4aZ2kj5hHjECgYEA
-mNS4+A8Fkss8Js1RieK2LniBxMgmYml3pfVLKGnzmng7H2+cwPLhPIzIuwytXywh
-2bzbsYEfYx3EoEVgMEpPhoarQnYPukrJO4gwE2o5Te6T5mJSZGlQJQj9q4ZB2Dfz
-et6INsK0oG8XVGXSpQvQh3RUYekCZQkBBFcpqWpbIEsCgYAnM3DQf3FJoSnXaMhr
-VBIovic5l0xFkEHskAjFTevO86Fsz1C2aSeRKSqGFoOQ0tmJzBEs1R6KqnHInicD
-TQrKhArgLXX4v3CddjfTRJkFWDbE/CkvKZNOrcf1nhaGCPspRJj2KUkj1Fhl9Cnc
-dn/RsYEONbwQSjIfMPkvxF+8HQ==
------END PRIVATE KEY-----"#.to_string()),
-    }
-});
-
 #[allow(dead_code)]
 #[derive(Clone, Default)]
 struct Scenario {
@@ -307,6 +167,9 @@ struct MockJwksResponse {
 }
 
 pub fn mock_jwk_issuer(jwks: &[Jwk]) -> Mock {
+    for jwk in jwks.to_vec().iter() {
+        println!("JWK: {}, {}", jwk.n, jwk.e);
+    }
     Mock::given(method("GET"))
         .and(path("/jwks_url"))
         .respond_with(
