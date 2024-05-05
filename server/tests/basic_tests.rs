@@ -29,12 +29,10 @@ async fn test_connect() {
     let jwk = Jwk::new(scenario.kid.as_str(), scenario.jwk_n.as_str());
 
     mock_jwk_issuer(vec![jwk].as_slice())
-        .expect(1)
         .mount(&mock_jwk_server)
         .await;
 
     let firebase_auth = FirebaseAuth::builder()
-        //.json_file("./src/firebase-credentials.json")
         .json_file("./src/dummy-firebase-creds.json")
         .jwks_url(TEST_JWKS_URL)
         .build()
@@ -65,45 +63,7 @@ async fn test_connect() {
     }).join().expect("Thread panicked")
 }
 
-// #[test]
-// async fn should_succeed_with_env() {
-//     let mock_server = setup_mock_server().await;
-//     let scenario = SCENARIO_HAPPY_PATH.clone();
-//     let jwk = Jwk::new(scenario.kid.as_str(), scenario.jwk_n.as_str());
-
-//     mock_jwk_issuer(vec![jwk].as_slice())
-//         .expect(1)
-//         .mount(&mock_server)
-//         .await;
-
-//     let firebase_auth = FirebaseAuth::builder()
-//         .env_file("tests/env_files/.env", "FIREBASE_CREDS")
-//         .jwks_url(TEST_JWKS_URL)
-//         .build()
-//         .unwrap();
-//     let decoded_token = firebase_auth.verify(scenario.token.as_str()).await;
-
-//     assert!(decoded_token.is_ok());
-
-//     let decoded_token = decoded_token.unwrap();
-
-//     assert_eq!(decoded_token.sub, "some-uid");
-//     assert!(decoded_token.exp > decoded_token.iat);
-// }
-
 // HELPERS
-
-static SCENARIO: Lazy<Scenario> = Lazy::new(|| {
-    Scenario {
-        //token: "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjE3MTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.XwxlXdkvcdVstZ3O_DXoDv4_03m1CBOCV2Uutq-SpAZOY2iEsf_yCuVPagbgt8Pu-oIMfJTf5aLnjktyHefhVr6YCeD0xTo8xF-yPSNrwKDI1uf_ftQCdhuS5fLLynH9I74aE5tM8nfXY20_iUbO3a-XHFQRwovlMYwGRhT2X461m-nnlGHeVhxcnG5l1hg1vnm8E8ZEkttrOGq49TDzzpbourOxgnZqSkzIjrT-a-rXy02LDep_E7o92J9anMbIk_rorJ29q0tNAAJg4QhljPA5O_EcGITqVS1rxVYM-ufhIAJDy0AoCkUmDe_qSH_USJ5VLaaQf3pTfz6vzY-Fbw".to_string(),
-        token: "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc2MDI3MTI2ODJkZjk5Y2ZiODkxYWEwMzdkNzNiY2M2YTM5NzAwODQiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2FyYWggUmlkbGV5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0t3enFCMzZGMS1WWWZyT2REUnp0X3JlZjJ0ZENSRlBHa2hKSlNfa1FMQj1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS92b2x0cm9uLTFlYTVjIiwiYXVkIjoidm9sdHJvbi0xZWE1YyIsImF1dGhfdGltZSI6MTcxNDYxMjYzMywidXNlcl9pZCI6IlpZR29ndnd1bnRNWUp4bGdvelNXdWs4RkNmQzIiLCJzdWIiOiJaWUdvZ3Z3dW50TVlKeGxnb3pTV3VrOEZDZkMyIiwiaWF0IjoxNzE0NzUyMjE4LCJleHAiOjUwMTQ3NTU4MTgsImVtYWlsIjoic2FyYWhfcmlkbGV5QGJyb3duLmVkdSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7Imdvb2dsZS5jb20iOlsiMTA1NzI4MzU3MzEzMjA1OTk4ODU2Il0sImVtYWlsIjpbInNhcmFoX3JpZGxleUBicm93bi5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.rtSyIyf9luiwRsPgU-h1Deku0qWqi93t9F4HHomEgfQdGmenpUGIG3yTsUqiH1xV-kthckS2ZfqgNoaEwfaM8NmONVFpXbwBPiqVcoRcwmNAe57DJJF9quO3qvlJHbMfqDMBaLSYnWdOnimmfRtsiFaVwN2FSYrwMRl7e0k0YIP5DiMeWMc0zGMlNLENXQXzTDLePnCYsDDuaaPXoyi_LRiE_JZp9-fo5Su6wcWhwS1JagR5eQiLqTiQkRLVO_Xo_QGKs-GbLXTTzxJb6z59kcNV5Q1kpiMTWUe_PWkill1xbYDQwewMcO2NabmqQgoREEgAlyCeHa4PC_v0u66z_w".to_string(),
-        jwk_n: "meR-imFrj9fksArDfbUF7A-CV4ouxRCa_zRqEJx3jwaG6zsx2kncsaL-6N16raLl5kQ3rVaQDXaYdq-fq0xWNdt9SnoUBfR6LGAwOM0_z4d9mfpKUvV5ZIPudeZaMELWBp8JQJpx4q4r04FJqx0exmlVTqOyuXqw9bWxYiI04LRzUY5cVUu_OlhHbzpFaHSUHCl-f-RQ5SNNQAG52y3_oiqQqv21zRhUCP-q-O006PahJlAB6D2qlti3HhqR9aqqAaAUX7EuKmlmwMbB47NHLq-MeAItXPoiWxTR0H24rPwczOXeQywxVeJ92T4ntN2iaKJ1m4iV9Xk1tTaOF8qM3w".to_string(),
-        kid: "7602712682df99cfb891aa037d73bcc6a3970084".to_string(),
-        // kid: "0922171885ba7cffaf40b2d4afd363d259e4e633",
-        public_key: Some("-----BEGIN CERTIFICATE-----\nMIIDHTCCAgWgAwIBAgIJALeM3DBeoI3wMA0GCSqGSIb3DQEBBQUAMDExLzAtBgNV\nBAMMJnNlY3VyZXRva2VuLnN5c3RlbS5nc2VydmljZWFjY291bnQuY29tMB4XDTI0\nMDQzMDA3MzIyMVoXDTI0MDUxNjE5NDcyMVowMTEvMC0GA1UEAwwmc2VjdXJldG9r\nZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wggEiMA0GCSqGSIb3DQEBAQUA\nA4IBDwAwggEKAoIBAQCZ5H6KYWuP1+SwCsN9tQXsD4JXii7FEJr/NGoQnHePBobr\nOzHaSdyxov7o3XqtouXmRDetVpANdph2r5+rTFY1231KehQF9HosYDA4zT/Ph32Z\n+kpS9Xlkg+515lowQtYGnwlAmnHirivTgUmrHR7GaVVOo7K5erD1tbFiIjTgtHNR\njlxVS786WEdvOkVodJQcKX5/5FDlI01AAbnbLf+iKpCq/bXNGFQI/6r47TTo9qEm\nUAHoPaqW2LceGpH1qqoBoBRfsS4qaWbAxsHjs0cur4x4Ai1c+iJbFNHQfbis/BzM\n5d5DLDFV4n3ZPie03aJoonWbiJX1eTW1No4XyozfAgMBAAGjODA2MAwGA1UdEwEB\n/wQCMAAwDgYDVR0PAQH/BAQDAgeAMBYGA1UdJQEB/wQMMAoGCCsGAQUFBwMCMA0G\nCSqGSIb3DQEBBQUAA4IBAQBGERUt+83Ar/OjpwpG9n1hsgM5X5TBrZXMPLpzlr0Y\nDOSB3svrvwBOcJftddUIStJKaEaFwuK+N6TuxtYbcE8tBF7QG1H1M7OdIb8j1o4j\naGggP9ziXiFgRHBADd8o4gHgeBygfZQUU73XHDu1jSzNsUELF0mUt5ffKxSoRtq2\ne1ng74n9sBmExN7HNW8DnyXyF21AnFeCqY3ttTY4KttsGKIXJB1PKXZ31wbTTeVH\njmn+QRC6co2ENNCgCtWr1GiBrgkve8HbtR1qbSDnpBiGAdH+yxBWCRNTEEPW4E7b\nZTGhgbFh1YNFf/+ihvomrfCeCdfwbQEkvs6hhQAI4nTC\n-----END CERTIFICATE-----\n".to_string()),
-        private_key: Some("-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC4Z4wOp4PhsLKb\n0euTbjIxvG5J7Nvf9rVI9IlmO35hHC5McXKa8LzfawD/fFRg2eiUT0/DJ4SNZtUb\n3miLKUn0FwLAAq5QtnRCHez+I6XnnpvJZMBbkUQS4tIIj0U1DPPPp8zTY3GVM+Re\nHx3Si5mu8uyesQDoczOdSQIep17slIxgztuEUTdfulEBTZJ9oyyBbKztlsnZ9vVp\nqnfRU2sM6Tu2Voi0yIiAyP1Fh+WUfTpqoGlSgPveqxEfLEndMlO1r2bbBnXDYjkY\n07YMBMkWi0L946DUipMx/A0HXJ1zPRrjZZZmxPUGFx9CqboSrGER8kvgQzJClBaZ\nF7EOmkR7AgMBAAECggEAO6d7vo3gcxVnYlMRg3slj8NmZlHSe2xjDvvUqxbZ9m5Y\nZ/BXY9o3L4t9IilFXqN/wuK5aeeR0PCQRli3tzUfMHB1Okpju8aaa30k2r4LgJdl\nzEvkknq26+kmixBWEihjgyzEbSoBZ4QG/4/PZPo2OEtr0pZuNcR20Q36OpJoed2z\nFmtAdbgBujdgY6r2JCqHiS/g69K0vl3ucoSkL1XKlmBZpfx7q3P4GK6wQUDbp9VR\nON4mKLeGP1hAU++HFmpjuc4z9dy0Xn26fol9tZlb1D5fKFpWIWCQfs2EfcSiLseZ\nq+tAWVcziAJfWqsFZH6nSqRhxo7FnuWapLSrPE2SYQKBgQDwP5DHeHn36a1VxiKq\ncUmGc8x0SuWhbvtl3/FM9YbGDMXhciJkJ+VcCzGZW3gMgtuWl7PshfbdLPg3gazY\ntvL5WBDEDbrNRtL69V11+P6JWXAD9Q/C+jIy9a1fVckLlRpUReC4wLbgJGSNNv9U\n+8Tt0VdiHhw8tqtQ8eYGJwX5cQKBgQDEfqyKfURNkvHXfScX07wlsDizqIEqVkEE\njOj2paG1BZvZBlF2/IlLJVgbQqRbtgHjaHqiBwvXS/xXhJniwDJb0wyITw51snkJ\ng0zzfoOtimOw2AC4EvGoAR2y+qDK2zRKg+i41lLl4jGbLHf1EHrNhVC1MnRI4SGX\nDWRoNAQGqwKBgCSdS29bCRujXWtpGvdm9JGtLEe88mo8A8xu6NOVx8h/QdkuD9e7\nzNTOT+zTZ+RgPR8iV6WAdTMYG2w6MyGEIFun9EYs4X9Pf/AHXQsRu5krLEsuGgzZ\nHLVvg9C3vkAppS2ayLjfhf97DGgJLbjB9i1Ybjzh4ePO4yUe+LOPVvXBAoGABAbQ\nhFoCz1AmkpLm/S8CmQceclgOpY508KHumDdWs/30bqMZgkW0joyqXIymD5cQPNfE\nQ5O/Y18UQbre6G2l2ondpOFx22mX32EIb6j1C9ZdKp+SjDMfLqEvOZ63MtEBJlHD\nsB38Pue+un5TyvrWeWW0/LGW/nNWm+DTYOtH9dcCgYB+ciejpE4irtBotoiW2QZL\nFERzJFY8gof/vLRbuyZhgLG/gm5fnWUhx0iRcyM0knSWCWDm2xKeQ2jj3RGdVGRk\nSLUCeMo8MF8piBDpgAT9Rj2zaqwGI+B7B1M03e5enZeLpbeb4Ke9Wx5eCagM024Z\ndoDFYwUmOYE0PhGGrCaDpw==\n-----END PRIVATE KEY-----\n".to_string()),
-    }
-});
 
 static SCENARIO_HAPPY_PATH: Lazy<Scenario> = Lazy::new(|| {
     Scenario {
@@ -167,9 +127,6 @@ struct MockJwksResponse {
 }
 
 pub fn mock_jwk_issuer(jwks: &[Jwk]) -> Mock {
-    for jwk in jwks.to_vec().iter() {
-        println!("JWK: {}, {}", jwk.n, jwk.e);
-    }
     Mock::given(method("GET"))
         .and(path("/jwks_url"))
         .respond_with(
