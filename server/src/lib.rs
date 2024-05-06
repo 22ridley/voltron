@@ -135,12 +135,12 @@ pub fn build_server_test() -> BBoxRocket<rocket::Build> {
         // Potential issues?
         .attach(cors.clone())
         .mount("/", alohomora::rocket::catch_all_options_routes())
-        .mount("/", routes![login::login])
+        .mount("/", routes![login::login, login::login_email_buggy, login::login_auth_buggy])
         .mount("/", routes![admin::admin])
-        .mount("/", routes![student::student, student::update])
-        .mount("/", routes![instructor::instructor])
+        .mount("/", routes![student::student, student::update, student::update_buggy])
+        .mount("/", routes![instructor::instructor, instructor::instructor_buggy])
         .mount(
             "/",
-            routes![register::register_instructor, register::register_student],
+            routes![register::register_instructor, register::register_student, register::register_student_buggy],
         )
 }

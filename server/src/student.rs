@@ -92,3 +92,42 @@ pub fn update(
         message: "".to_string(),
     });
 }
+
+#[post("/update_buggy?<text>")]
+pub fn update_buggy(
+    token: BBox<FirebaseToken, AuthStatePolicy>,
+    text: BBox<String, WriteBufferPolicy>,
+    backend: &State<Arc<Mutex<MySqlBackend>>>,
+    context: Context<ContextDataType>,
+) -> Json<SuccessResponse> {
+    // Find this student
+    let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
+    let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
+    let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+        "SELECT * FROM users WHERE email = ?",
+        vec![email_bbox.clone()],
+        context.clone(),
+    );
+    drop(bg);
+    // If the student is not found, return error
+    if user_res.len() == 0 {
+        return Json(SuccessResponse {
+            success: false,
+            message: "Student not found".to_string(),
+        });
+    }
+    let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
+
+    // Cooking up the wrong group_id to write to a different buffer
+    let wrong_group_id_bbox = BBox::new(2, ReadBufferPolicy::new(0, 2));
+
+    // BUGGY: We try to write to the buffer of the wrong group
+    write_buffer(class_id_bbox, wrong_group_id_bbox, context.clone(), text);
+
+    return Json(SuccessResponse {
+        success: true,
+        message: "".to_string(),
+    });
+}

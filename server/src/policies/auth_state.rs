@@ -28,7 +28,7 @@ impl FrontendPolicy for AuthStatePolicy {
     }
 }
 
-// Only admin can register instructors
+// Email from token can only be used in database, not returned from endpoint
 impl Policy for AuthStatePolicy {
     fn name(&self) -> String {
         format!("AuthStatePolicy")

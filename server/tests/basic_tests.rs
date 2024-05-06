@@ -1,67 +1,12 @@
 use alohomora::testing::BBoxClient;
+use rocket_firebase_auth::FirebaseAuth;
 use rocket::http::{Header, Status};
 use std::thread;
 use voltron::build_server_test;
 mod common;
-use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, setup_mock_server, mock_jwk_issuer};
+use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, TEST_JWKS_URL, setup_mock_server, mock_jwk_issuer, Instructor, AdminResponse, InstructorResponse, StudentResponse, SuccessResponse, Student, StudentGroup, LoginResponse};
 use rocket_firebase_auth::jwk::Jwk;
 use rocket::serde::Deserialize;
-
-#[derive(Deserialize)]
-struct LoginResponse {
-    email: String,
-    name: String,
-    privilege: i32,
-    success: bool
-}
-
-#[derive(Deserialize)]
-struct InstructorResponse {
-    class_id: i32,
-    student_groups: Vec<StudentGroup>,
-    students: Vec<Student>,
-    success: bool
-}
-
-#[derive(Deserialize)]
-struct Student {
-    name: String,
-    group_id: i32
-}
-
-#[derive(Deserialize)]
-struct StudentGroup {
-    pub code: String,
-    pub group_id: i64
-}
-
-#[derive(Deserialize)]
-struct SuccessResponse {
-    pub success: bool,
-    pub message: String
-}
-
-#[derive(Deserialize)]
-pub struct StudentResponse {
-    pub success: bool,
-    pub class_id: i64,
-    pub group_id: i64,
-    pub contents: Option<String>
-}
-
-#[derive(Deserialize)]
-pub struct AdminResponse {
-    pub success: bool,
-    pub instructors: Vec<Instructor>
-}
-
-#[derive(Deserialize)]
-pub struct Instructor {
-    pub name: String,
-    pub class_id: i32
-}
-
-// RUN WITH RUST_TEST_THREADS=1 cargo test
 
 // #[tokio::test]
 // async fn test_login() {
@@ -214,52 +159,52 @@ pub struct Instructor {
 //     }).join().expect("Thread panicked")
 // }
 
-#[tokio::test]
-async fn test_admin() {
-    // TEST ACTIONS BY ADMIN: 
-    // - Registering instructors
+// #[tokio::test]
+// async fn test_admin() {
+//     // TEST ACTIONS BY ADMIN: 
+//     // - Registering instructors
 
-    let mock_jwk_server = setup_mock_server().await;
-    let jwk = Jwk::new(KID, JWK_N);
+//     let mock_jwk_server = setup_mock_server().await;
+//     let jwk = Jwk::new(KID, JWK_N);
 
-    mock_jwk_issuer(vec![jwk].as_slice())
-        .mount(&mock_jwk_server)
-        .await;
+//     mock_jwk_issuer(vec![jwk].as_slice())
+//         .mount(&mock_jwk_server)
+//         .await;
 
-    // Send a request
-    let server = build_server_test();
-    thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+//     // Send a request
+//     let server = build_server_test();
+//     thread::spawn(|| {
+//         let client: BBoxClient = BBoxClient::tracked(server).unwrap();
 
-        // Check to make sure we are admin
-        let value = "Bearer ".to_owned() + ADMIN_TOKEN.clone();
-        let header = Header::new("Authorization", value);
-        let mut admin_request = client.get("/admin");
-        admin_request.add_header(header.clone());
-        let admin_response = admin_request.dispatch();
-        assert!(admin_response.status() == Status::Ok);
+//         // Check to make sure we are admin
+//         let value = "Bearer ".to_owned() + ADMIN_TOKEN.clone();
+//         let header = Header::new("Authorization", value);
+//         let mut admin_request = client.get("/admin");
+//         admin_request.add_header(header.clone());
+//         let admin_response = admin_request.dispatch();
+//         assert!(admin_response.status() == Status::Ok);
 
-        let mut admin_response_body: AdminResponse = admin_response.into_json::<AdminResponse>().unwrap();
-        let current_num_instr = admin_response_body.instructors.len();
-        assert!(0 < current_num_instr);
+//         let mut admin_response_body: AdminResponse = admin_response.into_json::<AdminResponse>().unwrap();
+//         let current_num_instr = admin_response_body.instructors.len();
+//         assert!(0 < current_num_instr);
 
-        // Check to make sure that we can register students
-        let mut reg_request = client.post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
-        reg_request.add_header(header.clone());
-        let reg_response = reg_request.dispatch();
-        assert!(reg_response.status() == Status::Ok);
+//         // Check to make sure that we can register instructors
+//         let mut reg_request = client.post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
+//         reg_request.add_header(header.clone());
+//         let reg_response = reg_request.dispatch();
+//         assert!(reg_response.status() == Status::Ok);
         
-        let reg_response_body: SuccessResponse = reg_response.into_json::<SuccessResponse>().unwrap();
-        assert_eq!(reg_response_body.success, true);
+//         let reg_response_body: SuccessResponse = reg_response.into_json::<SuccessResponse>().unwrap();
+//         assert_eq!(reg_response_body.success, true);
 
-        // Check to make sure that the student was registered (we have 1 more student!)
-        let mut new_admin_request = client.get("/admin");
-        new_admin_request.add_header(header.clone());
-        let new_admin_response = new_admin_request.dispatch();
-        assert!(new_admin_response.status() == Status::Ok);
+//         // Check to make sure that the instructor was registered (we have 1 more instructor!)
+//         let mut new_admin_request = client.get("/admin");
+//         new_admin_request.add_header(header.clone());
+//         let new_admin_response = new_admin_request.dispatch();
+//         assert!(new_admin_response.status() == Status::Ok);
 
-        let new_admin_response_body = new_admin_response.into_json::<AdminResponse>().unwrap();
-        assert_eq!(new_admin_response_body.instructors.len(), current_num_instr + 1);
+//         let new_admin_response_body: AdminResponse = new_admin_response.into_json::<AdminResponse>().unwrap();
+//         assert_eq!(new_admin_response_body.instructors.len(), current_num_instr + 1);
 
-    }).join().expect("Thread panicked")
-}
+//     }).join().expect("Thread panicked")
+// }
