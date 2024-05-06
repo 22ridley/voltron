@@ -61,9 +61,10 @@ pub(crate) fn login(
     JsonResponse::from((response, context.clone()))
 }
 
+// Buggy version of endpoint!
 #[get("/login_email_buggy")]
 pub(crate) fn login_email_buggy(
-    token: BBox<FirebaseToken, AuthStatePolicy>,
+    _token: BBox<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<LoginResponse, ContextDataType> {
@@ -102,6 +103,7 @@ pub(crate) fn login_email_buggy(
     JsonResponse::from((response, context.clone()))
 }
 
+// Another buggy version of endpoint!
 #[get("/login_auth_buggy")]
 pub(crate) fn login_auth_buggy(
     token: BBox<FirebaseToken, AuthStatePolicy>,

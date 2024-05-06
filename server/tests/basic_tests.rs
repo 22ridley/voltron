@@ -4,9 +4,10 @@ use rocket::http::{Header, Status};
 use std::thread;
 use voltron::{build_server_test, initialize};
 mod common;
-use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, TEST_JWKS_URL, setup_mock_server, mock_jwk_issuer, Instructor, AdminResponse, InstructorResponse, StudentResponse, SuccessResponse, Student, StudentGroup, LoginResponse};
+use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, TEST_JWKS_URL, setup_mock_server, mock_jwk_issuer, AdminResponse, InstructorResponse, StudentResponse, SuccessResponse, LoginResponse};
 use rocket_firebase_auth::jwk::Jwk;
-use rocket::serde::Deserialize;
+
+// Testing the versions of the endpoints that work correctly!
 
 #[tokio::test]
 async fn test_login() {
@@ -41,7 +42,7 @@ async fn test_login() {
         let client: BBoxClient = BBoxClient::tracked(server).unwrap();
 
         // check to make sure we can connect
-        let value = "Bearer ".to_owned() + INSTR_TOKEN.clone();
+        let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
         let mut request = client.get("/login");
         request.add_header(header);
@@ -77,14 +78,14 @@ async fn test_instr() {
         let client: BBoxClient = BBoxClient::tracked(server).unwrap();
 
         // Check to make sure we can see student buffers
-        let value = "Bearer ".to_owned() + INSTR_TOKEN.clone();
+        let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
         let mut instr_request = client.get("/instructor");
         instr_request.add_header(header.clone());
         let instr_response = instr_request.dispatch();
         assert!(instr_response.status() == Status::Ok);
 
-        let mut instr_response_body: InstructorResponse = instr_response.into_json::<InstructorResponse>().unwrap();
+        let instr_response_body: InstructorResponse = instr_response.into_json::<InstructorResponse>().unwrap();
         let current_num_students = instr_response_body.students.len();
         assert!(0 < current_num_students);
         assert_eq!(instr_response_body.class_id, 0);
@@ -183,14 +184,14 @@ async fn test_admin() {
         let client: BBoxClient = BBoxClient::tracked(server).unwrap();
 
         // Check to make sure we are admin
-        let value = "Bearer ".to_owned() + ADMIN_TOKEN.clone();
+        let value = "Bearer ".to_owned() + ADMIN_TOKEN;
         let header = Header::new("Authorization", value);
         let mut admin_request = client.get("/admin");
         admin_request.add_header(header.clone());
         let admin_response = admin_request.dispatch();
         assert!(admin_response.status() == Status::Ok);
 
-        let mut admin_response_body: AdminResponse = admin_response.into_json::<AdminResponse>().unwrap();
+        let admin_response_body: AdminResponse = admin_response.into_json::<AdminResponse>().unwrap();
         let current_num_instr = admin_response_body.instructors.len();
         assert!(0 < current_num_instr);
 

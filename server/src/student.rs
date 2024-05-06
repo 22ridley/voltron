@@ -93,6 +93,7 @@ pub fn update(
     });
 }
 
+// Buggy version of endpoint!
 #[post("/update_buggy?<text>")]
 pub fn update_buggy(
     token: BBox<FirebaseToken, AuthStatePolicy>,
@@ -118,8 +119,6 @@ pub fn update_buggy(
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
     let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
-
     // Cooking up the wrong group_id to write to a different buffer
     let wrong_group_id_bbox = BBox::new(2, ReadBufferPolicy::new(0, 2));
 

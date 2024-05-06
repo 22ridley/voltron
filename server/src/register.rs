@@ -63,6 +63,7 @@ pub fn register_student(
     });
 }
 
+// Buggy version of endpoint!
 #[post("/register_student_buggy?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student_buggy(
     _token: BBox<FirebaseToken, AuthStatePolicy>,

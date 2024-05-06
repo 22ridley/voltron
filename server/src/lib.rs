@@ -104,11 +104,6 @@ pub fn build_server_test() -> BBoxRocket<rocket::Build> {
         .build()
         .expect("Failed to read firebase credentials");
 
-    // Register all policies. #[schema_policy(...)] does not work on mac.
-    // alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("users"), 1);
-    // alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 3);
-    // alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 4);
-
     // Initialize the backend
     let config_path = "config.toml";
     let config = config::parse(config_path).unwrap();

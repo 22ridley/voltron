@@ -89,7 +89,7 @@ pub(crate) fn instructor(
     ))
 }
 
-
+// Buggy version of endpoint!
 #[get("/instructor_buggy")]
 pub(crate) fn instructor_buggy(
     token: BBox<FirebaseToken, AuthStatePolicy>,
