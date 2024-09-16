@@ -1,6 +1,6 @@
 use alohomora::bbox::BBox;
 use alohomora::context::Context;
-use alohomora::pcr::PrivacyCriticalRegion;
+use alohomora::pcr::{PrivacyCriticalRegion, Signature};
 use alohomora::policy::{AnyPolicy, Policy};
 use alohomora::pure::PrivacyPureRegion;
 use alohomora::rocket::ResponseBBoxJson;
@@ -90,17 +90,22 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
     unbox(
         (class_id, group_id),
         context,
-        PrivacyCriticalRegion::new(|(class_id, group_id): (i32, i32), ()| {
-            let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-            let content_result = fs::read_to_string(path);
-            let content: String = match content_result {
-                // If this file does not exist, return empty string
-                Err(_) => "".to_string(),
-                // Otherwise, return the file content
-                Ok(msg) => msg.to_string(),
-            };
-            BBox::new(content, ReadBufferPolicy::new(class_id, group_id))
-        }),
+        PrivacyCriticalRegion::new(
+            |(class_id, group_id): (i32, i32), ()| {
+                let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+                let content_result = fs::read_to_string(path);
+                let content: String = match content_result {
+                    // If this file does not exist, return empty string
+                    Err(_) => "".to_string(),
+                    // Otherwise, return the file content
+                    Ok(msg) => msg.to_string(),
+                };
+                BBox::new(content, ReadBufferPolicy::new(class_id, group_id))
+            },
+            Signature { username: "", signature: "" },
+            Signature { username: "", signature: "" },
+            Signature { username: "", signature: "" },
+        ),
         (),
     )
     .unwrap()
@@ -116,11 +121,16 @@ pub fn write_buffer<P: Policy + Clone + 'static>(
     contents
         .into_unbox(
             context,
-            PrivacyCriticalRegion::new(|contents: String, (class_id, group_id): (i32, i32)| {
-                let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-                let mut file: File = File::create(&path).unwrap();
-                let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
-            }),
+            PrivacyCriticalRegion::new(
+                |contents: String, (class_id, group_id): (i32, i32)| {
+                    let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+                    let mut file: File = File::create(&path).unwrap();
+                    let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
+                },
+                Signature { username: "", signature: "" },
+                Signature { username: "", signature: "" },
+                Signature { username: "", signature: "" },
+            ),
             (class_id, group_id),
         )
         .unwrap();
