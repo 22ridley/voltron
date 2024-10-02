@@ -102,9 +102,9 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
                 };
                 BBox::new(content, ReadBufferPolicy::new(class_id, group_id))
             },
-            Signature { username: "", signature: "" },
-            Signature { username: "", signature: "" },
-            Signature { username: "", signature: "" },
+            Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRURmUkt0dU50eWZadUpYenJmcjdqOFd2aGxzTUI0R01RVHBJKzZpazM0T3RHVU1ybEU5ZHVJTUl4SEdGVHkyaHMKWVloTmNTMEFkR3pveXJETndIOGNZQQotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
+            Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRURmUkt0dU50eWZadUpYenJmcjdqOFd2aGxzTUI0R01RVHBJKzZpazM0T3RHVU1ybEU5ZHVJTUl4SEdGVHkyaHMKWVloTmNTMEFkR3pveXJETndIOGNZQQotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
+            Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUF2V2NsQkxDSW9wZWkxcXF3QTdPalpHVTVweTFwWitBVWFZY0lYQkE1cXpVclg1OFBEdVBhOGZlUC9HLzlKZ04KNE84MXQyT2svdWRHQ1k3dGhUelM4RAotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
         ),
         (),
     )
@@ -127,9 +127,9 @@ pub fn write_buffer<P: Policy + Clone + 'static>(
                     let mut file: File = File::create(&path).unwrap();
                     let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
                 },
-                Signature { username: "", signature: "" },
-                Signature { username: "", signature: "" },
-                Signature { username: "", signature: "" },
+                Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUI5c2w3cWRCQWNaSVNBYkQya3czWWV2ZDhVT1l5MVlpNFBqZFp6R1Qwd1RQQU91Wk9uL2lXTGJxUnRxeVozanoKemcxdlRTdmRyWlNpWE5SWHRTU2dVRgotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
+                Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUI5c2w3cWRCQWNaSVNBYkQya3czWWV2ZDhVT1l5MVlpNFBqZFp6R1Qwd1RQQU91Wk9uL2lXTGJxUnRxeVozanoKemcxdlRTdmRyWlNpWE5SWHRTU2dVRgotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
+                Signature { username: "corinnt", signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUF2V2NsQkxDSW9wZWkxcXF3QTdPalpHVTVweTFwWitBVWFZY0lYQkE1cXpVclg1OFBEdVBhOGZlUC9HLzlKZ04KNE84MXQyT2svdWRHQ1k3dGhUelM4RAotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K" },
             ),
             (class_id, group_id),
         )
