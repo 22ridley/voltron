@@ -7,7 +7,7 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-alohomora = { path = "../../alohomora", default_features = false, features = ["derive"] }
+alohomora = { path = "../../Alohomora/alohomora", default_features = false, features = ["derive"] }
 bitvec = "0.22.3"
 rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
 chrono = "0.4.31"
@@ -33,7 +33,12 @@ features = ["handlebars", "tera"]
 features = ["dir_source"]
 
 [build-dependencies]
-alohomora_build = { path = "../../alohomora_build" }
+alohomora_build = { path = "../../Alohomora/alohomora_build" }
 
 [patch.crates-io]
 funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
+
+[workspace.metadata.dylint]
+libraries = [  
+   { path = "../../Alohomora/alohomora_lints" },
+]
