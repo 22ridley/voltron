@@ -18,15 +18,21 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
     instr_class: Option<&str>, instr_email: Option<&str>,
     backend: &State<Arc<Mutex<MySQLBackend>>>) -> ApiResponse<SuccessResponse> {
     let instructor_name: &str = instr_name.unwrap();
-    let class_id: &str = instr_class.unwrap();
+    let class_name: &str = instr_class.unwrap();
     let instructor_email: &str = instr_email.unwrap();
 
     // Make insert query to add this new instructor
     let mut bg = backend.lock().unwrap();
-    let users_row: Vec<&str> = vec![instructor_name, instructor_email, "1", class_id, "-1"];
+    let user_row: Vec<&str> = vec![instructor_name, instructor_email, "1"];
+    let result = (*bg).prep_exec::<_, _, Vec<u8>>(
+        "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
+        user_row
+    );
+    let instructor_id = (*bg).last_insert_id().to_string();
+    let class_row: Vec<&str> = vec![class_name, &instructor_id];
     let _ = (*bg).prep_exec::<_, _, Vec<u8>>(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
-        users_row
+        "INSERT INTO class (class_name, instructor_id) VALUES (?, ?)",
+        class_row
     );
     drop(bg);
 
@@ -50,10 +56,24 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
 
     // Make insert query to add this new student
     let mut bg = backend.lock().unwrap();
-    let users_row: Vec<&str> = vec![student_name, student_email, "0", student_class, student_group];
-    let _ = (*bg).prep_exec::<_, _, Vec<u8>>(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
+    let group_row: Vec<&str> = vec![student_group, student_class];
+    let result = (*bg).prep_exec::<_, _, Vec<u8>>(
+        "INSERT IGNORE INTO `group` (group_name, class_id) VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE group_id = LAST_INSERT_ID(group_id);",
+        group_row
+    );
+    let group_id = (*bg).last_insert_id().to_string();
+    let users_row: Vec<&str> = vec![student_name, student_email, "0"];
+    let result = (*bg).prep_exec::<_, _, Vec<u8>>(
+        "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
         users_row
+    );
+    let student_id = (*bg).last_insert_id().to_string();
+    println!("{}", student_id);
+    let enroll_row: Vec<&str> = vec![&student_id, student_class, &group_id];
+    let _ = (*bg).prep_exec::<_, _, Vec<u8>>(
+        "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
+        enroll_row
     );
     drop(bg);
 

@@ -57,4 +57,8 @@ impl MySQLBackend {
             let stmt = self.handle.prep(query)?;
             self.handle.exec(stmt, params)
     }
+
+    pub fn last_insert_id(&self) -> u64 {
+        self.handle.last_insert_id()
+    }
 }

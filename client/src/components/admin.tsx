@@ -12,14 +12,14 @@ interface AdminProps {
 export default function Admin(props: AdminProps) {
   const [failMessage, setFailMessage] = useState<string>("");
   const [newName, setNewName] = useState<string>("");
-  const [newClassID, setNewClassID] = useState<string>("");
+  const [newClassName, setNewClassName] = useState<string>("");
   const [newEmail, setNewEmail] = useState<string>("");
   const [instructors, setInstructors] = useState<any[]>([]);
 
   function handleSubmit() {
     setFailMessage("");
     fetch(
-      `${firebaseConfig.baseURL}/register_instructor?instr_name=${newName}&instr_class=${newClassID}&instr_email=${newEmail}`,
+      `${firebaseConfig.baseURL}/register_instructor?instr_name=${newName}&instr_class=${newClassName}&instr_email=${newEmail}`,
       {
         method: "POST",
         headers: {
@@ -38,7 +38,7 @@ export default function Admin(props: AdminProps) {
             }
             getInstructors();
             setNewName("");
-            setNewClassID("");
+            setNewClassName("");
             setNewEmail("");
           })
           .catch((error) => console.log(error));
@@ -90,7 +90,7 @@ export default function Admin(props: AdminProps) {
               <h4>Instructors:</h4>
               {instructors.map((instructor_json) => (
                 <div className="instructor">
-                  {instructor_json.name}: Class {instructor_json.class_id}
+                  {instructor_json.name}: <em>{instructor_json.class_name}</em>
                 </div>
               ))}
             </div>
@@ -109,10 +109,10 @@ export default function Admin(props: AdminProps) {
                 value={newEmail}
                 onChange={(val) => setNewEmail(val.target.value)}
               ></input>
-              <h4>Class ID:</h4>
+              <h4>Class Name:</h4>
               <input
-                value={newClassID}
-                onChange={(val) => setNewClassID(val.target.value)}
+                value={newClassName}
+                onChange={(val) => setNewClassName(val.target.value)}
               ></input>
               <br />
               <div className="submit_button_box">

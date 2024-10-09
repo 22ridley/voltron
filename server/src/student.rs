@@ -25,12 +25,12 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
     // Find this student
     let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
 
     let row: Row = user_res.get(0).unwrap().clone();
-    let class_id: i32 = row.get(3).unwrap();
-    let group_id: i32 = row.get(4).unwrap();
+    let class_id: i32 = row.get(5).unwrap();
+    let group_id: i32 = row.get(6).unwrap();
 
     // File path to read and write from
     let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
@@ -62,12 +62,12 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     // Find this student
     let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
 
     let row: Row = user_res.get(0).unwrap().clone();
-    let class_id: i32 = row.get(3).unwrap();
-    let group_id: i32 = row.get(4).unwrap();
+    let class_id: i32 = row.get(5).unwrap();
+    let group_id: i32 = row.get(6).unwrap();
 
     // Open a file in write-only mode, returns `io::Result<File>`
     let filepath: String = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);

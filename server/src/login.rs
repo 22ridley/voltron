@@ -31,7 +31,7 @@ async fn login(
 ) -> ApiResponse<LoginResponse> {
     let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM users WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
     if user_res.len() == 0 {
         return ApiResponse {
@@ -45,8 +45,9 @@ async fn login(
         }
     }
     let row: Row = user_res.get(0).unwrap().clone();
-    let user_name: String = row.get(0).unwrap();
-    let privilege: i32 =  row.get(2).unwrap();
+    // Iterate over each column in the row
+    let user_name: String = row.get(1).unwrap();
+    let privilege: i32 =  row.get(3).unwrap();
     // Return response
     ApiResponse {
         json: Some(Json(LoginResponse {

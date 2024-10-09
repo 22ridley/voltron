@@ -20,9 +20,9 @@ pub struct AdminResponse {
 #[get("/admin")]
 pub fn admin(_token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>) 
     -> ApiResponse<AdminResponse> {
-    // Get list of all students
+    // Get list of all instructors
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let instructors_res: Vec<Instructor> = (*bg).prep_exec("SELECT * FROM users WHERE privilege = 1", ()).unwrap();
+    let instructors_res: Vec<Instructor> = (*bg).prep_exec("SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id", ()).unwrap();
     drop(bg);
 
     // Return response

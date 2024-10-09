@@ -15,6 +15,7 @@ export default function Instructor(props: InstructorProps) {
   const [newGroup, setNewGroup] = useState<string>("");
   const [failMessage, setFailMessage] = useState<string>("");
   const [classID, setClassID] = useState<string>("");
+  const [className, setClassName] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [studentGroups, setStudentGroups] = useState<any[]>([]);
 
@@ -62,9 +63,11 @@ export default function Instructor(props: InstructorProps) {
           .json()
           .then((response_json) => {
             const class_id: number = response_json.class_id;
+            const class_name: String = response_json.class_name;
             const students = response_json.students;
             const student_groups = response_json.student_groups;
             setClassID(class_id.toString());
+            setClassName(class_name.toString());
             setStudents(students);
             setStudentGroups(student_groups);
           })
@@ -120,7 +123,7 @@ export default function Instructor(props: InstructorProps) {
             <div>{}</div>
             {students.map((student_json) => (
               <div className="student">
-                {student_json.name}: {student_json.group_id}
+                {student_json.name}: <em>Group {student_json.group_id}</em>
               </div>
             ))}
           </div>
@@ -132,6 +135,9 @@ export default function Instructor(props: InstructorProps) {
             </p>
             <p className="one-labelI">
               <b>Email:</b> {props.email}
+            </p>
+            <p className="one-labelI">
+              <b>Class Name:</b> {className}
             </p>
             <p className="one-labelI">
               <b>Class ID:</b> {classID}

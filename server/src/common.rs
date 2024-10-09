@@ -72,15 +72,15 @@ impl FromRow for StudentGroup {
 #[derive(Debug, Serialize)]
 pub struct Instructor{
     pub name: String,
-    pub class_id: i32,
+    pub class_name: String,
     pub index: usize
 }
 
 impl Instructor{
     pub fn new(row: Row, index: usize) -> Self {
         Instructor{
-            name: from_value(row[0].clone()),
-            class_id: from_value(row[3].clone()),
+            name: from_value(row[1].clone()),
+            class_name: from_value(row[5].clone()),
             index: index
         }
     } 
@@ -107,8 +107,8 @@ pub struct Student{
 impl Student{
     pub fn new(row: Row, index: usize) -> Self {
         Student{
-            name: from_value(row[0].clone()),
-            group_id: from_value(row[4].clone()),
+            name: from_value(row[1].clone()),
+            group_id: from_value(row[6].clone()),
             index: index
         }
     } 
