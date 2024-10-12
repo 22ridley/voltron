@@ -26,9 +26,12 @@ static INIT: Once = Once::new();
 pub fn initialize() {
     INIT.call_once(|| {
         // Register all policies. #[schema_policy(...)] does not work on mac.
-        alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("users"), 1);
-        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 3);
-        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 4);
+        // Email in user table
+        alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("user"), 2);
+        // Class_id in enroll table
+        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 1);
+        // Group_id in enroll table
+        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 2);
     });
 }
 
@@ -46,9 +49,9 @@ pub fn build_server() -> BBoxRocket<rocket::Build> {
         .expect("Failed to read firebase credentials");
 
     // Register all policies. #[schema_policy(...)] does not work on mac.
-    alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("users"), 1);
-    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 3);
-    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("users"), 4);
+    alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("user"), 2);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 1);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 2);
 
     // Initialize the backend
     let config_path = "config.toml";

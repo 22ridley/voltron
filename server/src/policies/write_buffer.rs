@@ -10,10 +10,8 @@ use serde::Serialize;
 #[derive(Clone, Serialize, Debug)]
 pub struct WriteBufferPolicy {}
 
-// Content of a buffer can only be accessed by:
+// Buffer can only be written to by:
 //   1. Students with group_id and class_id;
-//   2. Instructors with class_id;
-//   3. Admins
 impl Policy for WriteBufferPolicy {
     fn name(&self) -> String {
         String::from("WriteBufferPolicy")
@@ -47,12 +45,12 @@ impl Policy for WriteBufferPolicy {
         // Check the database
         let mut result = db
             .exec_iter(
-                "SELECT * FROM users WHERE email = ? AND clasS_id = ? AND group_id = ?",
+                "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ? AND class_id = ? AND group_id = ?",
                 (user, class_id, group_id),
             )
             .unwrap();
 
-        // Find out if we are an instructor for the class, or a student in the class and group.
+        // Find out if we are a student in the class and group.
         match result.next() {
             None => false,
             Some(_res) => true,

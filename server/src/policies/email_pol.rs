@@ -65,6 +65,6 @@ impl SchemaPolicy for EmailPolicy {
     where
         Self: Sized,
     {
-        EmailPolicy::new(mysql::from_value(row[1].clone()))
+        EmailPolicy::new(mysql::from_value(row[2].clone()))
     }
 }

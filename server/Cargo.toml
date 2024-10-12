@@ -30,6 +30,7 @@ branch = "main"
 features = ["handlebars", "tera"]
 
 [dependencies.handlebars]
+version = "4.3.3"
 features = ["dir_source"]
 
 [build-dependencies]

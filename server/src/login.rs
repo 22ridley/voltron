@@ -31,7 +31,7 @@ pub(crate) fn login(
 
     let mut bg = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+        "SELECT * FROM user WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -49,8 +49,8 @@ pub(crate) fn login(
         };
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
-        let name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
-        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2].clone()).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(row[1].clone()).unwrap();
+        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
         response = LoginResponse {
             success: true,
             name: name_bbox,
@@ -73,7 +73,7 @@ pub(crate) fn login_email_buggy(
     // access their data from the database, even though that is not the email
     // address attached to our firebase token
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+        "SELECT * FROM user WHERE email = ?",
         vec!["22ridleysk@gmail.com"],
         context.clone(),
     );
@@ -91,8 +91,8 @@ pub(crate) fn login_email_buggy(
         };
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
-        let name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
-        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2].clone()).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(row[1].clone()).unwrap();
+        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
         response = LoginResponse {
             success: true,
             name: name_bbox,
@@ -114,7 +114,7 @@ pub(crate) fn login_auth_buggy(
 
     let mut bg = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+        "SELECT * FROM user WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -134,8 +134,8 @@ pub(crate) fn login_auth_buggy(
         };
     } else {
         let row: Vec<BBox<Value, AnyPolicy>> = user_res.get(0).unwrap().clone();
-        let name_bbox: BBox<String, AnyPolicy> = from_value(row[0].clone()).unwrap();
-        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[2].clone()).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(row[1].clone()).unwrap();
+        let priv_bbox: BBox<i32, AnyPolicy> = from_value(row[3].clone()).unwrap();
         response = LoginResponse {
             success: true,
             name: name_bbox,

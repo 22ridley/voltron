@@ -16,7 +16,7 @@ use std::{sync::Arc, sync::Mutex};
 pub fn register_instructor(
     _token: BBox<FirebaseToken, AuthStatePolicy>,
     instr_name: BBox<String, InstructorPolicy>,
-    instr_class: BBox<i32, InstructorPolicy>,
+    instr_class: BBox<String, InstructorPolicy>,
     instr_email: BBox<String, InstructorPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
@@ -25,10 +25,17 @@ pub fn register_instructor(
     let mut bg = backend.lock().unwrap();
 
     // send insert query to db
-    bg.prep_exec(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
-        (instr_name, instr_email, 1i32, instr_class, -1i32),
-        context.clone(),
+    let _ = bg.prep_exec(
+        "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
+        (instr_name, instr_email, 1i32),
+        context.clone()
+    );
+
+    let instructor_id = (*bg).last_insert_id().to_string();
+    let _ = (*bg).prep_exec(
+        "INSERT INTO class (class_name, instructor_id) VALUES (?, ?)",
+        (instr_class, &instructor_id),
+        context.clone()
     );
     drop(bg);
 
@@ -43,7 +50,7 @@ pub fn register_student(
     _token: BBox<FirebaseToken, AuthStatePolicy>,
     stud_group: BBox<i32, StudentPolicy>,
     stud_name: BBox<String, StudentPolicy>,
-    stud_class: BBox<i32, StudentPolicy>,
+    stud_class: BBox<String, StudentPolicy>,
     stud_email: BBox<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
@@ -51,8 +58,21 @@ pub fn register_student(
     let mut bg = backend.lock().unwrap();
     // Make insert query to add this new student into users
     (*bg).prep_exec(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)", 
-        (stud_name, stud_email, 0i32, stud_class.clone(), stud_group.clone()), 
+        "INSERT IGNORE INTO `group` (group_name, class_id) VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE group_id = LAST_INSERT_ID(group_id)", 
+        (stud_group.clone(), stud_class.clone()), 
+        context.clone()
+    );
+    let group_id = (*bg).last_insert_id().to_string();
+    let _ = (*bg).prep_exec(
+        "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
+        (stud_name.clone(), stud_email.clone(), "0"),
+        context.clone()
+    );
+    let student_id = (*bg).last_insert_id().to_string();
+    let _ = (*bg).prep_exec(
+        "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
+        (&student_id, stud_class.clone(), &group_id),
         context.clone()
     );
     drop(bg);
@@ -69,17 +89,31 @@ pub fn register_student_buggy(
     _token: BBox<FirebaseToken, AuthStatePolicy>,
     stud_group: BBox<i32, StudentPolicy>,
     stud_name: BBox<String, StudentPolicy>,
-    stud_class: BBox<i32, StudentPolicy>,
+    stud_class: BBox<String, StudentPolicy>,
     stud_email: BBox<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
-    let mut bg = backend.lock().unwrap();
     // BUGGY: Make insert query to add this new student into users
     // Hard-coded to always insert to class 2!! This should fail student policy
+    let mut bg = backend.lock().unwrap();
+    // Make insert query to add this new student into users
     (*bg).prep_exec(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)", 
-        (stud_name, stud_email, 0i32, 2i32, stud_group.clone()), 
+        "INSERT IGNORE INTO `group` (group_name, class_id) VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE group_id = LAST_INSERT_ID(group_id)", 
+        (stud_group.clone(), stud_class.clone()), 
+        context.clone()
+    );
+    let group_id = (*bg).last_insert_id().to_string();
+    let _ = (*bg).prep_exec(
+        "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
+        (stud_name.clone(), stud_email.clone(), "0"),
+        context.clone()
+    );
+    let student_id = (*bg).last_insert_id().to_string();
+    let _ = (*bg).prep_exec(
+        "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
+        (&student_id, 2i32, &group_id),
         context.clone()
     );
     drop(bg);

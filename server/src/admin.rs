@@ -28,7 +28,7 @@ pub(crate) fn admin(
     // Get list of all instructors
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE privilege = 1",
+        "SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id",
         (),
         context.clone(),
     );
@@ -36,11 +36,11 @@ pub(crate) fn admin(
 
     let mut instr_vec_bbox: Vec<Instructor> = Vec::new();
     for instr in instructors_bbox.iter() {
-        let name_bbox: BBox<String, AnyPolicy> = from_value(instr[0].clone()).unwrap();
-        let class_id_bbox: BBox<i32, AnyPolicy> = from_value(instr[3].clone()).unwrap();
+        let name_bbox: BBox<String, AnyPolicy> = from_value(instr[1].clone()).unwrap();
+        let class_name_bbox: BBox<String, AnyPolicy> = from_value(instr[5].clone()).unwrap();
         let new_instr: Instructor = Instructor {
             name: name_bbox,
-            class_id: class_id_bbox,
+            class_name: class_name_bbox,
         };
         instr_vec_bbox.push(new_instr)
     }

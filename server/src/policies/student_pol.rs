@@ -51,17 +51,17 @@ impl Policy for StudentPolicy {
                 // Check the database
                 let mut instructor_res = db
                     .exec_iter(
-                        "SELECT * FROM users WHERE email = ? AND privilege = 1",
+                        "SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id WHERE email = ? AND privilege = 1",
                         (user.clone(),),
                     )
                     .unwrap();
 
                 // Get the instructor's class_id
                 let row = instructor_res.next().unwrap().unwrap();
-                let instructor_class: i32 = mysql::from_value(row[3].clone());
+                let instructor_class: i32 = mysql::from_value(row[5].clone());
 
-                // Get the class_id that the instructor is trying to put a student into
-                let query_class_id: i32 = mysql::from_value(params[3].clone());
+                // Get the class_id that the instructor is trying to enroll a student into
+                let query_class_id: i32 = mysql::from_value(params[1].clone());
 
                 // Fail if the instructor is trying to place a student into a class that is not the instructor's class
                 if instructor_class != query_class_id {

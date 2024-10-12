@@ -45,7 +45,7 @@ impl Policy for ReadBufferPolicy {
 
         // Check the database
         let mut result = db
-            .exec_iter("SELECT * FROM users WHERE email = ?", (user,))
+            .exec_iter("SELECT * FROM user FULL OUTER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", (user,))
             .unwrap();
 
         // Find out if we are an instructor for the class, or a student in the class and group.
@@ -55,9 +55,9 @@ impl Policy for ReadBufferPolicy {
                 match res {
                     Err(_) => false,
                     Ok(row) => {
-                        let privilege: i32 = mysql::from_value(row.get(2).unwrap());
-                        let class_id: i32 = mysql::from_value(row.get(3).unwrap());
-                        let group_id: i32 = mysql::from_value(row.get(4).unwrap());
+                        let privilege: i32 = mysql::from_value(row.get(3).unwrap());
+                        let class_id: i32 = mysql::from_value(row.get(5).unwrap());
+                        let group_id: i32 = mysql::from_value(row.get(6).unwrap());
                         if privilege == 2 {
                             // I am an admin
                             true
@@ -99,12 +99,12 @@ impl Policy for ReadBufferPolicy {
         if self.class_id == p2.class_id {
             comp_class_id = self.class_id;
         } else {
-            comp_class_id = -10;
+            comp_class_id = -1;
         }
         if self.group_id == p2.group_id {
             comp_group_id = self.group_id;
         } else {
-            comp_group_id = -10;
+            comp_group_id = -1;
         }
         Ok(ReadBufferPolicy {
             class_id: comp_class_id,
@@ -120,9 +120,9 @@ impl SchemaPolicy for ReadBufferPolicy {
     {
         ReadBufferPolicy::new(
             // class_id
-            mysql::from_value(row[3].clone()),
+            mysql::from_value(row[5].clone()),
             // group_id
-            mysql::from_value(row[4].clone()),
+            mysql::from_value(row[6].clone()),
         )
     }
 }

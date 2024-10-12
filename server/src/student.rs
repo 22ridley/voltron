@@ -34,15 +34,15 @@ pub(crate) fn student(
 
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
     drop(bg);
 
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[5].clone()).unwrap();
+    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[6].clone()).unwrap();
     let contents = read_buffer(
         class_id_bbox.clone(),
         group_id_bbox.clone(),
@@ -68,7 +68,7 @@ pub fn update(
     let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -81,8 +81,8 @@ pub fn update(
         });
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
-    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[5].clone()).unwrap();
+    let group_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[6].clone()).unwrap();
 
     // Needs to be privacy critical region
     write_buffer(class_id_bbox, group_id_bbox, context.clone(), text);
@@ -105,7 +105,7 @@ pub fn update_buggy(
     let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM users WHERE email = ?",
+       "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -118,7 +118,7 @@ pub fn update_buggy(
         });
     }
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[3].clone()).unwrap();
+    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[5].clone()).unwrap();
     // Cooking up the wrong group_id to write to a different buffer
     let wrong_group_id_bbox = BBox::new(2, ReadBufferPolicy::new(0, 2));
 

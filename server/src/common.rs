@@ -60,7 +60,7 @@ pub struct StudentGroup {
 #[derive(ResponseBBoxJson)]
 pub struct Instructor {
     pub name: BBox<String, AnyPolicy>,
-    pub class_id: BBox<i32, AnyPolicy>,
+    pub class_name: BBox<String, AnyPolicy>,
 }
 
 // The structure representing students

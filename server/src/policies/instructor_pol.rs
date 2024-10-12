@@ -54,7 +54,7 @@ impl Policy for InstructorPolicy {
         // Check the database
         let mut admin_res = db
             .exec_iter(
-                "SELECT * FROM users WHERE email = ? AND privilege = 2",
+                "SELECT * FROM user WHERE email = ? AND privilege = 2",
                 (user.clone(),),
             )
             .unwrap();
