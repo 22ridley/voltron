@@ -1,5 +1,6 @@
 extern crate serde;
 extern crate mysql;
+use mysql::Row;
 use std::{sync::Arc, sync::Mutex};
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -21,15 +22,19 @@ pub fn register_instructor(_token: FirebaseToken, instr_name: Option<&str>,
     let class_name: &str = instr_class.unwrap();
     let instructor_email: &str = instr_email.unwrap();
 
-    // Make insert query to add this new instructor
+    // Make insert query to add this new instructor to user
     let mut bg = backend.lock().unwrap();
-    let user_row: Vec<&str> = vec![instructor_name, instructor_email, "1"];
+    let user_row: Vec<&str> = vec![instructor_name, instructor_email.clone(), "1"];
     let result = (*bg).prep_exec::<_, _, Vec<u8>>(
         "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
         user_row
     );
-    let instructor_id = (*bg).last_insert_id().to_string();
-    let class_row: Vec<&str> = vec![class_name, &instructor_id];
+    let new_res: Vec<Row> = (*bg).prep_exec("SELECT user_id FROM user WHERE email = ?", vec![instructor_email.clone()]).unwrap();
+    let new_row: Row = new_res.get(0).unwrap().clone();
+    let instructor_id: i32 = new_row.get(0).unwrap();
+    let instructor_id_binding: String = instructor_id.to_string();
+    // Insert into class
+    let class_row: Vec<&str> = vec![class_name, &instructor_id_binding];
     let _ = (*bg).prep_exec::<_, _, Vec<u8>>(
         "INSERT INTO class (class_name, instructor_id) VALUES (?, ?)",
         class_row
@@ -58,19 +63,27 @@ pub fn register_student(_token: FirebaseToken, stud_group: Option<&str>, stud_na
     let mut bg = backend.lock().unwrap();
     let group_row: Vec<&str> = vec![student_group, student_class];
     let result = (*bg).prep_exec::<_, _, Vec<u8>>(
-        "INSERT IGNORE INTO `group` (group_name, class_id) VALUES (?, ?) 
-        ON DUPLICATE KEY UPDATE group_id = LAST_INSERT_ID(group_id);",
+        "INSERT IGNORE INTO `group` (group_name, class_id) VALUES (?, ?)",
         group_row
     );
-    let group_id = (*bg).last_insert_id().to_string();
+    // Find the group_id
+    let new_res: Vec<Row> = (*bg).prep_exec("SELECT group_id FROM `group` WHERE group_name = ?", vec![student_group.clone()]).unwrap();
+    let new_row: Row = new_res.get(0).unwrap().clone();
+    let group_id: i32 = new_row.get(0).unwrap();
+    let group_id_binding: String = group_id.to_string();
+    // Insert into user table
     let users_row: Vec<&str> = vec![student_name, student_email, "0"];
     let result = (*bg).prep_exec::<_, _, Vec<u8>>(
         "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
         users_row
     );
-    let student_id = (*bg).last_insert_id().to_string();
-    println!("{}", student_id);
-    let enroll_row: Vec<&str> = vec![&student_id, student_class, &group_id];
+     // Find the student_id
+    let new_res: Vec<Row> = (*bg).prep_exec("SELECT user_id FROM user WHERE email = ?", vec![student_email.clone()]).unwrap();
+    let new_row: Row = new_res.get(0).unwrap().clone();
+    let student_id: i32 = new_row.get(0).unwrap();
+    let student_id_binding: String = student_id.to_string();
+    let enroll_row: Vec<&str> = vec![&student_id_binding, student_class, &group_id_binding];
+    // Insert into enroll
     let _ = (*bg).prep_exec::<_, _, Vec<u8>>(
         "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
         enroll_row
