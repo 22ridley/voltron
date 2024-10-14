@@ -28,13 +28,13 @@ pub fn instructor(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
     let email: String = token.email.unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user_class WHERE email = ?", vec![email.clone()]).unwrap();
     let row: Row = user_res.get(0).unwrap().clone();
     let class_id: i32 = row.get(4).unwrap();
     let class_name: String = row.get(5).unwrap();
 
     // Get list of all students in this class
-    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE class_id = ?", vec![class_id.clone()]).unwrap();
+    let students_res: Vec<Student> = (*bg).prep_exec("SELECT * FROM user_enroll WHERE class_id = ?", vec![class_id.clone()]).unwrap();
     let mut group_ids_vec: Vec<i32> = Vec::new();
     for student in students_res.iter() {
         let group_id: i32 = student.group_id;

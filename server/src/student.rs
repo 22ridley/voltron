@@ -25,7 +25,7 @@ pub fn student(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>)
     // Find this student
     let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user_enroll WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
 
     let row: Row = user_res.get(0).unwrap().clone();
@@ -62,7 +62,7 @@ pub fn update(token: FirebaseToken, backend: &State<Arc<Mutex<MySQLBackend>>>,
     // Find this student
     let email: String = token.email.unwrap();
     let mut bg: std::sync::MutexGuard<'_, MySQLBackend> = backend.lock().unwrap();
-    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", vec![email.clone()]).unwrap();
+    let user_res: Vec<Row> = (*bg).prep_exec("SELECT * FROM user_enroll WHERE email = ?", vec![email.clone()]).unwrap();
     drop(bg);
 
     let row: Row = user_res.get(0).unwrap().clone();
