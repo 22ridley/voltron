@@ -34,7 +34,7 @@ pub(crate) fn student(
 
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
+        "SELECT * FROM user_enroll WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -68,7 +68,7 @@ pub fn update(
     let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
+        "SELECT * FROM user_enroll WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );
@@ -105,7 +105,7 @@ pub fn update_buggy(
     let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let user_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-       "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?",
+       "SELECT * FROM user_enroll WHERE email = ?",
         vec![email_bbox.clone()],
         context.clone(),
     );

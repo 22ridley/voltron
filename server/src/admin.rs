@@ -28,7 +28,7 @@ pub(crate) fn admin(
     // Get list of all instructors
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id",
+        "SELECT * FROM user_class",
         (),
         context.clone(),
     );

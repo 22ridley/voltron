@@ -40,7 +40,7 @@ impl Policy for StudentPolicy {
     fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
         // Check if the Reason involves the database (match on Reason, anything other than DB is false)
         match reason {
-            Reason::DB(_query, params) => {
+            Reason::DB(query, params) => {
                 // If they are an instructor (by checking database)
                 type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
                 let context: &ContextDataOut = context.downcast_ref().unwrap();
@@ -48,26 +48,46 @@ impl Policy for StudentPolicy {
                 let user: &Option<String> = &context.user;
                 let user: String = user.as_ref().unwrap().to_string();
 
-                // Check the database
-                let mut instructor_res = db
-                    .exec_iter(
-                        "SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id WHERE email = ? AND privilege = 1",
-                        (user.clone(),),
-                    )
-                    .unwrap();
+                let split: Vec<&str> = query.split_whitespace().collect();
+                let mut table_name: &str = "";
+                if let Some(index) = split.iter().position(|&word| word == "INTO") {
+                    if index + 1 < split.len() {
+                        table_name = split[index + 1];
+                    }
+                }
+                println!("{}", table_name);
 
-                // Get the instructor's class_id
-                let row = instructor_res.next().unwrap().unwrap();
-                let instructor_class: i32 = mysql::from_value(row[5].clone());
+                if table_name == "enroll" || table_name == "`group`" {
+                    // Check the database
+                    let mut instructor_res = db
+                        .exec_iter(
+                            "SELECT class_id FROM user_class WHERE email = ? AND privilege = 1",
+                            (user.clone(),),
+                        )
+                        .unwrap();
 
-                // Get the class_id that the instructor is trying to enroll a student into
-                let query_class_id: i32 = mysql::from_value(params[1].clone());
+                    // Get the instructor's class_id
+                    let row = instructor_res.next().unwrap().unwrap();
+                    let instructor_class: i32 = mysql::from_value(row[0].clone());
 
-                // Fail if the instructor is trying to place a student into a class that is not the instructor's class
-                if instructor_class != query_class_id {
+                    // Get the class_id that the instructor is trying to enroll a student into
+                    let query_class_id: i32 = mysql::from_value(params[1].clone());
+
+                    // Fail if the instructor is trying to place a student into a class that is not the instructor's class
+                    if instructor_class != query_class_id {
+                        return false;
+                    }
+                    return true;
+                } else if table_name == "user" {
+                    // Get the email of the student that the instructor is trying to add
+                    let privilege: String = mysql::from_value(params[2].clone());
+                    if privilege != "0" {
+                        return false;
+                    }
+                    return true;
+                } else {
                     return false;
                 }
-                return true;
             }
             Reason::Custom(_) => true,
             _ => return false,

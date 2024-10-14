@@ -36,7 +36,7 @@ pub(crate) fn login(
         context.clone(),
     );
     drop(bg);
-    let email_value: BBox<Value, AnyPolicy> = user_res[0][1].clone();
+    let email_value: BBox<Value, AnyPolicy> = user_res[0][2].clone();
     let email: BBox<String, AnyPolicy> = from_value(email_value).unwrap();
 
     let response: LoginResponse;

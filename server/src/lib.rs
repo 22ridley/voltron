@@ -28,10 +28,10 @@ pub fn initialize() {
         // Register all policies. #[schema_policy(...)] does not work on mac.
         // Email in user table
         alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("user"), 2);
-        // Class_id in enroll table
-        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 1);
-        // Group_id in enroll table
-        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 2);
+        // Class_id in user and enroll joined view
+        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("user_enroll"), 5);
+        // Group_id in user and enroll joined view
+        alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("user_enroll"), 6);
     });
 }
 
@@ -50,8 +50,8 @@ pub fn build_server() -> BBoxRocket<rocket::Build> {
 
     // Register all policies. #[schema_policy(...)] does not work on mac.
     alohomora::policy::add_schema_policy::<EmailPolicy>(String::from("user"), 2);
-    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 1);
-    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("enroll"), 2);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("user_enroll"), 5);
+    alohomora::policy::add_schema_policy::<ReadBufferPolicy>(String::from("user_enroll"), 6);
 
     // Initialize the backend
     let config_path = "config.toml";

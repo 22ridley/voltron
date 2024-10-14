@@ -9,6 +9,11 @@ CREATE TABLE `group` (group_id int NOT NULL AUTO_INCREMENT, group_name varchar(2
 -- Table containing student enrollment information
 CREATE TABLE enroll (student_id int, class_id int, group_id int, PRIMARY KEY(student_id), FOREIGN KEY(student_id) REFERENCES user(user_id), FOREIGN KEY(class_id) REFERENCES class(class_id))
 
+-- Create view for joining user and class
+CREATE VIEW user_class as SELECT * FROM user INNER JOIN class ON user.user_id = class.instructor_id
+-- Create view for joining user and enroll
+CREATE VIEW user_enroll as SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id
+
 -- Adding root instructor and sample instructors
 -- Also adding sample students
 INSERT INTO user (user_name, email, privilege) VALUES ("Admin", "22ridleysk@gmail.com", 2)        -- 1

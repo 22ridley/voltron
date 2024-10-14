@@ -17,8 +17,8 @@ use std::sync::{Arc, Mutex};
 #[derive(ResponseBBoxJson)]
 pub struct InstructorResponse {
     pub success: bool,
-    pub class_id: BBox<i64, ReadBufferPolicy>,
-    pub class_name: BBox<String, ReadBufferPolicy>,
+    pub class_id: BBox<i64, AnyPolicy>,
+    pub class_name: BBox<String, AnyPolicy>,
     pub students: Vec<Student>,
     pub student_groups: Vec<StudentGroup>,
 }
@@ -40,16 +40,17 @@ pub(crate) fn instructor(
     );
 
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
-    let class_name_bbox: BBox<String, ReadBufferPolicy> = from_value(row[5].clone()).unwrap();
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
+    let class_name_bbox: BBox<String, AnyPolicy> = from_value(row[5].clone()).unwrap();
 
     let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id WHERE class_id = ?",
+        "SELECT * FROM user_enroll WHERE class_id = ?",
         vec![class_id_bbox.clone()],
         context.clone(),
     );
     drop(bg);
 
+    let class_id_read_buffer_pol: BBox<i32, ReadBufferPolicy> = from_value(students_res[0].clone()[5].clone()).unwrap();
     let mut group_ids_bbox_vec: Vec<BBox<i32, ReadBufferPolicy>> = Vec::new();
     let mut students_bbox_vec: Vec<Student> = Vec::new();
     for row in students_res.iter() {
@@ -75,7 +76,7 @@ pub(crate) fn instructor(
     for group_id in group_ids_bbox_vec {
         let group = StudentGroup {
             group_id: group_id.clone().into_bbox(),
-            code: read_buffer(class_id_bbox.clone(), group_id, context.clone()),
+            code: read_buffer(class_id_read_buffer_pol.clone(), group_id, context.clone()),
         };
         group_bbox_vec.push(group);
     }
@@ -100,6 +101,7 @@ pub(crate) fn instructor_buggy(
     context: Context<ContextDataType>,
 ) -> JsonResponse<InstructorResponse, ContextDataType> {
     // Find this instructor
+    // Find this instructor
     let email_bbox: BBox<String, AuthStatePolicy> = email_bbox_from_token(token);
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
     // Get this instructor's class ID
@@ -110,17 +112,18 @@ pub(crate) fn instructor_buggy(
     );
 
     let row: Vec<BBox<Value, AnyPolicy>> = user_res[0].clone();
-    let class_id_bbox: BBox<i32, ReadBufferPolicy> = from_value(row[4].clone()).unwrap();
-    let class_name_bbox: BBox<String, ReadBufferPolicy> = from_value(row[5].clone()).unwrap();
+    let class_id_bbox: BBox<i32, AnyPolicy> = from_value(row[4].clone()).unwrap();
+    let class_name_bbox: BBox<String, AnyPolicy> = from_value(row[5].clone()).unwrap();
 
     // BUGGY: Instructor tries to read buffers of ALL students
     let students_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
-        "SELECT * FROM user INNER JOIN enroll ON user.user_id = enroll.student_id",
+        "SELECT * FROM user_enroll",
         vec![""], 
         context.clone(),
     );
     drop(bg);
 
+    let class_id_read_buffer_pol: BBox<i32, ReadBufferPolicy> = from_value(students_res[0].clone()[5].clone()).unwrap();
     let mut group_ids_bbox_vec: Vec<BBox<i32, ReadBufferPolicy>> = Vec::new();
     let mut students_bbox_vec: Vec<Student> = Vec::new();
     for row in students_res.iter() {
@@ -146,7 +149,7 @@ pub(crate) fn instructor_buggy(
     for group_id in group_ids_bbox_vec {
         let group = StudentGroup {
             group_id: group_id.clone().into_bbox(),
-            code: read_buffer(class_id_bbox.clone(), group_id, context.clone()),
+            code: read_buffer(class_id_read_buffer_pol.clone(), group_id, context.clone()),
         };
         group_bbox_vec.push(group);
     }

@@ -42,40 +42,50 @@ impl Policy for ReadBufferPolicy {
         }
 
         let user: &String = user.as_ref().unwrap();
+        let mut student = false;
 
-        // Check the database
-        let mut result = db
-            .exec_iter("SELECT * FROM user FULL OUTER JOIN enroll ON user.user_id = enroll.student_id WHERE email = ?", (user,))
-            .unwrap();
+        {
+            // Check the database
+            let mut result = db
+                .exec_iter("SELECT * FROM user WHERE email = ?", (user,))
+                .unwrap();
 
-        // Find out if we are an instructor for the class, or a student in the class and group.
-        match result.next() {
-            None => false,
-            Some(res) => {
-                match res {
-                    Err(_) => false,
-                    Ok(row) => {
-                        let privilege: i32 = mysql::from_value(row.get(3).unwrap());
-                        let class_id: i32 = mysql::from_value(row.get(5).unwrap());
-                        let group_id: i32 = mysql::from_value(row.get(6).unwrap());
-                        if privilege == 2 {
-                            // I am an admin
-                            true
-                        } else if privilege == 1 && class_id == self.class_id {
-                            // I am an instructor of this class.
-                            true
-                        } else if privilege == 0
-                            && class_id == self.class_id
-                            && group_id == self.group_id
-                        {
-                            // I am a student in this class and group.
-                            true
-                        } else {
-                            false
+            // Find out if we are an instructor for the class, or a student in the class and group.
+            match result.next() {
+                None => {return false;},
+                Some(res) => {
+                    match res {
+                        Err(_) => {return false;},
+                        Ok(row) => {
+                            let privilege: i32 = mysql::from_value(row.get(3).unwrap());
+                            if privilege == 2 {
+                                // I am an admin
+                                return true;
+                            } else if privilege == 0 {
+                                student = true;
+                            } 
                         }
                     }
                 }
             }
+        }
+
+        if student {
+            let mut result = db
+                .exec_iter("SELECT class_id, group_id FROM user_enroll WHERE email = ?", (user,))
+                .unwrap();
+            let row = result.next().unwrap().unwrap();
+            let class_id: i32 = mysql::from_value(row.get(0).unwrap());
+            let group_id: i32 = mysql::from_value(row.get(1).unwrap());
+            // I am a student in this class and group.
+            class_id == self.class_id && group_id == self.group_id
+        } else {
+            let mut result = db
+                .exec_iter("SELECT class_id FROM user_class WHERE email = ?", (user,))
+                .unwrap();
+            let class_id: i32 = mysql::from_value(result.next().unwrap().unwrap().get(0).unwrap());
+            // I am the instructor of this class
+            class_id == self.class_id
         }
     }
 

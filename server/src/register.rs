@@ -1,5 +1,6 @@
 extern crate mysql;
 extern crate serde;
+use mysql::Value;
 use crate::backend::MySqlBackend;
 use crate::common::SuccessResponse;
 use crate::context::ContextDataType;
@@ -7,6 +8,8 @@ use crate::policies::{AuthStatePolicy, InstructorPolicy, StudentPolicy};
 use alohomora::context::Context;
 use alohomora::rocket::post;
 use alohomora::bbox::BBox;
+use alohomora::policy::AnyPolicy;
+use alohomora::db::from_value;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
@@ -27,14 +30,19 @@ pub fn register_instructor(
     // send insert query to db
     let _ = bg.prep_exec(
         "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
-        (instr_name, instr_email, 1i32),
+        (instr_name, instr_email.clone(), 1i32),
         context.clone()
     );
 
-    let instructor_id = (*bg).last_insert_id().to_string();
-    let _ = (*bg).prep_exec(
+    // Find newest inserted user_id
+    let new_res: Vec<Vec<BBox<Value, AnyPolicy>>> = bg.prep_exec("SELECT LAST_INSERT_ID()", 
+        (), 
+        context.clone());
+    let instructor_id_val: BBox<Value, AnyPolicy> = new_res[0][0].clone();
+    let instructor_id: BBox<i32, AnyPolicy> = from_value(instructor_id_val).unwrap();
+    let _ = bg.prep_exec(
         "INSERT INTO class (class_name, instructor_id) VALUES (?, ?)",
-        (instr_class, &instructor_id),
+        (instr_class, instructor_id),
         context.clone()
     );
     drop(bg);
@@ -48,9 +56,9 @@ pub fn register_instructor(
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student(
     _token: BBox<FirebaseToken, AuthStatePolicy>,
-    stud_group: BBox<i32, StudentPolicy>,
+    stud_group: BBox<String, StudentPolicy>,
     stud_name: BBox<String, StudentPolicy>,
-    stud_class: BBox<String, StudentPolicy>,
+    stud_class: BBox<i32, StudentPolicy>,
     stud_email: BBox<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
@@ -63,16 +71,28 @@ pub fn register_student(
         (stud_group.clone(), stud_class.clone()), 
         context.clone()
     );
-    let group_id = (*bg).last_insert_id().to_string();
+    // Find the group_id
+    let new_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+        "SELECT LAST_INSERT_ID()", 
+        (),
+        context.clone());
+    let group_id_val: BBox<Value, AnyPolicy> = new_res[0][0].clone();
+    let group_id: BBox<i32, AnyPolicy> = from_value(group_id_val).unwrap();
+    // Insert into user table
     let _ = (*bg).prep_exec(
         "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
         (stud_name.clone(), stud_email.clone(), "0"),
         context.clone()
     );
-    let student_id = (*bg).last_insert_id().to_string();
-    let _ = (*bg).prep_exec(
+    // Find the student_id
+    let new_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT LAST_INSERT_ID()", 
+        (),
+        context.clone());
+    let student_id_val: BBox<Value, AnyPolicy> = new_res[0][0].clone();
+    let student_id: BBox<i32, AnyPolicy> = from_value(student_id_val).unwrap();
+    let _ = bg.prep_exec(
         "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
-        (&student_id, stud_class.clone(), &group_id),
+        (student_id, stud_class.clone(), group_id),
         context.clone()
     );
     drop(bg);
@@ -104,16 +124,28 @@ pub fn register_student_buggy(
         (stud_group.clone(), stud_class.clone()), 
         context.clone()
     );
-    let group_id = (*bg).last_insert_id().to_string();
+    // Find the group_id
+    let new_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+        "SELECT LAST_INSERT_ID()", 
+        (),
+        context.clone());
+    let group_id_val: BBox<Value, AnyPolicy> = new_res[0][0].clone();
+    let group_id: BBox<i32, AnyPolicy> = from_value(group_id_val).unwrap();
+    // Insert into user table
     let _ = (*bg).prep_exec(
         "INSERT INTO user (user_name, email, privilege) VALUES (?, ?, ?)",
         (stud_name.clone(), stud_email.clone(), "0"),
         context.clone()
     );
-    let student_id = (*bg).last_insert_id().to_string();
-    let _ = (*bg).prep_exec(
+    // Find the student_id
+    let new_res: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec("SELECT LAST_INSERT_ID()", 
+        (),
+        context.clone());
+    let student_id_val: BBox<Value, AnyPolicy> = new_res[0][0].clone();
+    let student_id: BBox<i32, AnyPolicy> = from_value(student_id_val).unwrap();
+    let _ = bg.prep_exec(
         "INSERT INTO enroll (student_id, class_id, group_id) VALUES (?, ?, ?)",
-        (&student_id, 2i32, &group_id),
+        (student_id, 2i32, group_id),
         context.clone()
     );
     drop(bg);
