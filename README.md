@@ -43,3 +43,9 @@ How to run locally:
 
 - To run the front end, `cd client`, then `npm install`, then `npm start`.
 - To run the back end, `cd server`, then `cargo run`.
+
+How to run tests:
+```bash
+cd server/
+cargo test -- --test-threads=1
+```

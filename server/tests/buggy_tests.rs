@@ -1,7 +1,7 @@
 use alohomora::testing::BBoxClient;
 use rocket::http::{Header, Status};
 use std::thread;
-use voltron::{build_server_test, initialize};
+use voltron::{build_server_test};
 mod common;
 use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, setup_mock_server, mock_jwk_issuer};
 use rocket_firebase_auth::jwk::Jwk;
@@ -13,8 +13,6 @@ use rocket_firebase_auth::jwk::Jwk;
 async fn test_auth_state_pol() {
     // Auth state policy should stop us from returning an email address
     // directly from token (emails from tokens can only be used in db queries)
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -41,8 +39,6 @@ async fn test_auth_state_pol() {
 async fn test_email_pol() {
     // Email policy should stop us from executing a database query
     // using an email other than the one attached to our token
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -69,8 +65,6 @@ async fn test_email_pol() {
 async fn test_instructor_pol() {
     // Instructor policy should stop anyone but admins from
     // registering new instructors
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -97,8 +91,6 @@ async fn test_instructor_pol() {
 async fn test_read_pol() {
     // Read policy should prevent unauthorized people from reading buffers
     // that they should not have access to 
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -125,8 +117,6 @@ async fn test_read_pol() {
 async fn test_student_pol() {
     // Student policy should stop us from registering students
     // to a class that is not our class (as the instructor)
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -153,8 +143,6 @@ async fn test_student_pol() {
 async fn test_write_pol() {
     // Write policy should prevent unauthorized people from writing to
     // buffers that they should not have access to 
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 

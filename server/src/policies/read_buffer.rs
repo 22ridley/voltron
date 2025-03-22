@@ -1,10 +1,12 @@
 use crate::context::ContextDataType;
 use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
+use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use serde::Serialize;
 
+#[schema_policy(table = "users", column = 3)]
+#[schema_policy(table = "users", column = 4)]
 #[derive(Clone, Serialize, Debug)]
 pub struct ReadBufferPolicy {
     class_id: i32, // Only students in the proper group in the proper class can access this buffer

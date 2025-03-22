@@ -2,7 +2,7 @@ use alohomora::testing::BBoxClient;
 use rocket_firebase_auth::FirebaseAuth;
 use rocket::http::{Header, Status};
 use std::thread;
-use voltron::{build_server_test, initialize};
+use voltron::{build_server_test};
 mod common;
 use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, TEST_JWKS_URL, setup_mock_server, mock_jwk_issuer, AdminResponse, InstructorResponse, StudentResponse, SuccessResponse, LoginResponse};
 use rocket_firebase_auth::jwk::Jwk;
@@ -12,7 +12,6 @@ use rocket_firebase_auth::jwk::Jwk;
 #[tokio::test]
 async fn test_login() {
     // TEST THAT LOGIN WORKS
-    initialize();
 
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
@@ -63,8 +62,6 @@ async fn test_instr() {
     // TEST ACTIONS BY INSTRUCTORS: 
     // - Viewing student buffers
     // - Registering students
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -117,8 +114,6 @@ async fn test_stud() {
     // TEST ACTIONS BY STUDENTS: 
     // - Viewing their own buffers
     // - Writing to their own buffer
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -169,8 +164,6 @@ async fn test_stud() {
 async fn test_admin() {
     // TEST ACTIONS BY ADMIN: 
     // - Registering instructors
-    initialize();
-
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 

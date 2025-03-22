@@ -1,9 +1,10 @@
 use crate::context::ContextDataType;
 use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
+use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
 use alohomora::AlohomoraType;
 use serde::Serialize;
 
+#[schema_policy(table = "users", column = 1)]
 #[derive(Clone, Serialize, Debug)]
 pub struct EmailPolicy {
     email: String,
