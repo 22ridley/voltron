@@ -67,7 +67,7 @@ pub(crate) fn instructor(
     }));
     let group_ids_bbox_vec: BBox<_, ReadBufferPolicy> =
         group_ids_bbox_vec.specialize_policy().unwrap();
-    let group_ids_bbox_vec: Vec<_> = group_ids_bbox_vec.into();
+    let group_ids_bbox_vec: Vec<_> = group_ids_bbox_vec.fold_in();
 
     let mut group_bbox_vec: Vec<StudentGroup> = Vec::new();
     for group_id in group_ids_bbox_vec {
@@ -136,7 +136,7 @@ pub(crate) fn instructor_buggy(
     }));
     let group_ids_bbox_vec: BBox<_, ReadBufferPolicy> =
         group_ids_bbox_vec.specialize_policy().unwrap();
-    let group_ids_bbox_vec: Vec<_> = group_ids_bbox_vec.into();
+    let group_ids_bbox_vec: Vec<_> = group_ids_bbox_vec.fold_in();
 
     let mut group_bbox_vec: Vec<StudentGroup> = Vec::new();
     for group_id in group_ids_bbox_vec {
