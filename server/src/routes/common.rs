@@ -1,17 +1,19 @@
-use alohomora::bbox::BBox;
-use alohomora::context::Context;
-use alohomora::pcr::{PrivacyCriticalRegion, Signature};
-use alohomora::policy::{AnyPolicy, Policy};
-use alohomora::pure::PrivacyPureRegion;
-use alohomora::rocket::ResponseBBoxJson;
-use alohomora::unbox::unbox;
 use mysql::serde::Serialize;
 use rocket::http::{ContentType, Status};
 use rocket::response;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
 use rocket_firebase_auth::FirebaseToken;
+use std::collections::HashMap;
 use std::fs::{self, File};
+
+use sesame::context::Context;
+use sesame::critical::{execute_critical, CriticalRegion, Signature};
+use sesame::pcon::PCon;
+use sesame::policy::{AnyPolicy, Policy};
+use sesame::verified::VerifiedRegion;
+use sesame_rocket::rocket::ResponsePConJson;
+use std::io::Write;
 
 use crate::context::ContextDataType;
 use crate::policies::{AuthStatePolicy, ReadBufferPolicy, WriteBufferPolicy};
@@ -50,47 +52,44 @@ pub struct LoginContext {
 }
 
 // The structure representing student groups and their code
-#[derive(ResponseBBoxJson)]
+#[derive(ResponsePConJson)]
 pub struct StudentGroup {
-    pub group_id: BBox<i64, ReadBufferPolicy>,
-    pub code: BBox<String, ReadBufferPolicy>,
+    pub group_id: PCon<i64, ReadBufferPolicy>,
+    pub code: PCon<String, ReadBufferPolicy>,
 }
 
 // The structure representing instructors
-#[derive(ResponseBBoxJson)]
+#[derive(ResponsePConJson)]
 pub struct Instructor {
-    pub name: BBox<String, AnyPolicy>,
-    pub class_id: BBox<i32, AnyPolicy>,
+    pub name: PCon<String, AnyPolicy>,
+    pub class_id: PCon<i32, AnyPolicy>,
 }
 
 // The structure representing students
-use std::collections::HashMap;
-#[derive(ResponseBBoxJson)]
+#[derive(ResponsePConJson)]
 pub struct Student {
-    pub name: BBox<String, AnyPolicy>,
-    pub group_id: BBox<i64, ReadBufferPolicy>,
+    pub name: PCon<String, AnyPolicy>,
+    pub group_id: PCon<i64, ReadBufferPolicy>,
 }
 
-pub fn email_bbox_from_token(
-    token: BBox<FirebaseToken, AuthStatePolicy>,
-) -> BBox<String, AuthStatePolicy> {
-    let email_bbox: BBox<String, AuthStatePolicy> =
-        token.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
-            let email: String = token.email.unwrap();
-            email
-        }));
-    email_bbox
+pub fn email_from_token(
+    token: PCon<FirebaseToken, AuthStatePolicy>,
+) -> PCon<String, AuthStatePolicy> {
+    token.into_verified(VerifiedRegion::new(|token: FirebaseToken| {
+        let email: String = token.email.unwrap();
+        email
+    }))
 }
 
 pub fn read_buffer<P: Policy + Clone + 'static>(
-    class_id: BBox<i32, P>,
-    group_id: BBox<i32, P>,
+    class_id: PCon<i32, P>,
+    group_id: PCon<i32, P>,
     context: Context<ContextDataType>,
-) -> BBox<String, ReadBufferPolicy> {
-    unbox(
+) -> PCon<String, ReadBufferPolicy> {
+    execute_critical(
         (class_id, group_id),
         context,
-        PrivacyCriticalRegion::new(
+        CriticalRegion::new(
             |(class_id, group_id): (i32, i32), ()| {
                 let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
                 let content_result = fs::read_to_string(path);
@@ -100,7 +99,7 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
                     // Otherwise, return the file content
                     Ok(msg) => msg.to_string(),
                 };
-                BBox::new(content, ReadBufferPolicy::new(class_id, group_id))
+                PCon::new(content, ReadBufferPolicy::new(class_id, group_id))
             },
             Signature {
               username: "corinnt",
@@ -112,28 +111,26 @@ pub fn read_buffer<P: Policy + Clone + 'static>(
     .unwrap()
 }
 
-use std::io::Write;
 pub fn write_buffer<P: Policy + Clone + 'static>(
-    class_id: BBox<i32, P>,
-    group_id: BBox<i32, P>,
+    class_id: PCon<i32, P>,
+    group_id: PCon<i32, P>,
     context: Context<ContextDataType>,
-    contents: BBox<String, WriteBufferPolicy>,
+    contents: PCon<String, WriteBufferPolicy>,
 ) {
-    contents
-        .into_unbox(
-            context,
-            PrivacyCriticalRegion::new(
-                |contents: String, (class_id, group_id): (i32, i32)| {
-                    let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
-                    let mut file: File = File::create(&path).unwrap();
-                    let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
-                },
-                Signature {
-                  username: "corinnt",
-                  signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUI5c2w3cWRCQWNaSVNBYkQya3czWWV2ZDhVT1l5MVlpNFBqZFp6R1Qwd1RQQU91Wk9uL2lXTGJxUnRxeVozanoKemcxdlRTdmRyWlNpWE5SWHRTU2dVRgotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K"
-                },
-            ),
-            (class_id, group_id),
-        )
-        .unwrap();
+    contents.into_critical(
+        context,
+        CriticalRegion::new(
+            |contents: String, (class_id, group_id): (i32, i32)| {
+                let path = format!("../group_code/class{}_group{}_code.txt", class_id, group_id);
+                let mut file: File = File::create(&path).unwrap();
+                let _bytes_written: Result<usize, std::io::Error> = file.write(contents.as_bytes());
+            },
+            Signature {
+              username: "corinnt",
+              signature: "LS0tLS1CRUdJTiBTU0ggU0lHTkFUVVJFLS0tLS0KVTFOSVUwbEhBQUFBQVFBQUFETUFBQUFMYzNOb0xXVmtNalUxTVRrQUFBQWd6dGJjeE9zVzlOL09Fd2c3Y3BKZ3dUQnFMNgpGazI2ZVB2Rm1ZaXpRRjM1VUFBQUFFWm1sc1pRQUFBQUFBQUFBR2MyaGhOVEV5QUFBQVV3QUFBQXR6YzJndFpXUXlOVFV4Ck9RQUFBRUI5c2w3cWRCQWNaSVNBYkQya3czWWV2ZDhVT1l5MVlpNFBqZFp6R1Qwd1RQQU91Wk9uL2lXTGJxUnRxeVozanoKemcxdlRTdmRyWlNpWE5SWHRTU2dVRgotLS0tLUVORCBTU0ggU0lHTkFUVVJFLS0tLS0K"
+            },
+        ),
+        (class_id, group_id),
+    )
+    .unwrap();
 }

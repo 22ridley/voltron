@@ -1,11 +1,12 @@
 use crate::context::ContextDataType;
 use crate::mysql::prelude::Queryable;
-use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason};
-use alohomora::AlohomoraType;
 use rocket::http::Cookie;
 use rocket::Request;
 use serde::Serialize;
+use sesame::context::UnprotectedContext;
+use sesame::policy::{Reason, SimplePolicy};
+use sesame::SesameTypeOut;
+use sesame_rocket::policy::FrontendPolicy;
 
 #[derive(Clone, Serialize, Debug)]
 pub struct StudentPolicy {}
@@ -32,17 +33,17 @@ impl FrontendPolicy for StudentPolicy {
 }
 
 // Only instructors can register students for their own class
-impl Policy for StudentPolicy {
-    fn name(&self) -> String {
+impl SimplePolicy for StudentPolicy {
+    fn simple_name(&self) -> String {
         format!("StudentPolicy")
     }
 
-    fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
+    fn simple_check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
         // Check if the Reason involves the database (match on Reason, anything other than DB is false)
         match reason {
             Reason::DB(_query, params) => {
                 // If they are an instructor (by checking database)
-                type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
+                type ContextDataOut = <ContextDataType as SesameTypeOut>::Out;
                 let context: &ContextDataOut = context.downcast_ref().unwrap();
                 let mut db = context.db.lock().unwrap();
                 let user: &Option<String> = &context.user;
@@ -67,28 +68,12 @@ impl Policy for StudentPolicy {
                 if instructor_class != query_class_id {
                     return false;
                 }
-                return true;
+                true
             }
             Reason::Custom(_) => true,
-            _ => return false,
+            _ => false,
         }
     }
 
-    fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<StudentPolicy>() {
-            // Policies are combinable
-            let other = other.specialize::<StudentPolicy>().unwrap();
-            Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {
-            //Policies must be stacked
-            Ok(AnyPolicy::new(PolicyAnd::new(
-                AnyPolicy::new(self.clone()),
-                other,
-            )))
-        }
-    }
-
-    fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
-        Ok(StudentPolicy {})
-    }
+    fn simple_join_direct(&mut self, _other: &mut Self) {}
 }

@@ -1,9 +1,10 @@
 use crate::context::ContextDataType;
-use alohomora::context::UnprotectedContext;
-use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
-use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use serde::Serialize;
+use sesame::context::UnprotectedContext;
+use sesame::policy::{Reason, SimplePolicy};
+use sesame::SesameTypeOut;
+use sesame_mysql::{schema_policy, SchemaPolicy};
 
 #[schema_policy(table = "users", column = 3)]
 #[schema_policy(table = "users", column = 4)]
@@ -23,16 +24,16 @@ impl ReadBufferPolicy {
 //   1. Students with group_id and class_id;
 //   2. Instructors with class_id;
 //   3. Admins
-impl Policy for ReadBufferPolicy {
-    fn name(&self) -> String {
+impl SimplePolicy for ReadBufferPolicy {
+    fn simple_name(&self) -> String {
         format!(
             "ReadBufferPolicy(class id {:?} and group id {:?})",
             self.class_id, self.group_id
         )
     }
 
-    fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
-        type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
+    fn simple_check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
+        type ContextDataOut = <ContextDataType as SesameTypeOut>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
 
         let user: &Option<String> = &context.user;
@@ -81,37 +82,21 @@ impl Policy for ReadBufferPolicy {
         }
     }
 
-    fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<ReadBufferPolicy>() {
-            // Policies are combinable
-            let other = other.specialize::<ReadBufferPolicy>().unwrap();
-            Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {
-            //Policies must be stacked
-            Ok(AnyPolicy::new(PolicyAnd::new(
-                AnyPolicy::new(self.clone()),
-                other,
-            )))
-        }
-    }
-
-    fn join_logic(&self, p2: Self) -> Result<Self, ()> {
+    fn simple_join_direct(&mut self, other: &mut Self) {
         let comp_class_id: i32;
         let comp_group_id: i32;
-        if self.class_id == p2.class_id {
+        if self.class_id == other.class_id {
             comp_class_id = self.class_id;
         } else {
             comp_class_id = -10;
         }
-        if self.group_id == p2.group_id {
+        if self.group_id == other.group_id {
             comp_group_id = self.group_id;
         } else {
             comp_group_id = -10;
         }
-        Ok(ReadBufferPolicy {
-            class_id: comp_class_id,
-            group_id: comp_group_id,
-        })
+        self.class_id = comp_class_id;
+        self.group_id = comp_group_id;
     }
 }
 

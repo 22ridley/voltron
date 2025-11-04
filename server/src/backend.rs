@@ -1,16 +1,16 @@
 use crate::context::ContextDataType;
-use alohomora::context::Context;
-use alohomora::db::{BBoxConn, BBoxOpts, BBoxParams, BBoxStatement, BBoxValue};
+use sesame::context::Context;
+use sesame_mysql::{PConOpts, PConParams, PConStatement, PConValue, SesameConn};
 use slog::o;
 use std::collections::HashMap;
 use std::error::Error;
 use std::result::Result;
 
 pub struct MySqlBackend {
-    pub handle: BBoxConn,
+    pub handle: SesameConn,
     pub log: slog::Logger,
     _schema: String,
-    prep_stmts: HashMap<String, BBoxStatement>,
+    prep_stmts: HashMap<String, PConStatement>,
 }
 
 impl MySqlBackend {
@@ -28,9 +28,9 @@ impl MySqlBackend {
 
         let schema = std::fs::read_to_string("src/schema.sql")?;
 
-        let mut db = BBoxConn::new(
+        let mut db = SesameConn::new(
             // this is the user and password from the config.toml file
-            BBoxOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap(),
+            PConOpts::from_url(&format!("mysql://{}:{}@127.0.0.1/", user, password)).unwrap(),
         )
         .unwrap();
         assert_eq!(db.ping(), true);
@@ -59,12 +59,12 @@ impl MySqlBackend {
         })
     }
 
-    pub fn prep_exec<P: Into<BBoxParams>>(
+    pub fn prep_exec<P: Into<PConParams>>(
         &mut self,
         sql: &str,
         params: P,
         context: Context<ContextDataType>,
-    ) -> Vec<Vec<BBoxValue>> {
+    ) -> Vec<Vec<PConValue>> {
         if !self.prep_stmts.contains_key(sql) {
             let stmt = self
                 .handle
@@ -73,12 +73,11 @@ impl MySqlBackend {
             self.prep_stmts.insert(sql.to_owned(), stmt);
         }
 
-        let params: BBoxParams = params.into();
-        match self.handle.exec_iter(
-            self.prep_stmts[sql].clone(),
-            params.clone(),
-            context.clone(),
-        ) {
+        let params: PConParams = params.into();
+        match self
+            .handle
+            .exec_iter(self.prep_stmts[sql].clone(), params, context.clone())
+        {
             Err(_e) => {
                 panic!()
             }
@@ -88,7 +87,7 @@ impl MySqlBackend {
                     rows.push(row.unwrap().unwrap());
                 }
                 //debug!(self.log, "executed query {}, got {} rows", sql, rows.len());
-                return rows;
+                rows
             }
         }
     }

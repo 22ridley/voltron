@@ -7,12 +7,13 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-alohomora = { path = "../../../alohomora", default_features = false, features = ["derive"] }
+sesame = { path = "../../../sesame/core", default_features = false, features = ["derive"] }
+sesame_mysql = { path = "../../../sesame/mysql", default_features = false, features = ["derive"] }
+sesame_rocket = { path = "../../../sesame/rocket", default_features = false, features = ["derive", "mysql"] }
 bitvec = "0.22.3"
 rocket = { git = "https://github.com/KinanBab/Rocket.git", branch = "main" }
 chrono = "0.4.31"
 mysql = "21.0.2"
-mysql_common = "0.22"
 rocket_cors = { git = "https://github.com/KinanBab/rocket_cors.git", branch = "main" }
 rocket_firebase_auth = { git = "https://github.com/22ridley/rocket-firebase-auth.git" }
 serde = "1.0.195"
@@ -33,7 +34,9 @@ features = ["handlebars", "tera"]
 features = ["dir_source"]
 
 [build-dependencies]
-alohomora_build = { path = "../../../alohomora_build" }
+sesame_build = { path = "../../../sesame/build" }
 
-[patch.crates-io]
-funty = { git = "https://github.com/bitvecto-rs/funty/", rev = "7ef0d890fbcd8b3def1635ac1a877fc298488446" }
+#[workspace.metadata.dylint]
+#libraries = [
+#    { path = "../../sesame/lints" },
+#]

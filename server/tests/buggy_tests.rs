@@ -1,13 +1,13 @@
-use alohomora::testing::BBoxClient;
+// Testing the versions of the endpoints that are buggy!
+// This verifies that the Sesame policies correctly catch insecure actions
+
 use rocket::http::{Header, Status};
 use std::thread;
-use voltron::{build_server_test};
+use voltron::build_server_test;
 mod common;
-use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, setup_mock_server, mock_jwk_issuer};
+use common::{mock_jwk_issuer, setup_mock_server, INSTR_TOKEN, JWK_N, KID, STUD_TOKEN};
 use rocket_firebase_auth::jwk::Jwk;
-
-// Testing the versions of the endpoints that are buggy!
-// This verifies that the Alohomora policies correctly catch insecure actions
+use sesame_rocket::testing::SesameClient;
 
 #[tokio::test]
 async fn test_auth_state_pol() {
@@ -23,7 +23,7 @@ async fn test_auth_state_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
@@ -31,8 +31,9 @@ async fn test_auth_state_pol() {
         request.add_header(header);
         let response = request.dispatch();
         assert!(response.status() != Status::Ok);
-
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
@@ -49,7 +50,7 @@ async fn test_email_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
@@ -57,8 +58,9 @@ async fn test_email_pol() {
         request.add_header(header);
         let response = request.dispatch();
         assert!(response.status() != Status::Ok);
-
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
@@ -75,22 +77,24 @@ async fn test_instructor_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
-        let mut reg_request = client.post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
+        let mut reg_request = client
+            .post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
         reg_request.add_header(header.clone());
         let reg_response = reg_request.dispatch();
         assert!(reg_response.status() == Status::InternalServerError);
-
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
 async fn test_read_pol() {
     // Read policy should prevent unauthorized people from reading buffers
-    // that they should not have access to 
+    // that they should not have access to
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -101,7 +105,7 @@ async fn test_read_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
@@ -109,8 +113,9 @@ async fn test_read_pol() {
         reg_request.add_header(header.clone());
         let reg_response = reg_request.dispatch();
         assert!(reg_response.status() == Status::InternalServerError);
-
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
@@ -127,7 +132,7 @@ async fn test_student_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
         let header = Header::new("Authorization", value);
@@ -142,7 +147,7 @@ async fn test_student_pol() {
 #[tokio::test]
 async fn test_write_pol() {
     // Write policy should prevent unauthorized people from writing to
-    // buffers that they should not have access to 
+    // buffers that they should not have access to
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
 
@@ -153,7 +158,7 @@ async fn test_write_pol() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         let value = "Bearer ".to_owned() + STUD_TOKEN;
         let header = Header::new("Authorization", value);
@@ -161,6 +166,7 @@ async fn test_write_pol() {
         reg_request.add_header(header.clone());
         let reg_response = reg_request.dispatch();
         assert!(reg_response.status() == Status::InternalServerError);
-
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }

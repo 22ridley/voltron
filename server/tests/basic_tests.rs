@@ -1,13 +1,16 @@
-use alohomora::testing::BBoxClient;
-use rocket_firebase_auth::FirebaseAuth;
-use rocket::http::{Header, Status};
-use std::thread;
-use voltron::{build_server_test};
-mod common;
-use common::{JWK_N, KID, INSTR_TOKEN, STUD_TOKEN, ADMIN_TOKEN, TEST_JWKS_URL, setup_mock_server, mock_jwk_issuer, AdminResponse, InstructorResponse, StudentResponse, SuccessResponse, LoginResponse};
-use rocket_firebase_auth::jwk::Jwk;
-
 // Testing the versions of the endpoints that work correctly!
+use rocket::http::{Header, Status};
+use rocket_firebase_auth::FirebaseAuth;
+use std::thread;
+use voltron::build_server_test;
+mod common;
+use common::{
+    mock_jwk_issuer, setup_mock_server, AdminResponse, InstructorResponse, LoginResponse,
+    StudentResponse, SuccessResponse, ADMIN_TOKEN, INSTR_TOKEN, JWK_N, KID, STUD_TOKEN,
+    TEST_JWKS_URL,
+};
+use rocket_firebase_auth::jwk::Jwk;
+use sesame_rocket::testing::SesameClient;
 
 #[tokio::test]
 async fn test_login() {
@@ -32,13 +35,16 @@ async fn test_login() {
     let decoded_token = decoded_token.unwrap();
 
     assert_eq!(decoded_token.sub, "some-uid");
-    assert_eq!(decoded_token.email, Some("sarah_ridley@brown.edu".to_string()));
+    assert_eq!(
+        decoded_token.email,
+        Some("sarah_ridley@brown.edu".to_string())
+    );
     assert!(decoded_token.exp > decoded_token.iat);
 
     // Now send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         // check to make sure we can connect
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
@@ -54,12 +60,14 @@ async fn test_login() {
         assert_eq!(response_body.name, "Prof. S");
         assert_eq!(response_body.privilege, 1);
         assert_eq!(response_body.success, true);
-    }).join().expect("Thread panicked")
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
 async fn test_instr() {
-    // TEST ACTIONS BY INSTRUCTORS: 
+    // TEST ACTIONS BY INSTRUCTORS:
     // - Viewing student buffers
     // - Registering students
     let mock_jwk_server = setup_mock_server().await;
@@ -72,7 +80,7 @@ async fn test_instr() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         // Check to make sure we can see student buffers
         let value = "Bearer ".to_owned() + INSTR_TOKEN;
@@ -82,19 +90,23 @@ async fn test_instr() {
         let instr_response = instr_request.dispatch();
         assert!(instr_response.status() == Status::Ok);
 
-        let instr_response_body: InstructorResponse = instr_response.into_json::<InstructorResponse>().unwrap();
+        let instr_response_body: InstructorResponse =
+            instr_response.into_json::<InstructorResponse>().unwrap();
         let current_num_students = instr_response_body.students.len();
         assert!(0 < current_num_students);
         assert_eq!(instr_response_body.class_id, 0);
         assert!(0 < instr_response_body.student_groups.len());
 
         // Check to make sure that we can register students
-        let mut reg_request = client.post("/register_student?stud_group=0&stud_name=paul&stud_class=0&stud_email=paul@gmail.com");
+        let mut reg_request = client.post(
+            "/register_student?stud_group=0&stud_name=paul&stud_class=0&stud_email=paul@gmail.com",
+        );
         reg_request.add_header(header.clone());
         let reg_response = reg_request.dispatch();
         assert!(reg_response.status() == Status::Ok);
-        
-        let reg_response_body: SuccessResponse = reg_response.into_json::<SuccessResponse>().unwrap();
+
+        let reg_response_body: SuccessResponse =
+            reg_response.into_json::<SuccessResponse>().unwrap();
         assert_eq!(reg_response_body.success, true);
 
         // Check to make sure that the student was registered (we have 1 more student!)
@@ -103,15 +115,21 @@ async fn test_instr() {
         let new_instr_response = new_instr_request.dispatch();
         assert!(new_instr_response.status() == Status::Ok);
 
-        let new_instr_response_body = new_instr_response.into_json::<InstructorResponse>().unwrap();
-        assert_eq!(new_instr_response_body.students.len(), current_num_students + 1);
-
-    }).join().expect("Thread panicked")
+        let new_instr_response_body = new_instr_response
+            .into_json::<InstructorResponse>()
+            .unwrap();
+        assert_eq!(
+            new_instr_response_body.students.len(),
+            current_num_students + 1
+        );
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
 async fn test_stud() {
-    // TEST ACTIONS BY STUDENTS: 
+    // TEST ACTIONS BY STUDENTS:
     // - Viewing their own buffers
     // - Writing to their own buffer
     let mock_jwk_server = setup_mock_server().await;
@@ -124,7 +142,7 @@ async fn test_stud() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         // Check to make sure we can see student buffers
         let value = "Bearer ".to_owned() + STUD_TOKEN;
@@ -134,7 +152,8 @@ async fn test_stud() {
         let stud_response = stud_request.dispatch();
         assert!(stud_response.status() == Status::Ok);
 
-        let stud_response_body: StudentResponse = stud_response.into_json::<StudentResponse>().unwrap();
+        let stud_response_body: StudentResponse =
+            stud_response.into_json::<StudentResponse>().unwrap();
         assert_eq!(stud_response_body.class_id, 0);
         assert_eq!(stud_response_body.group_id, 0);
         assert!(stud_response_body.contents.is_some());
@@ -144,8 +163,9 @@ async fn test_stud() {
         upd_request.add_header(header.clone());
         let upd_response = upd_request.dispatch();
         assert!(upd_response.status() == Status::Ok);
-        
-        let upd_response_body: SuccessResponse = upd_response.into_json::<SuccessResponse>().unwrap();
+
+        let upd_response_body: SuccessResponse =
+            upd_response.into_json::<SuccessResponse>().unwrap();
         assert_eq!(upd_response_body.success, true);
 
         // Check to make sure that buffer contents are updated
@@ -154,15 +174,20 @@ async fn test_stud() {
         let new_stud_response = new_stud_request.dispatch();
         assert!(new_stud_response.status() == Status::Ok);
 
-        let new_stud_response_body: StudentResponse = new_stud_response.into_json::<StudentResponse>().unwrap();
-        assert_eq!(new_stud_response_body.contents.unwrap(), "// This is a comment!");
-
-    }).join().expect("Thread panicked")
+        let new_stud_response_body: StudentResponse =
+            new_stud_response.into_json::<StudentResponse>().unwrap();
+        assert_eq!(
+            new_stud_response_body.contents.unwrap(),
+            "// This is a comment!"
+        );
+    })
+    .join()
+    .expect("Thread panicked")
 }
 
 #[tokio::test]
 async fn test_admin() {
-    // TEST ACTIONS BY ADMIN: 
+    // TEST ACTIONS BY ADMIN:
     // - Registering instructors
     let mock_jwk_server = setup_mock_server().await;
     let jwk = Jwk::new(KID, JWK_N);
@@ -174,7 +199,7 @@ async fn test_admin() {
     // Send a request
     let server = build_server_test();
     thread::spawn(|| {
-        let client: BBoxClient = BBoxClient::tracked(server).unwrap();
+        let client: SesameClient = SesameClient::tracked(server).unwrap();
 
         // Check to make sure we are admin
         let value = "Bearer ".to_owned() + ADMIN_TOKEN;
@@ -184,17 +209,20 @@ async fn test_admin() {
         let admin_response = admin_request.dispatch();
         assert!(admin_response.status() == Status::Ok);
 
-        let admin_response_body: AdminResponse = admin_response.into_json::<AdminResponse>().unwrap();
+        let admin_response_body: AdminResponse =
+            admin_response.into_json::<AdminResponse>().unwrap();
         let current_num_instr = admin_response_body.instructors.len();
         assert!(0 < current_num_instr);
 
         // Check to make sure that we can register instructors
-        let mut reg_request = client.post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
+        let mut reg_request = client
+            .post("/register_instructor?instr_name=paul&instr_class=3&instr_email=paul@gmail.com");
         reg_request.add_header(header.clone());
         let reg_response = reg_request.dispatch();
         assert!(reg_response.status() == Status::Ok);
-        
-        let reg_response_body: SuccessResponse = reg_response.into_json::<SuccessResponse>().unwrap();
+
+        let reg_response_body: SuccessResponse =
+            reg_response.into_json::<SuccessResponse>().unwrap();
         assert_eq!(reg_response_body.success, true);
 
         // Check to make sure that the instructor was registered (we have 1 more instructor!)
@@ -203,8 +231,13 @@ async fn test_admin() {
         let new_admin_response = new_admin_request.dispatch();
         assert!(new_admin_response.status() == Status::Ok);
 
-        let new_admin_response_body: AdminResponse = new_admin_response.into_json::<AdminResponse>().unwrap();
-        assert_eq!(new_admin_response_body.instructors.len(), current_num_instr + 1);
-
-    }).join().expect("Thread panicked")
+        let new_admin_response_body: AdminResponse =
+            new_admin_response.into_json::<AdminResponse>().unwrap();
+        assert_eq!(
+            new_admin_response_body.instructors.len(),
+            current_num_instr + 1
+        );
+    })
+    .join()
+    .expect("Thread panicked")
 }

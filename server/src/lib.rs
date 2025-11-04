@@ -1,25 +1,23 @@
 extern crate mysql;
 extern crate rocket;
 extern crate serde;
-use crate::policies::{ReadBufferPolicy, EmailPolicy};
-use alohomora::rocket::{routes, BBoxRocket};
+extern crate sesame;
+extern crate sesame_mysql;
+extern crate sesame_rocket;
+
 use backend::MySqlBackend;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_firebase_auth::FirebaseAuth;
+use sesame_rocket::rocket::{routes, SesameRocket};
 use slog::o;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex, Once};
+use std::sync::{Arc, Mutex};
 
-mod admin;
 mod backend;
-mod common;
 mod config;
 mod context;
-mod instructor;
-mod login;
 mod policies;
-mod register;
-mod student;
+mod routes;
 
 pub fn new_logger() -> slog::Logger {
     use slog::Drain;
@@ -28,7 +26,7 @@ pub fn new_logger() -> slog::Logger {
     Logger::root(Mutex::new(term_full()).fuse(), o!())
 }
 
-pub fn build_server() -> BBoxRocket<rocket::Build> {
+pub fn build_server() -> SesameRocket<rocket::Build> {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
         .json_file("./src/firebase-credentials.json")
         .build()
@@ -62,26 +60,32 @@ pub fn build_server() -> BBoxRocket<rocket::Build> {
         .to_cors()
         .expect("Failed to setup cors configuration.");
 
-    // build 
-    BBoxRocket::build()
+    // build
+    SesameRocket::build()
         .manage(cors.clone())
         .manage(backend)
         .manage(config)
         .manage(firebase_auth)
         // Potential issues?
         .attach(cors.clone())
-        .mount("/", alohomora::rocket::catch_all_options_routes())
-        .mount("/", routes![login::login])
-        .mount("/", routes![admin::admin])
-        .mount("/", routes![student::student, student::update])
-        .mount("/", routes![instructor::instructor])
+        .mount("/", sesame_rocket::rocket::catch_all_options_routes())
+        .mount("/", routes![routes::login::login])
+        .mount("/", routes![routes::admin::admin])
         .mount(
             "/",
-            routes![register::register_instructor, register::register_student],
+            routes![routes::student::student, routes::student::update],
+        )
+        .mount("/", routes![routes::instructor::instructor])
+        .mount(
+            "/",
+            routes![
+                routes::register::register_instructor,
+                routes::register::register_student
+            ],
         )
 }
 
-pub fn build_server_test() -> BBoxRocket<rocket::Build> {
+pub fn build_server_test() -> SesameRocket<rocket::Build> {
     let firebase_auth: FirebaseAuth = FirebaseAuth::builder()
         .json_file("./tests/dummy-firebase-creds.json")
         .jwks_url("http://localhost:8888/jwks_url")
@@ -116,21 +120,45 @@ pub fn build_server_test() -> BBoxRocket<rocket::Build> {
         .to_cors()
         .expect("Failed to setup cors configuration.");
 
-    // build 
-    BBoxRocket::build()
+    // build
+    SesameRocket::build()
         .manage(cors.clone())
         .manage(backend)
         .manage(config)
         .manage(firebase_auth)
         // Potential issues?
         .attach(cors.clone())
-        .mount("/", alohomora::rocket::catch_all_options_routes())
-        .mount("/", routes![login::login, login::login_email_buggy, login::login_auth_buggy])
-        .mount("/", routes![admin::admin])
-        .mount("/", routes![student::student, student::update, student::update_buggy])
-        .mount("/", routes![instructor::instructor, instructor::instructor_buggy])
+        .mount("/", sesame_rocket::rocket::catch_all_options_routes())
         .mount(
             "/",
-            routes![register::register_instructor, register::register_student, register::register_student_buggy],
+            routes![
+                routes::login::login,
+                routes::login::login_email_buggy,
+                routes::login::login_auth_buggy
+            ],
+        )
+        .mount("/", routes![routes::admin::admin])
+        .mount(
+            "/",
+            routes![
+                routes::student::student,
+                routes::student::update,
+                routes::student::update_buggy
+            ],
+        )
+        .mount(
+            "/",
+            routes![
+                routes::instructor::instructor,
+                routes::instructor::instructor_buggy
+            ],
+        )
+        .mount(
+            "/",
+            routes![
+                routes::register::register_instructor,
+                routes::register::register_student,
+                routes::register::register_student_buggy
+            ],
         )
 }

@@ -1,18 +1,20 @@
 use crate::backend::MySqlBackend;
-use crate::common::Instructor;
 use crate::context::ContextDataType;
 use crate::policies::AuthStatePolicy;
-use alohomora::context::Context;
-use alohomora::db::from_value;
-use alohomora::rocket::{get, JsonResponse, ResponseBBoxJson};
-use alohomora::{bbox::BBox, policy::AnyPolicy};
+use crate::routes::common::Instructor;
+use sesame::context::Context;
+use sesame::pcon::PCon;
+use sesame::policy::AnyPolicy;
+use sesame_mysql::from_value;
+use sesame_rocket::rocket::{get, JsonResponse, ResponsePConJson};
+
 use mysql::Value;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-#[derive(ResponseBBoxJson)]
+#[derive(ResponsePConJson)]
 pub struct AdminResponse {
     pub success: bool,
     pub instructors: Vec<Instructor>,
@@ -20,34 +22,36 @@ pub struct AdminResponse {
 
 #[get("/admin")]
 pub(crate) fn admin(
-    _token: BBox<FirebaseToken, AuthStatePolicy>,
+    _token: PCon<FirebaseToken, AuthStatePolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> JsonResponse<AdminResponse, ContextDataType> {
     // Verify that this user is admin?
     // Get list of all instructors
     let mut bg: std::sync::MutexGuard<'_, MySqlBackend> = backend.lock().unwrap();
-    let instructors_bbox: Vec<Vec<BBox<Value, AnyPolicy>>> = (*bg).prep_exec(
+    let result: Vec<Vec<PCon<Value, AnyPolicy>>> = (*bg).prep_exec(
         "SELECT * FROM users WHERE privilege = 1",
         (),
         context.clone(),
     );
     drop(bg);
 
-    let mut instr_vec_bbox: Vec<Instructor> = Vec::new();
-    for instr in instructors_bbox.iter() {
-        let name_bbox: BBox<String, AnyPolicy> = from_value(instr[0].clone()).unwrap();
-        let class_id_bbox: BBox<i32, AnyPolicy> = from_value(instr[3].clone()).unwrap();
+    let mut instructors: Vec<Instructor> = Vec::new();
+    for mut instr in result.into_iter() {
+        let class_id = instr.swap_remove(3);
+        let name = instr.swap_remove(0);
+        let name: PCon<String, AnyPolicy> = from_value(name).unwrap();
+        let class_id: PCon<i32, AnyPolicy> = from_value(class_id).unwrap();
         let new_instr: Instructor = Instructor {
-            name: name_bbox,
-            class_id: class_id_bbox,
+            name: name.into_any_policy_no_clone(),
+            class_id,
         };
-        instr_vec_bbox.push(new_instr)
+        instructors.push(new_instr)
     }
 
     let response = AdminResponse {
         success: true,
-        instructors: instr_vec_bbox,
+        instructors,
     };
     JsonResponse::from((response, context.clone()))
 }

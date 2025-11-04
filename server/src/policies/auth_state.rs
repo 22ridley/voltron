@@ -1,8 +1,9 @@
-use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason};
 use rocket::http::Cookie;
 use rocket::Request;
 use serde::Serialize;
+use sesame::context::UnprotectedContext;
+use sesame::policy::{Reason, SimplePolicy};
+use sesame_rocket::policy::FrontendPolicy;
 
 #[derive(Clone, Serialize, Debug)]
 pub struct AuthStatePolicy {}
@@ -29,34 +30,18 @@ impl FrontendPolicy for AuthStatePolicy {
 }
 
 // Email from token can only be used in database, not returned from endpoint
-impl Policy for AuthStatePolicy {
-    fn name(&self) -> String {
+impl SimplePolicy for AuthStatePolicy {
+    fn simple_name(&self) -> String {
         format!("AuthStatePolicy")
     }
 
-    fn check(&self, _context: &UnprotectedContext, reason: Reason) -> bool {
+    fn simple_check(&self, _context: &UnprotectedContext, reason: Reason) -> bool {
         // Only approve use in database queries
         match reason {
-            Reason::DB(_, _) => return true,
-            _ => return false,
+            Reason::DB(_, _) => true,
+            _ => false,
         }
     }
 
-    fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<AuthStatePolicy>() {
-            // Policies are combinable
-            let other = other.specialize::<AuthStatePolicy>().unwrap();
-            Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {
-            //Policies must be stacked
-            Ok(AnyPolicy::new(PolicyAnd::new(
-                AnyPolicy::new(self.clone()),
-                other,
-            )))
-        }
-    }
-
-    fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
-        Ok(AuthStatePolicy {})
-    }
+    fn simple_join_direct(&mut self, _other: &mut Self) {}
 }

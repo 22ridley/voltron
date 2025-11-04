@@ -1,8 +1,9 @@
 use crate::context::ContextDataType;
-use alohomora::context::UnprotectedContext;
-use alohomora::policy::{schema_policy, AnyPolicy, Policy, PolicyAnd, Reason, SchemaPolicy};
-use alohomora::AlohomoraType;
 use serde::Serialize;
+use sesame::context::UnprotectedContext;
+use sesame::policy::{Reason, SimplePolicy};
+use sesame::SesameTypeOut;
+use sesame_mysql::{schema_policy, SchemaPolicy};
 
 #[schema_policy(table = "users", column = 1)]
 #[derive(Clone, Serialize, Debug)]
@@ -17,14 +18,14 @@ impl EmailPolicy {
 }
 
 // Only admin can register instructors
-impl Policy for EmailPolicy {
-    fn name(&self) -> String {
+impl SimplePolicy for EmailPolicy {
+    fn simple_name(&self) -> String {
         format!("EmailPolicy")
     }
 
-    fn check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
+    fn simple_check(&self, context: &UnprotectedContext, _reason: Reason) -> bool {
         // Make sure that this is their own email
-        type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
+        type ContextDataOut = <ContextDataType as SesameTypeOut>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
         let user: &Option<String> = &context.user;
         let user: String = user.as_ref().unwrap().to_string();
@@ -36,27 +37,9 @@ impl Policy for EmailPolicy {
         }
     }
 
-    fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<EmailPolicy>() {
-            // Policies are combinable
-            let other = other.specialize::<EmailPolicy>().unwrap();
-            Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {
-            //Policies must be stacked
-            Ok(AnyPolicy::new(PolicyAnd::new(
-                AnyPolicy::new(self.clone()),
-                other,
-            )))
-        }
-    }
-
-    fn join_logic(&self, p2: Self) -> Result<Self, ()> {
-        if self.email == p2.email {
-            Ok(EmailPolicy {
-                email: self.email.clone(),
-            })
-        } else {
-            Err(())
+    fn simple_join_direct(&mut self, other: &mut Self) {
+        if self.email != other.email {
+            panic!("Cannot join different emails");
         }
     }
 }

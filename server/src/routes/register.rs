@@ -1,23 +1,21 @@
-extern crate mysql;
-extern crate serde;
 use crate::backend::MySqlBackend;
-use crate::common::SuccessResponse;
 use crate::context::ContextDataType;
 use crate::policies::{AuthStatePolicy, InstructorPolicy, StudentPolicy};
-use alohomora::context::Context;
-use alohomora::rocket::post;
-use alohomora::bbox::BBox;
+use crate::routes::common::SuccessResponse;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket_firebase_auth::FirebaseToken;
+use sesame::context::Context;
+use sesame::pcon::PCon;
+use sesame_rocket::rocket::post;
 use std::{sync::Arc, sync::Mutex};
 
 #[post("/register_instructor?<instr_name>&<instr_class>&<instr_email>")]
 pub fn register_instructor(
-    _token: BBox<FirebaseToken, AuthStatePolicy>,
-    instr_name: BBox<String, InstructorPolicy>,
-    instr_class: BBox<i32, InstructorPolicy>,
-    instr_email: BBox<String, InstructorPolicy>,
+    _token: PCon<FirebaseToken, AuthStatePolicy>,
+    instr_name: PCon<String, InstructorPolicy>,
+    instr_class: PCon<i32, InstructorPolicy>,
+    instr_email: PCon<String, InstructorPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
@@ -40,37 +38,37 @@ pub fn register_instructor(
 
 #[post("/register_student?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student(
-    _token: BBox<FirebaseToken, AuthStatePolicy>,
-    stud_group: BBox<i32, StudentPolicy>,
-    stud_name: BBox<String, StudentPolicy>,
-    stud_class: BBox<i32, StudentPolicy>,
-    stud_email: BBox<String, StudentPolicy>,
+    _token: PCon<FirebaseToken, AuthStatePolicy>,
+    stud_group: PCon<i32, StudentPolicy>,
+    stud_name: PCon<String, StudentPolicy>,
+    stud_class: PCon<i32, StudentPolicy>,
+    stud_email: PCon<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
     let mut bg = backend.lock().unwrap();
     // Make insert query to add this new student into users
     (*bg).prep_exec(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)", 
-        (stud_name, stud_email, 0i32, stud_class.clone(), stud_group.clone()), 
+        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
+        (stud_name, stud_email, 0i32, stud_class.clone(), stud_group.clone()),
         context.clone()
     );
     drop(bg);
 
-    return Json(SuccessResponse {
+    Json(SuccessResponse {
         success: true,
         message: "".to_string(),
-    });
+    })
 }
 
 // Buggy version of endpoint!
 #[post("/register_student_buggy?<stud_group>&<stud_name>&<stud_class>&<stud_email>")]
 pub fn register_student_buggy(
-    _token: BBox<FirebaseToken, AuthStatePolicy>,
-    stud_group: BBox<i32, StudentPolicy>,
-    stud_name: BBox<String, StudentPolicy>,
-    stud_class: BBox<i32, StudentPolicy>,
-    stud_email: BBox<String, StudentPolicy>,
+    _token: PCon<FirebaseToken, AuthStatePolicy>,
+    stud_group: PCon<i32, StudentPolicy>,
+    stud_name: PCon<String, StudentPolicy>,
+    #[allow(unused_variables)] stud_class: PCon<i32, StudentPolicy>,
+    stud_email: PCon<String, StudentPolicy>,
     backend: &State<Arc<Mutex<MySqlBackend>>>,
     context: Context<ContextDataType>,
 ) -> Json<SuccessResponse> {
@@ -78,14 +76,14 @@ pub fn register_student_buggy(
     // BUGGY: Make insert query to add this new student into users
     // Hard-coded to always insert to class 2!! This should fail student policy
     (*bg).prep_exec(
-        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)", 
-        (stud_name, stud_email, 0i32, 2i32, stud_group.clone()), 
+        "INSERT INTO users (user_name, email, privilege, class_id, group_id) VALUES (?, ?, ?, ?, ?)",
+        (stud_name, stud_email, 0i32, 2i32, stud_group.clone()),
         context.clone()
     );
     drop(bg);
 
-    return Json(SuccessResponse {
+    Json(SuccessResponse {
         success: true,
         message: "".to_string(),
-    });
+    })
 }

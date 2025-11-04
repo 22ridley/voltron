@@ -1,11 +1,12 @@
 use crate::context::ContextDataType;
-use alohomora::context::UnprotectedContext;
-use alohomora::policy::{AnyPolicy, FrontendPolicy, Policy, PolicyAnd, Reason};
-use alohomora::AlohomoraType;
 use mysql::prelude::Queryable;
 use rocket::http::Cookie;
 use rocket::Request;
 use serde::Serialize;
+use sesame::context::UnprotectedContext;
+use sesame::policy::{Reason, SimplePolicy};
+use sesame::SesameTypeOut;
+use sesame_rocket::policy::FrontendPolicy;
 
 #[derive(Clone, Serialize, Debug)]
 pub struct WriteBufferPolicy {}
@@ -14,16 +15,16 @@ pub struct WriteBufferPolicy {}
 //   1. Students with group_id and class_id;
 //   2. Instructors with class_id;
 //   3. Admins
-impl Policy for WriteBufferPolicy {
-    fn name(&self) -> String {
+impl SimplePolicy for WriteBufferPolicy {
+    fn simple_name(&self) -> String {
         String::from("WriteBufferPolicy")
     }
 
-    fn check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
+    fn simple_check(&self, context: &UnprotectedContext, reason: Reason) -> bool {
         let (class_id, group_id): (i32, i32) = match reason {
             Reason::Custom(arg) => {
                 let arg = &*arg;
-                let tup: &(i32, i32) = arg.cast().downcast_ref().unwrap();
+                let tup: &(i32, i32) = arg.downcast_ref().unwrap();
                 (tup.0, tup.1)
             }
             _ => {
@@ -31,7 +32,7 @@ impl Policy for WriteBufferPolicy {
             }
         };
 
-        type ContextDataOut = <ContextDataType as AlohomoraType>::Out;
+        type ContextDataOut = <ContextDataType as SesameTypeOut>::Out;
         let context: &ContextDataOut = context.downcast_ref().unwrap();
 
         let user: &Option<String> = &context.user;
@@ -59,23 +60,7 @@ impl Policy for WriteBufferPolicy {
         }
     }
 
-    fn join(&self, other: AnyPolicy) -> Result<AnyPolicy, ()> {
-        if other.is::<WriteBufferPolicy>() {
-            // Policies are combinable
-            let other = other.specialize::<WriteBufferPolicy>().unwrap();
-            Ok(AnyPolicy::new(self.join_logic(other)?))
-        } else {
-            //Policies must be stacked
-            Ok(AnyPolicy::new(PolicyAnd::new(
-                AnyPolicy::new(self.clone()),
-                other,
-            )))
-        }
-    }
-
-    fn join_logic(&self, _p2: Self) -> Result<Self, ()> {
-        Ok(WriteBufferPolicy {})
-    }
+    fn simple_join_direct(&mut self, _other: &mut Self) {}
 }
 
 impl FrontendPolicy for WriteBufferPolicy {

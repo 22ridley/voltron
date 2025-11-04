@@ -1,28 +1,29 @@
 use crate::config::Config;
-use alohomora::db::{BBoxConn, BBoxOpts};
-use alohomora::pure::PrivacyPureRegion;
-use alohomora::rocket::{BBoxRequest, BBoxRequestOutcome, FromBBoxRequest};
-use alohomora::AlohomoraType;
-use alohomora::{bbox::BBox, policy::NoPolicy};
 use rocket::State;
 use rocket_firebase_auth::{FirebaseAuth, FirebaseToken};
+use sesame::pcon::PCon;
+use sesame::policy::NoPolicy;
+use sesame::verified::VerifiedRegion;
+use sesame::SesameType;
+use sesame_mysql::{PConOpts, SesameConn};
+use sesame_rocket::rocket::{FromPConRequest, PConRequest, PConRequestOutcome};
 use std::boxed::Box;
 use std::{sync::Arc, sync::Mutex};
 
 // Custom developer defined payload attached to every context.
-#[derive(AlohomoraType)]
-#[alohomora_out_type(verbatim = [config])]
+#[derive(SesameType)]
+#[sesame_out_type(verbatim = [config])]
 pub struct ContextDataType {
-    pub user: Option<BBox<String, NoPolicy>>,
-    pub db: Arc<Mutex<BBoxConn>>,
+    pub user: Option<PCon<String, NoPolicy>>,
+    pub db: Arc<Mutex<SesameConn>>,
     pub config: Config,
 }
 impl Clone for ContextDataType {
     fn clone(&self) -> Self {
         // Connect to the DB.
-        let mut db = BBoxConn::new(
+        let mut db = SesameConn::new(
             // this is the user and password from the config.toml file
-            BBoxOpts::from_url(&format!(
+            PConOpts::from_url(&format!(
                 "mysql://{}:{}@127.0.0.1/",
                 self.config.db_user, self.config.db_password
             ))
@@ -41,19 +42,19 @@ impl Clone for ContextDataType {
 
 // Build the custom payload for the context given HTTP request.
 #[rocket::async_trait]
-impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
-    type BBoxError = ();
+impl<'a, 'r> FromPConRequest<'a, 'r> for ContextDataType {
+    type PConError = ();
 
-    async fn from_bbox_request(
-        request: BBoxRequest<'a, 'r>,
-    ) -> BBoxRequestOutcome<Self, Self::BBoxError> {
+    async fn from_pcon_request(
+        request: PConRequest<'a, 'r>,
+    ) -> PConRequestOutcome<Self, Self::PConError> {
         let config: &State<Config> = request.guard().await.unwrap();
         let firebase_auth: &State<FirebaseAuth> = request.guard().await.unwrap();
 
         // Connect to the DB.
-        let mut db = BBoxConn::new(
+        let mut db = SesameConn::new(
             // this is the user and password from the config.toml file
-            BBoxOpts::from_url(&format!(
+            PConOpts::from_url(&format!(
                 "mysql://{}:{}@127.0.0.1/",
                 config.db_user, config.db_password
             ))
@@ -67,15 +68,13 @@ impl<'a, 'r> FromBBoxRequest<'a, 'r> for ContextDataType {
 
         let user = match token {
             None => None,
-            Some(token_bbox) => {
-                Some(token_bbox.into_ppr(PrivacyPureRegion::new(|token: FirebaseToken| {
-                    token.email.unwrap()
-                })))
-            },
+            Some(token) => Some(token.into_verified(VerifiedRegion::new(
+                |token: FirebaseToken| token.email.unwrap(),
+            ))),
         };
 
         // Return resulting context.
-        BBoxRequestOutcome::Success(ContextDataType {
+        PConRequestOutcome::Success(ContextDataType {
             user,
             db: Arc::new(Mutex::new(db)),
             config: config.inner().clone(),
